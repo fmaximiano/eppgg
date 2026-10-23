@@ -1,0 +1,308 @@
+{
+  "status": "historical_reference_only",
+  "warning": "Transcrição dos anexos fornecidos. Não comprova vigência em 2026 e não constitui conjunto utilizável no motor de cálculo.",
+  "salary_source": "Lei 18.974/2010, Anexo IV, PDF recebido pp.10–11 (compilação impressa em 25/02/2019). O próprio anexo remete à alteração da Lei 21.334/2014.",
+  "points_source": "Lei 13.085/1998, Anexo V, PDF recebido pp.8–9, redação da Lei 20.336/2012; arquivo indica última atualização em 27/06/2014.",
+  "positions": [
+    {
+      "level": "I",
+      "grade": "A",
+      "historical_salary": "1760.00",
+      "historical_gdpi_points": 600
+    },
+    {
+      "level": "I",
+      "grade": "B",
+      "historical_salary": "1825.12",
+      "historical_gdpi_points": 830
+    },
+    {
+      "level": "I",
+      "grade": "C",
+      "historical_salary": "1892.65",
+      "historical_gdpi_points": 830
+    },
+    {
+      "level": "I",
+      "grade": "D",
+      "historical_salary": "1962.68",
+      "historical_gdpi_points": 831
+    },
+    {
+      "level": "I",
+      "grade": "E",
+      "historical_salary": "2035.29",
+      "historical_gdpi_points": 831
+    },
+    {
+      "level": "I",
+      "grade": "F",
+      "historical_salary": "2110.60",
+      "historical_gdpi_points": 832
+    },
+    {
+      "level": "I",
+      "grade": "G",
+      "historical_salary": "2188.69",
+      "historical_gdpi_points": 832
+    },
+    {
+      "level": "I",
+      "grade": "H",
+      "historical_salary": "2269.67",
+      "historical_gdpi_points": 833
+    },
+    {
+      "level": "I",
+      "grade": "I",
+      "historical_salary": "2353.65",
+      "historical_gdpi_points": 833
+    },
+    {
+      "level": "I",
+      "grade": "J",
+      "historical_salary": "2440.72",
+      "historical_gdpi_points": 834
+    },
+    {
+      "level": "II",
+      "grade": "A",
+      "historical_salary": "2110.60",
+      "historical_gdpi_points": 1175
+    },
+    {
+      "level": "II",
+      "grade": "B",
+      "historical_salary": "2188.69",
+      "historical_gdpi_points": 1179
+    },
+    {
+      "level": "II",
+      "grade": "C",
+      "historical_salary": "2269.67",
+      "historical_gdpi_points": 1183
+    },
+    {
+      "level": "II",
+      "grade": "D",
+      "historical_salary": "2353.65",
+      "historical_gdpi_points": 1187
+    },
+    {
+      "level": "II",
+      "grade": "E",
+      "historical_salary": "2440.72",
+      "historical_gdpi_points": 1191
+    },
+    {
+      "level": "II",
+      "grade": "F",
+      "historical_salary": "2531.05",
+      "historical_gdpi_points": 1195
+    },
+    {
+      "level": "II",
+      "grade": "G",
+      "historical_salary": "2624.69",
+      "historical_gdpi_points": 1199
+    },
+    {
+      "level": "II",
+      "grade": "H",
+      "historical_salary": "2721.80",
+      "historical_gdpi_points": 1203
+    },
+    {
+      "level": "II",
+      "grade": "I",
+      "historical_salary": "2822.50",
+      "historical_gdpi_points": 1207
+    },
+    {
+      "level": "II",
+      "grade": "J",
+      "historical_salary": "2926.94",
+      "historical_gdpi_points": 1211
+    },
+    {
+      "level": "III",
+      "grade": "A",
+      "historical_salary": "2531.05",
+      "historical_gdpi_points": 1737
+    },
+    {
+      "level": "III",
+      "grade": "B",
+      "historical_salary": "2624.69",
+      "historical_gdpi_points": 1747
+    },
+    {
+      "level": "III",
+      "grade": "C",
+      "historical_salary": "2721.80",
+      "historical_gdpi_points": 1757
+    },
+    {
+      "level": "III",
+      "grade": "D",
+      "historical_salary": "2822.50",
+      "historical_gdpi_points": 1767
+    },
+    {
+      "level": "III",
+      "grade": "E",
+      "historical_salary": "2926.94",
+      "historical_gdpi_points": 1777
+    },
+    {
+      "level": "III",
+      "grade": "F",
+      "historical_salary": "3035.24",
+      "historical_gdpi_points": 1787
+    },
+    {
+      "level": "III",
+      "grade": "G",
+      "historical_salary": "3147.54",
+      "historical_gdpi_points": 1797
+    },
+    {
+      "level": "III",
+      "grade": "H",
+      "historical_salary": "3264.00",
+      "historical_gdpi_points": 1807
+    },
+    {
+      "level": "III",
+      "grade": "I",
+      "historical_salary": "3384.77",
+      "historical_gdpi_points": 1817
+    },
+    {
+      "level": "III",
+      "grade": "J",
+      "historical_salary": "3509.99",
+      "historical_gdpi_points": 1827
+    },
+    {
+      "level": "IV",
+      "grade": "A",
+      "historical_salary": "3035.24",
+      "historical_gdpi_points": 2161
+    },
+    {
+      "level": "IV",
+      "grade": "B",
+      "historical_salary": "3147.54",
+      "historical_gdpi_points": 2181
+    },
+    {
+      "level": "IV",
+      "grade": "C",
+      "historical_salary": "3264.00",
+      "historical_gdpi_points": 2201
+    },
+    {
+      "level": "IV",
+      "grade": "D",
+      "historical_salary": "3384.77",
+      "historical_gdpi_points": 2221
+    },
+    {
+      "level": "IV",
+      "grade": "E",
+      "historical_salary": "3509.99",
+      "historical_gdpi_points": 2241
+    },
+    {
+      "level": "IV",
+      "grade": "F",
+      "historical_salary": "3639.86",
+      "historical_gdpi_points": 2261
+    },
+    {
+      "level": "IV",
+      "grade": "G",
+      "historical_salary": "3774.53",
+      "historical_gdpi_points": 2281
+    },
+    {
+      "level": "IV",
+      "grade": "H",
+      "historical_salary": "3914.19",
+      "historical_gdpi_points": 2301
+    },
+    {
+      "level": "IV",
+      "grade": "I",
+      "historical_salary": "4059.01",
+      "historical_gdpi_points": 2321
+    },
+    {
+      "level": "IV",
+      "grade": "J",
+      "historical_salary": "4209.18",
+      "historical_gdpi_points": 2341
+    },
+    {
+      "level": "V",
+      "grade": "A",
+      "historical_salary": "3639.86",
+      "historical_gdpi_points": 2564
+    },
+    {
+      "level": "V",
+      "grade": "B",
+      "historical_salary": "3774.53",
+      "historical_gdpi_points": 2598
+    },
+    {
+      "level": "V",
+      "grade": "C",
+      "historical_salary": "3914.19",
+      "historical_gdpi_points": 2632
+    },
+    {
+      "level": "V",
+      "grade": "D",
+      "historical_salary": "4059.01",
+      "historical_gdpi_points": 2666
+    },
+    {
+      "level": "V",
+      "grade": "E",
+      "historical_salary": "4209.18",
+      "historical_gdpi_points": 2700
+    },
+    {
+      "level": "V",
+      "grade": "F",
+      "historical_salary": "4364.92",
+      "historical_gdpi_points": 2734
+    },
+    {
+      "level": "V",
+      "grade": "G",
+      "historical_salary": "4526.41",
+      "historical_gdpi_points": 2768
+    },
+    {
+      "level": "V",
+      "grade": "H",
+      "historical_salary": "4693.89",
+      "historical_gdpi_points": 2802
+    },
+    {
+      "level": "V",
+      "grade": "I",
+      "historical_salary": "4867.56",
+      "historical_gdpi_points": 2836
+    },
+    {
+      "level": "V",
+      "grade": "J",
+      "historical_salary": "5047.65",
+      "historical_gdpi_points": 2870
+    }
+  ]
+}

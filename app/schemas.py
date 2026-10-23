@@ -1,0 +1,240 @@
+"""Contratos de entrada. Valores monetários trafegam como decimais, nunca float."""
+from datetime import date
+from decimal import Decimal
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, allow_inf_nan=False)
+
+
+class Position(StrictModel):
+    level: str = Field(min_length=1, max_length=20)
+    grade: str = Field(min_length=1, max_length=20)
+    salary: Decimal = Field(gt=0)
+    points: Decimal = Field(ge=0)
+
+
+class PensionBand(StrictModel):
+    upper: Decimal | None = Field(default=None, gt=0)
+    rate: Decimal = Field(ge=0, le=1)
+
+
+class TaxBand(StrictModel):
+    upper: Decimal | None = Field(default=None, gt=0)
+    rate: Decimal = Field(ge=0, le=1)
+    deduction: Decimal = Field(ge=0)
+
+
+class Commission(StrictModel):
+    code: str = Field(min_length=1, max_length=80)
+    amount: Decimal = Field(gt=0)
+    kind: str = Field(min_length=1, max_length=80)
+    allow_a: bool = False
+    allow_b: bool = False
+    a_keep_salary: bool = False
+    a_keep_gdpi: bool = False
+    b_keep_salary: bool = True
+    b_keep_gdpi: bool = True
+    optional_pension: bool = False
+    mandatory_pension: bool = False
+    pension_basis_a: Literal['paid', 'effective'] = 'paid'
+    pension_basis_b: Literal['paid', 'effective'] = 'paid'
+    health: bool = True
+    tax: bool = True
+    vacation: bool = True
+    thirteenth: bool = True
+    source: str = Field(min_length=1)
+
+
+class HealthRules(StrictModel):
+    rate: Decimal = Field(default=Decimal('.032'), ge=0, le=1)
+    minimum: Decimal = Field(default=Decimal('60'), ge=0)
+    maximum: Decimal = Field(default=Decimal('500'), gt=0)
+    child_under21: Decimal = Field(default=Decimal('60'), ge=0)
+    child_21_to38: Decimal = Field(default=Decimal('90'), ge=0)
+    age_surcharge: Decimal = Field(default=Decimal('.01'), ge=0, le=1)
+    surcharge_age: int = Field(default=60, ge=0, le=120)
+    minimum_wage: Decimal = Field(gt=0)
+    low_income_rule: Literal['unresolved', 'standard'] = 'unresolved'
+    thirteenth_incidence: bool | None = None
+
+    @model_validator(mode='after')
+    def check_limits(self):
+        if self.minimum > self.maximum:
+            raise ValueError('Piso IPSEMG superior ao teto.')
+        return self
+
+
+class Parameters(StrictModel):
+    version: str = Field(min_length=1, max_length=100)
+    valid_from: date
+    valid_until: date
+    effective_competence: str = Field(pattern=r'^\d{4}-(0[1-9]|1[0-2])$')
+    source: str = Field(min_length=1)
+    status: Literal['demo', 'provisional', 'verified']
+    verified_at: date | None = None
+    notes: list[str] = Field(default_factory=list)
+    sources: dict[str, str]
+    positions: list[Position] = Field(min_length=1)
+    gdpi_factor: Decimal = Field(ge=0)
+    gdpi_reference_salary: Decimal = Field(gt=0)
+    gdpi_min_adi: Decimal = Field(default=Decimal('70'), ge=0, le=100)
+    gdpi_pension: bool
+    gdpi_health: bool
+    commissions: list[Commission] = Field(default_factory=list)
+    pension_bands: list[PensionBand] = Field(min_length=1)
+    rgps_ceiling: Decimal = Field(gt=0)
+    health: HealthRules
+    tax_bands: list[TaxBand] = Field(min_length=1)
+    tax_dependent: Decimal = Field(ge=0)
+    tax_simplified: Decimal = Field(ge=0)
+    reduction_enabled: bool
+    reduction_full_income: Decimal = Field(gt=0)
+    reduction_full_max: Decimal = Field(ge=0)
+    reduction_until: Decimal = Field(gt=0)
+    reduction_intercept: Decimal = Field(ge=0)
+    reduction_slope: Decimal = Field(ge=0)
+    vacation_extra_pension: bool
+    vacation_extra_health: bool
+    career_rules: dict = Field(default_factory=dict)
+
+    @model_validator(mode='after')
+    def coherent(self):
+        if self.valid_until < self.valid_from:
+            raise ValueError('Vigência inválida.')
+        if self.status == 'verified' and not self.verified_at:
+            raise ValueError('Parâmetros verificados exigem verified_at.')
+        if not self.valid_from <= date.fromisoformat(self.effective_competence + '-01') <= self.valid_until:
+            raise ValueError('Competência efetiva fora da vigência.')
+        if len({(p.level, p.grade) for p in self.positions}) != len(self.positions):
+            raise ValueError('Posição duplicada.')
+        if len({c.code for c in self.commissions}) != len(self.commissions):
+            raise ValueError('Cargo duplicado.')
+        for bands in (self.pension_bands, self.tax_bands):
+            limits = [b.upper for b in bands[:-1]]
+            if bands[-1].upper is not None or any(v is None for v in limits):
+                raise ValueError('Somente a última faixa deve ser ilimitada.')
+            if limits != sorted(set(limits)):
+                raise ValueError('Faixas devem ser crescentes e sem duplicatas.')
+        for key in ('salary', 'gdpi', 'commission', 'pension', 'health', 'tax', 'vacation'):
+            if not self.sources.get(key):
+                raise ValueError(f'Fonte obrigatória: {key}.')
+        if self.reduction_until <= self.reduction_full_income:
+            raise ValueError('Limites da redução de IR inválidos.')
+        return self
+
+
+class Rubric(StrictModel):
+    name: str = Field(min_length=1, max_length=100)
+    amount: Decimal = Field(ge=0, le=10000000)
+    nature: Literal['earning', 'deduction'] = 'earning'
+    tax: bool = False
+    pension: bool = False
+    health: bool = False
+    vacation: bool = False
+    thirteenth: bool = False
+    proportional: bool = False
+    source: str = Field(min_length=1, max_length=500)
+
+    @model_validator(mode='after')
+    def deduction_flags(self):
+        if self.nature == 'deduction' and any((self.tax, self.pension, self.health, self.vacation, self.thirteenth)):
+            raise ValueError('Consignações são pós-bases e não têm incidências.')
+        return self
+
+
+class Beneficiary(StrictModel):
+    relationship: Literal['spouse', 'child', 'parent', 'sibling']
+    age: int = Field(ge=0, le=120)
+    special_condition: bool = False
+
+
+class Scenario(StrictModel):
+    name: str = Field(default='Minha simulação', min_length=1, max_length=80)
+    competence: str = Field(default='2026-10', pattern=r'^\d{4}-(0[1-9]|1[0-2])$')
+    mode: Literal['demo', 'official'] = 'demo'
+    level: str = Field(default='I', max_length=20)
+    grade: str = Field(default='A', max_length=20)
+    adi: Decimal = Field(default=Decimal('95'), ge=0, le=100)
+    ai: Decimal = Field(default=Decimal('90'), ge=0, le=100)
+    fraction: Decimal = Field(default=Decimal('1'), ge=0, le=1)
+    gdpi_eligible: bool = True
+    gdpi_evaluation: Literal['normal', 'no_institutional', 'statutory_70'] = 'normal'
+    commission: str | None = None
+    remuneration_option: Literal['none', 'a', 'b'] = 'none'
+    commission_pension: bool = False
+    capped_pension: bool = False
+    complementary_rate: Decimal = Field(default=Decimal('0'), ge=0, le=Decimal('.3'))
+    complementary_deductible: bool = False
+    health_enrolled: bool = False
+    age: int = Field(default=35, ge=0, le=120)
+    beneficiaries: list[Beneficiary] = Field(default_factory=list, max_length=30)
+    copay: Decimal = Field(default=Decimal('0'), ge=0, le=1000000)
+    special_health: bool = False
+    tax_dependents: int = Field(default=0, ge=0, le=30)
+    alimony: Decimal = Field(default=Decimal('0'), ge=0, le=1000000)
+    alimony_deductible: bool = False
+    other_deductions: Decimal = Field(default=Decimal('0'), ge=0, le=1000000)
+    rubrics: list[Rubric] = Field(default_factory=list, max_length=50)
+    project_annual: bool = True
+
+    @model_validator(mode='after')
+    def choices(self):
+        if self.remuneration_option != 'none' and not self.commission:
+            raise ValueError('Selecione um cargo para a opção remuneratória.')
+        if self.commission_pension and self.remuneration_option == 'none':
+            raise ValueError('Contribuição facultativa requer opção comissionada.')
+        if self.complementary_rate and not self.capped_pension:
+            raise ValueError('Complementar exige regime limitado ao teto nesta simulação.')
+        if not self.health_enrolled and (self.beneficiaries or self.copay or self.special_health):
+            raise ValueError('Beneficiários e coparticipação exigem adesão ao IPSEMG.')
+        return self
+
+
+class CompareRequest(StrictModel):
+    scenarios: list[Scenario] = Field(min_length=1, max_length=3)
+
+
+class RetroRequest(StrictModel):
+    entries: list[tuple[Scenario, Scenario]] = Field(min_length=1, max_length=60)
+    treatment: Literal['competence_difference'] = 'competence_difference'
+
+
+class CareerRequest(StrictModel):
+    scenario: Scenario
+    future_level: str
+    future_grade: str
+    years: int = Field(default=5, ge=1, le=40)
+
+
+class CareerActRequest(StrictModel):
+    scenario: Scenario
+    requirement_date: date
+    protocol_date: date
+    publication_date: date | None = None
+    financial_date: date | None = None
+    level_start: date
+    probation_complete: bool
+    satisfactory: bool
+    in_effective_exercise: bool = True
+    blocked_until: date | None = None
+    progression_balance: Decimal = Field(ge=0, le=100000)
+    promotion_balance: Decimal = Field(ge=0, le=100000)
+    # Pontos homologados entram nos dois saldos; a concessão desconta apenas o saldo do ato.
+    validated_event_points: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
+    prior_progressions_this_year: int = Field(default=0, ge=0, le=4)
+
+    @model_validator(mode='after')
+    def ordered_dates(self):
+        if self.protocol_date < self.requirement_date:
+            raise ValueError('Protocolo anterior à aquisição dos requisitos.')
+        if self.publication_date and self.publication_date < self.protocol_date:
+            raise ValueError('Publicação anterior ao protocolo.')
+        if self.financial_date and not self.publication_date:
+            raise ValueError('Vigência financeira exige data de publicação.')
+        if self.level_start > self.requirement_date:
+            raise ValueError('Início no nível posterior à aquisição de requisitos.')
+        return self

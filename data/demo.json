@@ -1,0 +1,449 @@
+{
+  "version": "demo-2026-v1",
+  "valid_from": "2026-01-01",
+  "valid_until": "2026-12-31",
+  "effective_competence": "2026-01",
+  "source": "Conjunto didático, NÃO OFICIAL",
+  "status": "demo",
+  "verified_at": null,
+  "notes": [
+    "Vencimentos, pontos GDPI, cargos e limites RPPS deste conjunto são fictícios. Não use os resultados para decisões financeiras.",
+    "Anexos de 1998–2018 disponíveis na documentação; atualização monetária de 2026 ainda não auditada."
+  ],
+  "sources": {
+    "salary": "DADOS FICTÍCIOS para demonstração; não é tabela SEPLAG 2026",
+    "gdpi": "Decreto 46.640/2014, Anexo; Decreto 46.956/2016 (fórmula histórica); pontos e VBref fictícios no demo",
+    "commission": "Cargo fictício de demonstração, sem equivalência com DAD/DAI real",
+    "pension": "Alíquotas indicadas na especificação; LIMITES FICTÍCIOS, não são faixas RPPS 2026",
+    "health": "Especificação v1.0, seção 6; incidências e parâmetros pendentes de auditoria",
+    "tax": "Especificação v1.0, seção 7; fórmula de redução 2026 parametrizada, pendente de conferência oficial",
+    "vacation": "Hipóteses de demonstração; incidências dependem de auditoria da folha"
+  },
+  "positions": [
+    {
+      "level": "I",
+      "grade": "A",
+      "salary": "4000",
+      "points": "600"
+    },
+    {
+      "level": "I",
+      "grade": "B",
+      "salary": "4150",
+      "points": "610"
+    },
+    {
+      "level": "I",
+      "grade": "C",
+      "salary": "4300",
+      "points": "620"
+    },
+    {
+      "level": "I",
+      "grade": "D",
+      "salary": "4450",
+      "points": "630"
+    },
+    {
+      "level": "I",
+      "grade": "E",
+      "salary": "4600",
+      "points": "640"
+    },
+    {
+      "level": "I",
+      "grade": "F",
+      "salary": "4750",
+      "points": "650"
+    },
+    {
+      "level": "I",
+      "grade": "G",
+      "salary": "4900",
+      "points": "660"
+    },
+    {
+      "level": "I",
+      "grade": "H",
+      "salary": "5050",
+      "points": "670"
+    },
+    {
+      "level": "I",
+      "grade": "I",
+      "salary": "5200",
+      "points": "680"
+    },
+    {
+      "level": "I",
+      "grade": "J",
+      "salary": "5350",
+      "points": "690"
+    },
+    {
+      "level": "II",
+      "grade": "A",
+      "salary": "4900",
+      "points": "1000"
+    },
+    {
+      "level": "II",
+      "grade": "B",
+      "salary": "5050",
+      "points": "1010"
+    },
+    {
+      "level": "II",
+      "grade": "C",
+      "salary": "5200",
+      "points": "1020"
+    },
+    {
+      "level": "II",
+      "grade": "D",
+      "salary": "5350",
+      "points": "1030"
+    },
+    {
+      "level": "II",
+      "grade": "E",
+      "salary": "5500",
+      "points": "1040"
+    },
+    {
+      "level": "II",
+      "grade": "F",
+      "salary": "5650",
+      "points": "1050"
+    },
+    {
+      "level": "II",
+      "grade": "G",
+      "salary": "5800",
+      "points": "1060"
+    },
+    {
+      "level": "II",
+      "grade": "H",
+      "salary": "5950",
+      "points": "1070"
+    },
+    {
+      "level": "II",
+      "grade": "I",
+      "salary": "6100",
+      "points": "1080"
+    },
+    {
+      "level": "II",
+      "grade": "J",
+      "salary": "6250",
+      "points": "1090"
+    },
+    {
+      "level": "III",
+      "grade": "A",
+      "salary": "5800",
+      "points": "1400"
+    },
+    {
+      "level": "III",
+      "grade": "B",
+      "salary": "5950",
+      "points": "1410"
+    },
+    {
+      "level": "III",
+      "grade": "C",
+      "salary": "6100",
+      "points": "1420"
+    },
+    {
+      "level": "III",
+      "grade": "D",
+      "salary": "6250",
+      "points": "1430"
+    },
+    {
+      "level": "III",
+      "grade": "E",
+      "salary": "6400",
+      "points": "1440"
+    },
+    {
+      "level": "III",
+      "grade": "F",
+      "salary": "6550",
+      "points": "1450"
+    },
+    {
+      "level": "III",
+      "grade": "G",
+      "salary": "6700",
+      "points": "1460"
+    },
+    {
+      "level": "III",
+      "grade": "H",
+      "salary": "6850",
+      "points": "1470"
+    },
+    {
+      "level": "III",
+      "grade": "I",
+      "salary": "7000",
+      "points": "1480"
+    },
+    {
+      "level": "III",
+      "grade": "J",
+      "salary": "7150",
+      "points": "1490"
+    },
+    {
+      "level": "IV",
+      "grade": "A",
+      "salary": "6700",
+      "points": "1800"
+    },
+    {
+      "level": "IV",
+      "grade": "B",
+      "salary": "6850",
+      "points": "1810"
+    },
+    {
+      "level": "IV",
+      "grade": "C",
+      "salary": "7000",
+      "points": "1820"
+    },
+    {
+      "level": "IV",
+      "grade": "D",
+      "salary": "7150",
+      "points": "1830"
+    },
+    {
+      "level": "IV",
+      "grade": "E",
+      "salary": "7300",
+      "points": "1840"
+    },
+    {
+      "level": "IV",
+      "grade": "F",
+      "salary": "7450",
+      "points": "1850"
+    },
+    {
+      "level": "IV",
+      "grade": "G",
+      "salary": "7600",
+      "points": "1860"
+    },
+    {
+      "level": "IV",
+      "grade": "H",
+      "salary": "7750",
+      "points": "1870"
+    },
+    {
+      "level": "IV",
+      "grade": "I",
+      "salary": "7900",
+      "points": "1880"
+    },
+    {
+      "level": "IV",
+      "grade": "J",
+      "salary": "8050",
+      "points": "1890"
+    },
+    {
+      "level": "V",
+      "grade": "A",
+      "salary": "7600",
+      "points": "2200"
+    },
+    {
+      "level": "V",
+      "grade": "B",
+      "salary": "7750",
+      "points": "2210"
+    },
+    {
+      "level": "V",
+      "grade": "C",
+      "salary": "7900",
+      "points": "2220"
+    },
+    {
+      "level": "V",
+      "grade": "D",
+      "salary": "8050",
+      "points": "2230"
+    },
+    {
+      "level": "V",
+      "grade": "E",
+      "salary": "8200",
+      "points": "2240"
+    },
+    {
+      "level": "V",
+      "grade": "F",
+      "salary": "8350",
+      "points": "2250"
+    },
+    {
+      "level": "V",
+      "grade": "G",
+      "salary": "8500",
+      "points": "2260"
+    },
+    {
+      "level": "V",
+      "grade": "H",
+      "salary": "8650",
+      "points": "2270"
+    },
+    {
+      "level": "V",
+      "grade": "I",
+      "salary": "8800",
+      "points": "2280"
+    },
+    {
+      "level": "V",
+      "grade": "J",
+      "salary": "8950",
+      "points": "2290"
+    }
+  ],
+  "gdpi_factor": "0.0007",
+  "gdpi_reference_salary": "10000",
+  "gdpi_min_adi": "70",
+  "gdpi_pension": true,
+  "gdpi_health": true,
+  "commissions": [
+    {
+      "code": "COMISSÃO DEMO",
+      "kind": "Exemplo fictício",
+      "amount": "4000",
+      "allow_a": true,
+      "allow_b": true,
+      "a_keep_salary": false,
+      "a_keep_gdpi": false,
+      "b_keep_salary": true,
+      "b_keep_gdpi": true,
+      "optional_pension": true,
+      "source": "Cargo fictício de demonstração, sem equivalência com DAD/DAI real"
+    }
+  ],
+  "pension_bands": [
+    {
+      "upper": "1500",
+      "rate": ".11"
+    },
+    {
+      "upper": "3000",
+      "rate": ".12"
+    },
+    {
+      "upper": "4500",
+      "rate": ".13"
+    },
+    {
+      "upper": "6000",
+      "rate": ".14"
+    },
+    {
+      "upper": "10000",
+      "rate": ".15"
+    },
+    {
+      "upper": "20000",
+      "rate": ".155"
+    },
+    {
+      "upper": null,
+      "rate": ".16"
+    }
+  ],
+  "rgps_ceiling": "8000",
+  "health": {
+    "minimum_wage": "1600",
+    "thirteenth_incidence": false,
+    "low_income_rule": "unresolved"
+  },
+  "tax_bands": [
+    {
+      "upper": "2428.80",
+      "rate": "0",
+      "deduction": "0"
+    },
+    {
+      "upper": "2826.65",
+      "rate": ".075",
+      "deduction": "182.16"
+    },
+    {
+      "upper": "3751.05",
+      "rate": ".15",
+      "deduction": "394.16"
+    },
+    {
+      "upper": "4664.68",
+      "rate": ".225",
+      "deduction": "675.49"
+    },
+    {
+      "upper": null,
+      "rate": ".275",
+      "deduction": "908.73"
+    }
+  ],
+  "tax_dependent": "189.59",
+  "tax_simplified": "607.20",
+  "reduction_enabled": true,
+  "reduction_full_income": "5000",
+  "reduction_full_max": "312.89",
+  "reduction_until": "7350",
+  "reduction_intercept": "978.62",
+  "reduction_slope": "0.133145",
+  "vacation_extra_pension": false,
+  "vacation_extra_health": false,
+  "career_rules": {
+    "source": "Instrução SEPLAG 001/2018, arts. 17–21; critérios históricos não auditados para 2026",
+    "progression_cost": 5,
+    "promotion_cost": 50,
+    "interstice_years": 4,
+    "level_order": [
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V"
+    ],
+    "grade_order": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "annual_progression_limits": {
+      "I": 4,
+      "II": 3,
+      "III": 3,
+      "IV": 3,
+      "V": 3
+    }
+  }
+}

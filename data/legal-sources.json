@@ -1,0 +1,57 @@
+[
+  {
+    "file": "Lei_13085-98.pdf",
+    "sha256": "efc15ca7d420a19e57d6aa37b008a8fb891747121618e96aa2c8d492c4c4b047",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Decreto_46030-12.pdf",
+    "sha256": "58c8e03291b440a91f4372c3fa25666a22dd7e45678936d714b88b461171c4a1",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Lei_21334-14.pdf",
+    "sha256": "67b3bf2868ffd5190f2f1b7c2a8a32273239d405c0e3e00b453b5fc4f0cd5a7a",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Lei_20336-12.pdf",
+    "sha256": "0c193635ff7900dee4c12b3a53c317b46becedda6f247f4ea9a1d568834134ea",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Decreto_45600-11.pdf",
+    "sha256": "210157544a6949e22240a629ef84f3a349090d2d7e5916e7cd38a00ceafb15f7",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Lei_18974-10.pdf",
+    "sha256": "89c42c52f37b74277a2b48fdc314e6c287b3a4bf2e3f293a0b50b86680ff77cf",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Instrucao_SEPLAG_01_30082018.pdf",
+    "sha256": "b128cf5522c8887c672ad01732cef47f16131f417d3ae4a00d1269f709dde2ea",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Decreto_46956-16.pdf",
+    "sha256": "f6e47a987f49556d68b42d9046cbf1c95fc160074b580190c2beecc1e8c4f6d4",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Lei_15961-05.pdf",
+    "sha256": "515ae071555ec4973b1d8b3d3613f21db16eb8cc2e8d5687c8a89c49d964b7b9",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Decreto_46640-14.pdf",
+    "sha256": "7b60fec12b925960f6111e7a13602ffd560e90e5301236f36e994abd91526c13",
+    "status": "historical_not_audited_for_2026"
+  },
+  {
+    "file": "Decreto_47081_16.pdf",
+    "sha256": "314998ab33570575bd91c3c2901b082047f4c70d8bd454e4a82a72a175904ad8",
+    "status": "historical_not_audited_for_2026"
+  }
+]
