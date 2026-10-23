@@ -28,7 +28,7 @@ Para validar o Neon na imagem, injete `DATABASE_URL` do seu gerenciador de segre
 docker run --rm -p 8000:8000 --env DATABASE_URL eppgg
 ```
 
-Em ambiente corporativo com proxy TLS, o build aceita **opcionalmente** uma cadeia CA confiável como segredo BuildKit `build_ca`. A cadeia é usada somente na instalação e não é gravada na imagem. Não desative verificação de TLS ou hashes. O build convencional do Railway não requer esse segredo quando usa uma conexão direta confiável ao PyPI.
+O Dockerfile usa instruções convencionais, sem mounts de segredo, para ser compatível com o construtor do Railway. A instalação mantém a verificação de TLS e dos hashes das dependências. Em ambientes corporativos com inspeção TLS, configure a cadeia CA confiável no construtor utilizado; não desative a verificação de certificados ou checksums. O build do Railway com acesso direto confiável ao PyPI não precisa dessa configuração corporativa.
 
 ## Dados e privacidade
 
