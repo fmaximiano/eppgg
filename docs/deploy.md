@@ -8,7 +8,7 @@ O repositório contém `Dockerfile` e `railway.toml`. Não foi publicado automat
 2. No Neon, crie um projeto e um banco PostgreSQL. Use a connection string recomendada pelo painel (pooled ou direct), com TLS habilitado.
 3. No Railway, crie um serviço a partir desse repositório. O builder Docker e o healthcheck já estão em `railway.toml`.
 4. Nas **Variables** do Railway, adicione `DATABASE_URL` com a connection string do Neon. Insira a credencial somente nesse campo seguro. Não coloque no código, no Dockerfile, no terminal com saída gravada ou em arquivos versionados.
-5. Implante o serviço e confira o healthcheck. O processo cria `parameter_sets` e o conjunto demonstrativo se ainda não existirem. Gere o domínio público pelo painel do Railway.
+5. Implante o serviço e confira o healthcheck. O processo cria `parameter_sets` e `career_data_sets` e carrega o conjunto demonstrativo e os dados remuneratórios reais de 2026 se ainda não existirem. A carga real vem no repositório; não depende de executar um comando administrativo depois do deploy. Gere o domínio público pelo painel do Railway.
 6. Importe conjuntos legais auditados por uma sessão administrativa com acesso ao mesmo banco. Confira as fontes no aplicativo e o modo oficial antes da liberação para uso real.
 
 O usuário de banco precisa inicialmente criar a tabela; após a inicialização, pode ter permissões limitadas a leitura e à inserção idempotente do demo. Alterações futuras de schema deverão ser tratadas em migrações, não por exclusão de tabelas. `create_all` apenas cria tabelas ausentes e não migra schema existente.

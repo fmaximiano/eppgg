@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlalchemy import JSON, String, create_engine, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.engine import make_url
-from .schemas import Parameters
+from .schemas import Parameters, CareerData
 
 
 class Base(DeclarativeBase):
@@ -13,6 +13,12 @@ class Base(DeclarativeBase):
 
 class ParameterSet(Base):
     __tablename__ = 'parameter_sets'
+    version: Mapped[str] = mapped_column(String(100), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class CareerDataSet(Base):
+    __tablename__ = 'career_data_sets'
     version: Mapped[str] = mapped_column(String(100), primary_key=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
@@ -55,12 +61,35 @@ def initialize(engine, sessions):
     with sessions() as session:
         p = Parameters.model_validate_json((Path(__file__).parent.parent / 'data/demo.json').read_text())
         store_parameters(session, p)
+        career=CareerData.model_validate_json((Path(__file__).parent.parent / 'data/career-2026.json').read_text())
+        store_career_data(session,career)
+
+
+def store_career_data(session, p):
+    current=session.get(CareerDataSet,p.version)
+    payload=p.model_dump(mode='json')
+    if current:
+        if CareerData.model_validate(current.payload).model_dump(mode='json') != payload:
+            raise ValueError('Versão remuneratória existente com conteúdo diferente; crie outra versão.')
+        return
+    for row in session.scalars(select(CareerDataSet)):
+        other=CareerData.model_validate(row.payload)
+        if p.valid_from <= other.valid_until and other.valid_from <= p.valid_until:
+            raise ValueError('Tabelas remuneratórias reais com vigências sobrepostas.')
+    session.add(CareerDataSet(version=p.version,payload=payload))
+    session.commit()
 
 
 def resolve_parameters(session, competence, mode):
     from datetime import date
     from .calculator import CalculationError
     day = date.fromisoformat(competence + '-01')
+    if mode == 'real':
+        valid=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
+        valid=[p for p in valid if p.valid_from <= day <= p.valid_until]
+        if len(valid)!=1:
+            raise CalculationError('Nenhuma tabela remuneratória real única cadastrada para a competência.')
+        return valid[0]
     valid = [Parameters.model_validate(r.payload) for r in session.scalars(select(ParameterSet))]
     valid = [p for p in valid if p.valid_from <= day <= p.valid_until
              and (p.status == 'demo' if mode == 'demo' else p.status == 'verified')]

@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from .calculator import CalculationError, calculate, money
 from .career import project, simulate_act
-from .database import create_db, initialize, database_health, resolve_parameters, ParameterSet
+from .database import create_db, initialize, database_health, resolve_parameters, ParameterSet, CareerDataSet
 from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters
 
 ROOT = Path(__file__).parent
@@ -92,17 +92,21 @@ def create_app(database_url=None):
     def sources():
         with sessions() as session:
             versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes')}
-                        for r in session.scalars(select(ParameterSet))]
+                        for r in [*session.scalars(select(ParameterSet)),*session.scalars(select(CareerDataSet))]]
         return {'versions': versions, 'attachments': json.loads((ROOT.parent / 'data/legal-sources.json').read_text()),
-                'pending': ['Matriz salarial SEPLAG 2026 e vigências de reajustes', 'Pontos GDPI e VB de referência vigentes',
-                            'Tabelas e elegibilidade DAD/DAI', 'Limites RPPS e teto RGPS por competência',
+                'pending': ['Líquido real: limites RPPS e base contributiva do enquadramento',
                             'Exceções IPSEMG, incidência no 13º e atualização dos pisos/tetos',
                             'Auditoria de incidências de férias, auxílios e vantagens pessoais',
-                            'Conferência de IRRF com fonte oficial e contracheques'],
+                            'Conferência da opção A e manutenção das parcelas de cada cargo',
+                            'Confronto do líquido real com contracheques'],
                 'historical_findings': ['Decreto 46.640/2014: F=0,0005 em 2015, 0,0006 em 2016 e 0,0007 desde 2017; não retroagir o fator atual.',
                                         'Decreto 46.956/2016: P remete ao Anexo V da Lei 13.085/1998, respeitado o §6º do art.16.',
                                         'Decreto 47.081/2016: revogou §7º do art.9º do Decreto 46.030/2012; não aplicar a vedação antiga de curso integral.',
                                         'Instrução 001/2018: saldos separados; promoção precede progressão; enquadramento no primeiro grau do novo nível com vencimento superior.']}
+
+    @app.get('/api/career-data')
+    def career_data(competence: str = '2026-10'):
+        return parameters(competence,'real')
 
     @app.get('/api/historical-reference')
     def historical_reference():
@@ -120,13 +124,17 @@ def create_app(database_url=None):
         first = results[0]['monthly']['net']
         first_annual = results[0]['annual']['net'] if results[0]['annual'] else None
         for r in results:
-            delta = money(r['monthly']['net'] - first)
-            annual_delta = money(r['annual']['net'] - first_annual) if first_annual is not None and r['annual'] else None
+            delta = money(r['monthly']['net'] - first) if first is not None and r['monthly']['net'] is not None else None
+            annual_delta = money(r['annual']['net'] - first_annual) if first_annual is not None and r['annual'] and r['annual']['net'] is not None else None
+            gross_delta=money(r['monthly']['gross']-results[0]['monthly']['gross'])
             r['difference'] = {'monthly': delta, 'monthly_percent': money(delta / abs(first) * 100) if first else None,
-                               'annual': annual_delta, 'annual_percent': money(annual_delta / abs(first_annual) * 100) if first_annual and annual_delta is not None else None}
-        all_annual = all(r['annual'] for r in results)
-        return encoded({'results': results, 'best_monthly': max(range(len(results)), key=lambda i: results[i]['monthly']['net']),
-                        'best_annual': max(range(len(results)), key=lambda i: results[i]['annual']['net']) if all_annual else None})
+                               'annual': annual_delta, 'annual_percent': money(annual_delta / abs(first_annual) * 100) if first_annual and annual_delta is not None else None,
+                               'gross':gross_delta,'gross_percent':money(gross_delta/abs(results[0]['monthly']['gross'])*100) if results[0]['monthly']['gross'] else None}
+        all_monthly=all(r['monthly']['net'] is not None for r in results)
+        all_annual = all(r['annual'] and r['annual']['net'] is not None for r in results)
+        return encoded({'results': results, 'best_monthly': max(range(len(results)), key=lambda i: results[i]['monthly']['net']) if all_monthly else None,
+                        'best_annual': max(range(len(results)), key=lambda i: results[i]['annual']['net']) if all_annual else None,
+                        'best_gross':max(range(len(results)),key=lambda i:results[i]['monthly']['gross'])})
 
     @app.post('/api/commission-options')
     def commission_options(s: Scenario):
@@ -135,7 +143,11 @@ def create_app(database_url=None):
         commission = next((c for c in p.commissions if c.code == s.commission), None)
         if commission is None:
             raise CalculationError('Selecione um cargo comissionado cadastrado.')
-        variants = [s.model_copy(update={'name': 'Sem comissão', 'remuneration_option': 'none', 'commission_pension': False})]
+        function=next((f for f in p.functions if f.code==s.function),None)
+        baseline={'name':'Sem comissão','remuneration_option':'none','commission_pension':False}
+        if function and function.requires_commission_kind:
+            baseline.update(function=None,function_pension=False)
+        variants = [s.model_copy(update=baseline)]
         for option in ('a', 'b'):
             if getattr(commission, 'allow_' + option):
                 variants.append(s.model_copy(update={'name': 'Opção ' + option.upper(), 'remuneration_option': option}))
@@ -160,10 +172,12 @@ def create_app(database_url=None):
             if before.competence != after.competence or before.mode != after.mode:
                 raise CalculationError('Cada par deve ter a mesma competência e modo.')
             a, b = run(before), run(after)
+            net_difference=money(b['monthly']['net']-a['monthly']['net']) if a['monthly']['net'] is not None and b['monthly']['net'] is not None else None
             rows.append({'competence': before.competence, 'before': a, 'after': b,
                          'gross_difference': money(b['monthly']['gross'] - a['monthly']['gross']),
-                         'net_difference': money(b['monthly']['net'] - a['monthly']['net'])})
-        return encoded({'entries': rows, 'total_net_difference': money(sum((x['net_difference'] for x in rows), Decimal('0'))),
+                         'net_difference': net_difference})
+        return encoded({'entries': rows, 'total_net_difference': money(sum((x['net_difference'] for x in rows), Decimal('0'))) if all(x['net_difference'] is not None for x in rows) else None,
+                        'total_gross_difference':money(sum((x['gross_difference'] for x in rows),Decimal('0'))),
                         'warning': 'Diferenças estimadas nas competências de origem. Não calcula IR de RRA, juros, atualização ou líquido da folha de pagamento retroativo.'})
 
     @app.post('/api/export/{kind}')
@@ -184,8 +198,16 @@ def create_app(database_url=None):
         writer.writerow(['Competência', 'Versão', 'Status', 'Rubrica', 'Valor', 'IR', 'RPPS', 'IPSEMG', 'Fonte'])
         for row in result['monthly']['earnings']:
             writer.writerow([s.competence, result['parameters']['version'], result['parameters']['status'], safe(row['name']),
-                             format(row['amount'], '.2f'), row['tax'], row['pension'], row['health'], safe(row['source'])])
+                             format(row['amount'], '.2f'),
+                             row['tax'] if result['monthly']['net'] is not None else 'não apurado',
+                             row['pension'] if result['monthly']['net'] is not None else 'não apurado',
+                             row['health'] if result['monthly']['net'] is not None else 'não apurado',safe(row['source'])])
         m = result['monthly']
+        if m['net'] is None:
+            writer.writerow([s.competence,result['parameters']['version'],result['parameters']['status'],'Bruto',format(m['gross'],'.2f')])
+            writer.writerow([s.competence,result['parameters']['version'],result['parameters']['status'],'Descontos e líquido não apurados; consultar pendências'])
+            return Response('\ufeff'+output.getvalue(),media_type='text/csv; charset=utf-8',
+                            headers={'Content-Disposition':'attachment; filename="remuneracao-real-eppgg.csv"'})
         for name, amount, key in [('RPPS', m['pension']['amount'], 'pension'), ('Complementar', m['complementary'], 'pension'),
                                   ('IPSEMG', m['health']['amount'], 'health'), ('Coparticipação', m['health']['copay'], 'health'),
                                   ('IRRF', m['income_tax']['amount'], 'tax'), ('Pensão alimentícia', m['alimony'], 'tax'),

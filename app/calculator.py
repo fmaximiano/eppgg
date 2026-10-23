@@ -1,6 +1,6 @@
 """Motor decimal independente de HTTP/banco; nunca extrapola tabelas ausentes."""
 from decimal import Decimal, ROUND_HALF_UP
-from .schemas import Parameters, Scenario
+from .schemas import Parameters, Scenario, CareerData
 
 D = Decimal
 ZERO = D('0')
@@ -96,7 +96,7 @@ def earnings(s, p):
     if s.gdpi_evaluation == 'statutory_70':
         adi, ai = D('70'), D('70')
     evaluation = adi / 100 if s.gdpi_evaluation == 'no_institutional' else (D('.6') * adi + D('.4') * ai) / 100
-    raw_ceiling = pos.points * p.gdpi_factor * p.gdpi_reference_salary * s.fraction
+    raw_ceiling = pos.points * p.gdpi_point_share * p.gdpi_factor * p.gdpi_reference_salary * s.fraction
     ceiling = money(raw_ceiling)
     gdpi = money(raw_ceiling * evaluation) if s.gdpi_eligible and adi >= p.gdpi_min_adi else ZERO
     keep_salary, keep_gdpi = True, True
@@ -107,6 +107,8 @@ def earnings(s, p):
             raise CalculationError('Cargo comissionado não cadastrado para a competência.')
         option = s.remuneration_option
         if not getattr(commission, 'allow_' + option):
+            if isinstance(p,CareerData) and option=='a':
+                raise CalculationError('Opção A real ainda não habilitada: confira a manutenção das parcelas no enquadramento concreto.')
             raise CalculationError('Opção remuneratória não permitida para este cargo.')
         keep_salary = getattr(commission, option + '_keep_salary')
         keep_gdpi = getattr(commission, option + '_keep_gdpi')
@@ -122,6 +124,19 @@ def earnings(s, p):
                             commission.amount * s.fraction * (1 if s.remuneration_option == 'a' else D('.5')),
                             commission.source, pension=s.commission_pension or commission.mandatory_pension, tax=commission.tax,
                             health=commission.health, vacation=commission.vacation, thirteenth=commission.thirteenth))
+    if s.function:
+        function=next((f for f in p.functions if f.code==s.function),None)
+        if function is None:
+            raise CalculationError('Função/gratificação não cadastrada para a competência.')
+        if function.requires_commission_kind and (not commission or commission.kind!=function.requires_commission_kind):
+            raise CalculationError(f'{function.code} exige cargo {function.requires_commission_kind} em exercício.')
+        if commission and not function.allow_with_commission:
+            raise CalculationError('Combinação de função gratificada com cargo comissionado não habilitada neste cadastro.')
+        if s.function_pension and not function.optional_pension:
+            raise CalculationError('Contribuição facultativa sobre a função não habilitada.')
+        rows.append(earning(function.code+' · integral',function.amount*s.fraction,function.source,
+                            pension=s.function_pension,tax=function.tax,health=function.health,
+                            vacation=function.vacation,thirteenth=function.thirteenth))
     for r in s.rubrics:
         if r.nature == 'earning':
             rows.append(earning(r.name, r.amount * (s.fraction if r.proportional else 1), r.source,
@@ -134,10 +149,11 @@ def earnings(s, p):
         if not keep_gdpi and p.gdpi_pension:
             reference_pension += gdpi
     return rows, {'points': pos.points, 'factor': p.gdpi_factor, 'reference_salary': p.gdpi_reference_salary,
+                  'point_share':p.gdpi_point_share,'effective_points':pos.points*p.gdpi_point_share,
                   'evaluation': evaluation, 'ceiling': ceiling, 'actual': gdpi if keep_gdpi else ZERO,
                   'minimum_adi': p.gdpi_min_adi, 'eligible': s.gdpi_eligible and adi >= p.gdpi_min_adi,
                   'evaluation_mode': s.gdpi_evaluation, 'effective_adi': adi, 'effective_ai': ai,
-                  'formula': 'P × F × VBref × (0,6 × ADI/100 + 0,4 × AI/100) × proporção'}, reference_pension
+                  'formula': 'P_tabela × quota legal × F × VBref × avaliação × proporção'}, reference_pension
 
 
 def payroll(rows, s, p, kind='monthly', reference_pension=ZERO):
@@ -170,7 +186,7 @@ def payroll(rows, s, p, kind='monthly', reference_pension=ZERO):
             'income_tax': tax, 'alimony': alimony, 'other_deductions': money(other)}
 
 
-def calculate(s: Scenario, p: Parameters):
+def calculate(s: Scenario, p: Parameters | CareerData):
     from datetime import date
     competence = date.fromisoformat(s.competence + '-01')
     if not p.valid_from <= competence <= p.valid_until:
@@ -178,6 +194,8 @@ def calculate(s: Scenario, p: Parameters):
     if s.mode == 'official' and p.status != 'verified':
         raise CalculationError('Não há parâmetros oficiais auditados para esta competência.')
     rows, gdpi, reference_pension = earnings(s, p)
+    if isinstance(p,CareerData):
+        return calculate_compensation(s,p,rows,gdpi)
     monthly = payroll(rows, s, p, reference_pension=reference_pension)
     warnings = list(p.notes)
     if p.status != 'verified':
@@ -200,3 +218,22 @@ def calculate(s: Scenario, p: Parameters):
         'effective_competence': p.effective_competence, 'verified_at': p.verified_at,
         'source': p.source, 'sources': p.sources}, 'rounding': 'Decimal, ROUND_HALF_UP, centavos por rubrica e por tributo; RPPS arredondado após soma das faixas.',
         'monthly': monthly, 'gdpi': gdpi, 'annual': annual, 'warnings': warnings}
+
+
+def calculate_compensation(s,p,rows,gdpi):
+    """Exibe somente os valores confirmados, sem estimar descontos com fixtures."""
+    gross=money(sum((r['amount'] for r in rows),ZERO))
+    annual=None
+    if s.project_annual:
+        thirteenth=money(sum((r['amount'] for r in rows if r['thirteenth']),ZERO))
+        extra=money(sum((money(r['amount']/3) for r in rows if r['vacation']),ZERO))
+        vacation=money(gross+extra)
+        annual={'gross':money(12*gross+extra+thirteenth),'net':None,
+                'thirteenth':{'gross':thirteenth,'net':None},'vacation':{'gross':vacation,'net':None},
+                'assumptions':'Projeção bruta estática: 12 remunerações, terço e 13º integral, sem reajustes ou avos proporcionais; descontos não apurados.'}
+    return {'scenario':s.model_dump(mode='json'),'parameters':{
+        k:getattr(p,k) for k in ('version','status','valid_from','valid_until','effective_competence','verified_at','source','sources')},
+        'rounding':'Decimal, ROUND_HALF_UP, centavos por rubrica.',
+        'monthly':{'kind':'monthly','earnings':rows,'gross':gross,'deductions':None,'net':None},
+        'gdpi':gdpi,'annual':annual,'pending':p.pending,
+        'warnings':p.notes+['DADOS REMUNERATÓRIOS REAIS — descontos e líquido não calculados; não se misturam faixas demonstrativas às tabelas oficiais.']}

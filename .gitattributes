@@ -1,0 +1,2 @@
+# Evidências oficiais devem conservar os bytes originais para conferir SHA-256.
+data/sources/* -text -diff

@@ -24,7 +24,7 @@ def main():
             store_parameters(session, params)
         print(f'Importado: {params.version} ({params.status})')
     else:
-        print('Banco inicializado; dados demonstrativos disponíveis.')
+        print('Banco inicializado; remuneração real de 2026 e dados demonstrativos disponíveis.')
 
 
 if __name__ == '__main__':

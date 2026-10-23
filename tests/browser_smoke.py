@@ -16,6 +16,25 @@ def main():
             errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(os.getenv('APP_URL','http://127.0.0.1:8000'),wait_until='networkidle')
+            # A interface abre com dados reais de remuneração, sem inventar líquido.
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
+            expect(page.locator('.stat.net .stat-value')).to_have_text('A conferir')
+            page.locator('[name=function]').select_option('FGD-5')
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('7.218,24')
+            page.locator('[name=commission]').select_option('DAD-6')
+            page.locator('[name=function]').select_option('GTED-4')
+            page.locator('[name=remuneration_option]').select_option('b')
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('9.419,74')
+            page.locator('#compare-options').click()
+            expect(page.locator('#comparison-result')).to_contain_text('líquido não apurado')
+            page.locator('[data-tab=sources]').click()
+            expect(page.locator('.real-catalog')).to_contain_text('50 posições, 52 cargos e 45 funções')
+            page.locator('.real-catalog summary').first.click()
+            expect(page.locator('.real-catalog')).to_contain_text('3.773,24')
+            page.locator('[data-tab=calculator]').click()
+            page.locator('#reset').click()
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
+            page.locator('[name=mode]').select_option('demo')
             expect(page.locator('.stat.net .stat-value')).to_contain_text('5.889,55')
             page.locator('[name=adi]').fill('69')
             expect(page.locator('.big-inline').first).to_contain_text('0,00')
@@ -53,12 +72,14 @@ def main():
             expect(page.locator('.stat-value')).to_have_count(0)
             page.locator('[name=mode]').select_option('demo')
             expect(page.locator('.stat-value')).to_have_count(3)
+            page.locator('#reset').click()
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow horizontal'
             assert not errors,errors
             if os.getenv('SCREENSHOTS_DIR'):
                 directory=Path(os.environ['SCREENSHOTS_DIR']);directory.mkdir(parents=True,exist_ok=True)
                 page.screenshot(path=str(directory/f'eppgg-{width}.png'),full_page=True)
-            print(f'PASS: interface {width}px, cálculo, cenários, comparação, carreira, fontes, exportação e bloqueio oficial')
+            print(f'PASS: interface {width}px; dados reais, funções integrais, GTE, catálogo, demonstração, cenários, comparação, carreira e exportação')
             context.close()
         browser.close()
 

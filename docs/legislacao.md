@@ -22,8 +22,8 @@ As 50 posições e seus valores históricos foram transcritos para `data/histori
 
 ## Pendências materiais
 
-Ainda faltam a matriz salarial oficial por competência, validação atual dos pontos/VBref GDPI, tabelas e elegibilidade dos comissionados, limites monetários RPPS/RGPS, regras atualizadas e exceções do IPSEMG, incidências e reflexos especiais, conferência da legislação federal de IR de 2026 e confronto com folhas oficiais. A Lei 25.804/2026 e as normas atuais RPPS/IPSEMG citadas na especificação não estão entre os anexos recebidos.
+A matriz salarial, pontos/VBref GDPI e tabelas DAD/DAI/FGD/FGI/GTED/GTEI de 2026 foram acrescentadas após consulta oficial. Ainda faltam a conferência completa dos limites monetários e bases RPPS/RGPS, regras atualizadas e exceções IPSEMG, incidências e reflexos especiais, manutenção das parcelas na opção A dos comissionados e confronto da folha líquida com contracheques. A Lei 25.804/2026 e normas atuais RPPS/IPSEMG não estavam nos anexos originais, mas seus textos públicos foram consultados nesta etapa.
 
-A tentativa de consulta aos sites `www.mg.gov.br` e `www.almg.gov.br` neste ambiente recebeu HTTP 403 do proxy de rede. Isso não comprova ausência das normas; impede apenas a conferência externa nesta execução. O aplicativo permanece demonstrativo e bloqueia o modo oficial sem importação auditada.
+A primeira tentativa de consulta aos sites MG/ALMG recebeu 403 do proxy. Na etapa seguinte de inclusão dos dados reais, essas fontes ficaram acessíveis e foram consultadas: a matriz salarial, os pontos GDPI e os valores de cargos/funções de 2026 estão em [dados-reais.md](dados-reais.md), com cópias preservadas em `data/sources/`. O Portal do Servidor ainda respondeu 403; descontos e líquido reais continuam pendentes. Não se deve mais interpretar a transcrição histórica como o único dado disponível.
 
 Fontes para conferência: [ALMG](https://www.almg.gov.br/), [SEPLAG/MG](https://www.mg.gov.br/planejamento/pagina/gestao-de-pessoas/carreiras-e-remuneracao/tabelas-de-vencimento-basico), [IPSEMG](https://www.ipsemg.mg.gov.br/), [Receita Federal](https://www.gov.br/receitafederal/pt-br).

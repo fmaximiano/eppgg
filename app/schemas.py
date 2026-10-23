@@ -49,6 +49,20 @@ class Commission(StrictModel):
     source: str = Field(min_length=1)
 
 
+class FunctionPayment(StrictModel):
+    code: str = Field(min_length=1, max_length=80)
+    amount: Decimal = Field(gt=0)
+    kind: Literal['FGD', 'FGI', 'GTED', 'GTEI']
+    requires_commission_kind: Literal['DAD', 'DAI'] | None = None
+    allow_with_commission: bool = False
+    optional_pension: bool = True
+    tax: bool = True
+    health: bool = True
+    vacation: bool = True
+    thirteenth: bool = True
+    source: str = Field(min_length=1)
+
+
 class HealthRules(StrictModel):
     rate: Decimal = Field(default=Decimal('.032'), ge=0, le=1)
     minimum: Decimal = Field(default=Decimal('60'), ge=0)
@@ -80,11 +94,13 @@ class Parameters(StrictModel):
     sources: dict[str, str]
     positions: list[Position] = Field(min_length=1)
     gdpi_factor: Decimal = Field(ge=0)
+    gdpi_point_share: Decimal = Field(default=Decimal('1'), gt=0, le=1)
     gdpi_reference_salary: Decimal = Field(gt=0)
     gdpi_min_adi: Decimal = Field(default=Decimal('70'), ge=0, le=100)
     gdpi_pension: bool
     gdpi_health: bool
     commissions: list[Commission] = Field(default_factory=list)
+    functions: list[FunctionPayment] = Field(default_factory=list)
     pension_bands: list[PensionBand] = Field(min_length=1)
     rgps_ceiling: Decimal = Field(gt=0)
     health: HealthRules
@@ -127,6 +143,49 @@ class Parameters(StrictModel):
         return self
 
 
+class CareerData(StrictModel):
+    """Tabelas remuneratórias reais, independentes de parâmetros de descontos.
+
+    Não completa campos ausentes com valores demonstrativos.
+    """
+    version: str = Field(min_length=1, max_length=100)
+    valid_from: date
+    valid_until: date
+    effective_competence: str = Field(pattern=r'^\d{4}-(0[1-9]|1[0-2])$')
+    source: str = Field(min_length=1)
+    status: Literal['real'] = 'real'
+    verified_at: date
+    notes: list[str]
+    sources: dict[str, str]
+    positions: list[Position] = Field(min_length=50, max_length=50)
+    gdpi_factor: Decimal = Field(gt=0)
+    gdpi_reference_salary: Decimal = Field(gt=0)
+    gdpi_point_share: Decimal = Field(gt=0, le=1)
+    gdpi_min_adi: Decimal = Field(ge=0, le=100)
+    gdpi_pension: bool = True
+    gdpi_health: bool = True
+    commissions: list[Commission]
+    functions: list[FunctionPayment]
+    career_rules: dict
+    pending: list[str] = Field(min_length=1)
+    evidence: list[dict] = Field(min_length=1)
+
+    @model_validator(mode='after')
+    def complete_matrix(self):
+        expected={(level,grade) for level in ('I','II','III','IV','V') for grade in 'ABCDEFGHIJ'}
+        if {(p.level,p.grade) for p in self.positions} != expected:
+            raise ValueError('A matriz EPPGG real deve conter as 50 posições distintas de I-A a V-J.')
+        reference=next(p.salary for p in self.positions if (p.level,p.grade)==('V','J'))
+        if self.gdpi_reference_salary != reference:
+            raise ValueError('VBref deve corresponder ao vencimento do último grau do último nível.')
+        if self.valid_until < self.valid_from:
+            raise ValueError('Vigência inválida.')
+        codes=[p.code for p in self.commissions]+[p.code for p in self.functions]
+        if len(codes)!=len(set(codes)):
+            raise ValueError('Cargo/função duplicado.')
+        return self
+
+
 class Rubric(StrictModel):
     name: str = Field(min_length=1, max_length=100)
     amount: Decimal = Field(ge=0, le=10000000)
@@ -155,7 +214,7 @@ class Beneficiary(StrictModel):
 class Scenario(StrictModel):
     name: str = Field(default='Minha simulação', min_length=1, max_length=80)
     competence: str = Field(default='2026-10', pattern=r'^\d{4}-(0[1-9]|1[0-2])$')
-    mode: Literal['demo', 'official'] = 'demo'
+    mode: Literal['demo', 'real', 'official'] = 'demo'
     level: str = Field(default='I', max_length=20)
     grade: str = Field(default='A', max_length=20)
     adi: Decimal = Field(default=Decimal('95'), ge=0, le=100)
@@ -166,6 +225,8 @@ class Scenario(StrictModel):
     commission: str | None = None
     remuneration_option: Literal['none', 'a', 'b'] = 'none'
     commission_pension: bool = False
+    function: str | None = None
+    function_pension: bool = False
     capped_pension: bool = False
     complementary_rate: Decimal = Field(default=Decimal('0'), ge=0, le=Decimal('.3'))
     complementary_deductible: bool = False
@@ -187,6 +248,8 @@ class Scenario(StrictModel):
             raise ValueError('Selecione um cargo para a opção remuneratória.')
         if self.commission_pension and self.remuneration_option == 'none':
             raise ValueError('Contribuição facultativa requer opção comissionada.')
+        if self.function_pension and not self.function:
+            raise ValueError('Contribuição facultativa sobre função exige uma função selecionada.')
         if self.complementary_rate and not self.capped_pension:
             raise ValueError('Complementar exige regime limitado ao teto nesta simulação.')
         if not self.health_enrolled and (self.beneficiaries or self.copay or self.special_health):

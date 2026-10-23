@@ -14,3 +14,13 @@ Executada no ambiente de desenvolvimento, em 23/10/2026:
 **Não validados:** deploy real no Railway, conexão ao projeto Neon do usuário, valores oficiais de 2026, conferência com contracheques, casos especiais listados no README e restauração deste ambiente em uma nova tarefa. A integração PostgreSQL local demonstra a compatibilidade do driver/schema com o protocolo usado pelo Neon; não comprova acesso a uma conta Neon específica.
 
 O app está preparado para desenvolvimento e demonstração; a liberação como simulador oficial depende de dados auditados e das rotinas especiais ainda pendentes. Os arquivos Docker/Railway não constituem uma implantação realizada.
+
+## Inclusão dos dados remuneratórios reais de 2026
+
+- Suíte ampliada: **72 testes aprovados**, incluindo as 50 posições reais, valores publicados de cada família de cargo/função, hashes das nove fontes preservadas, quota de 50% da pontuação GDPI, GTE paga integralmente, pré-requisitos e exportações sem líquido fictício.
+- Teste funcional em Chromium nas larguras de 1440 e 390 pixels: abertura em Reais · bruto, seleção de FGD, combinação DAD/GTED, comparação bruta, catálogo completo, cenários salvos/editados, fluxos demonstrativos, carreira, fontes e exportação. Sem erros JavaScript ou overflow horizontal nesses fluxos.
+- Inicialização repetida do banco local preservou o catálogo real e as versões existentes. O novo catálogo fica em tabela própria e não promove as fixtures demonstrativas a parâmetros de folha.
+- Carga reproduzida das cópias oficiais com `scripts/build_career_data.py`, hashes conferidos e validação do contrato `CareerData`.
+- `docker build --check .`, compilação Python e checagem de sintaxe JavaScript aprovados nesta etapa. Não foi executado novo deploy real no Railway nem conexão a uma conta Neon específica.
+
+O modo real apura bruto e projeções brutas, com descontos e líquido nulos. A opção A de comissão real permanece não habilitada até conferir a manutenção das parcelas no enquadramento. Esses limites são visíveis na interface e nos resultados exportados.
