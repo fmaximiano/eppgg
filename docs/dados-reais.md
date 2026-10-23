@@ -37,13 +37,13 @@ I-A com ADI 95 e AI 90: 600 × 0,5 × 0,0007 × 13.538,20 × 0,93 = R$2.644,01; 
 
 FGD/FGI e GTE são pagas integralmente, sem aplicar automaticamente o percentual de 50% dos cargos comissionados. GTED exige DAD; GTEI exige DAI. No PDF da administração direta o código aparece como GTE; o aplicativo usa o prefixo GTED para distingui-lo de GTEI.
 
-A opção B de comissão segue efetivo + 50%, conforme art.27 da LD 174 e art.20 da LD 175. A opção A real permanece bloqueada até conferir as parcelas preservadas no enquadramento concreto. Isso não equivale a negar a existência legal da opção A: o aplicativo ainda não a habilita nesse conjunto. Combinação FGD/FGI com comissão também permanece não habilitada no cadastro; não se presume uma autorização geral de acumulação. Os valores de cargos disponíveis não substituem o ato de nomeação/designação.
+A opção B de comissão segue efetivo + 50%, conforme art.27 da LD 174 e art.20 da LD 175. O catálogo isolado v1 mantém o bloqueio histórico de A; o conjunto completo de folha v2 habilita vencimento comissionado + GDPI elegível, conforme Decreto 46.030/2012, art.11, XI, sem pagamento duplicado do VB. A contribuição facultativa considera só o excedente ao VB substituído. Combinação FGD/FGI com comissão também permanece não habilitada no cadastro; não se presume uma autorização geral de acumulação. Os valores de cargos disponíveis não substituem o ato de nomeação/designação.
 
 ## Descontos e líquido
 
 O catálogo remuneratório permanece imutável em `career_data_sets`. O conjunto completo `data/payroll-2026.json`, em `parameter_sets`, acrescenta as regras fiscais e é selecionado automaticamente pelo modo real. Não lê nem promove `data/demo.json`. Com parâmetros completos vigentes, comparações, evolução, retroativos estimados e exportações usam o líquido. Sem esses parâmetros, o catálogo isolado continua retornando líquido nulo.
 
-Veja [líquido de 2026](liquido-2026.md) para as regras RPPS/IPSEMG/IRRF, reconstrução anual das faixas, evidências e limitações. O horizonte cadastrado vai até dezembro de 2026; não garante ausência de alteração normativa posterior à consulta. A opção A de comissão permanece desabilitada.
+Veja [líquido de 2026](liquido-2026.md) para as regras RPPS/IPSEMG/IRRF, reconstrução anual das faixas, evidências e limitações. O horizonte cadastrado vai até dezembro de 2026; não garante ausência de alteração normativa posterior à consulta. Veja também [comissão, RRA e fontes](folhas-especificas.md).
 
 ## Reprodução da carga
 

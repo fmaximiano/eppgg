@@ -215,6 +215,10 @@ def earnings(s, p):
             reference_pension += money(pos.salary * s.fraction)
         if not keep_gdpi and p.gdpi_pension:
             reference_pension += gdpi
+        if s.remuneration_option=='a' and commission.pension_excess_only_a and (s.commission_pension or commission.mandatory_pension):
+            # A substitui o VB: a opção contributiva acrescenta somente o excedente,
+            # sem somar VB de referência + vencimento integral da comissão.
+            reference_pension -= min(money(pos.salary*s.fraction),money(commission.amount*s.fraction))
     return rows, {'points': pos.points, 'factor': p.gdpi_factor, 'reference_salary': p.gdpi_reference_salary,
                   'point_share':p.gdpi_point_share,'effective_points':pos.points*p.gdpi_point_share,
                   'evaluation': evaluation, 'ceiling': ceiling, 'actual': gdpi if keep_gdpi else ZERO,

@@ -1,6 +1,6 @@
 # Líquido estimado · 2026
 
-O modo **Dados reais** passa a selecionar `eppgg-folha-real-2026-v1`, válido de janeiro a dezembro de 2026. O banco recebe esse conjunto automaticamente na inicialização, inclusive no Neon configurado. A carga é imutável e idempotente; uma versão administrativa previamente importada com vigência sobreposta é preservada. Não é necessário alterar o schema do banco: as regras ficam no JSON versionado de `parameter_sets`.
+O modo **Dados reais** passa a selecionar `eppgg-folha-real-2026-v2`, válido de janeiro a dezembro de 2026. O banco recebe esse conjunto automaticamente na inicialização, inclusive no Neon configurado. A carga é imutável e idempotente; uma versão administrativa previamente importada com vigência sobreposta é preservada. Não é necessário alterar o schema do banco: as regras ficam no JSON versionado de `parameter_sets`.
 
 ## Caso de referência
 
@@ -60,4 +60,4 @@ Férias e 13º têm folhas próprias. O anual soma 11 folhas normais, uma folha 
 
 O JSON exportado contém fontes, hashes, incidências, faixas aplicadas, atualização anual RPPS e ressalvas. `scripts/build_payroll_data.py` reproduz o conjunto a partir das cópias locais; não consulta rede ao iniciar o serviço nem lê fixtures demonstrativas. Mudanças exigem nova versão.
 
-O status `verified` significa conferência dos parâmetros implementados; não representa certificação estatal, auditoria independente ou conciliação com contracheques. A opção A de comissão permanece desabilitada. Múltiplas fontes/vínculos, RRA, aposentados, isenções fora das hipóteses cadastradas, pensão percentual e avos proporcionais exigem rotinas próprias. As entradas de regime, decisões judiciais, opções contributivas e elegibilidade devem corresponder aos atos do vínculo.
+O status `verified` significa conferência dos parâmetros implementados; não representa certificação estatal, auditoria independente ou conciliação com contracheques. A opção A, RRA de anos anteriores e consolidação de vínculos/fontes foram implementados em [rotinas próprias](folhas-especificas.md). Aposentados, isenções fora das hipóteses cadastradas, pensão percentual e avos proporcionais exigem rotinas próprias. As entradas de regime, decisões judiciais, opções contributivas e elegibilidade devem corresponder aos atos do vínculo.

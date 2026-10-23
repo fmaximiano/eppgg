@@ -110,12 +110,12 @@ def test_real_comparison_ranks_actual_net(client):
     r=client.post('/api/commission-options',json={'mode':'real','commission':'DAD-6','remuneration_option':'b','function':'GTED-1'})
     assert r.status_code==200
     r=r.json()
-    assert len(r['results'])==2
-    assert r['best_monthly']==r['best_annual']==1
-    assert r['best_gross']==1
+    assert len(r['results'])==3
+    assert r['best_monthly']==r['best_annual']==2
+    assert r['best_gross']==2
     assert r['results'][0]['scenario']['function'] is None
-    assert r['results'][1]['difference']['gross']=='2252.49'
-    assert D(r['results'][1]['difference']['monthly'])>0
+    assert r['results'][2]['difference']['gross']=='2252.49'
+    assert D(r['results'][2]['difference']['monthly'])>0
 
 
 def test_real_exports_keep_inputs_reusable_and_do_not_export_fake_deductions(client):

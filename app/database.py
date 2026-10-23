@@ -47,11 +47,22 @@ def store_parameters(session, p):
         if Parameters.model_validate(current.payload).model_dump(mode='json') != payload:
             raise ValueError('Versão existente com conteúdo diferente. Use uma nova versão.')
         return
+    for version in p.supersedes:
+        row=session.get(ParameterSet,version)
+        if row is None:
+            raise ValueError('Versão substituída deve existir no histórico.')
+        prior=Parameters.model_validate(row.payload)
+        if prior.status!=p.status or not (p.valid_from<=prior.valid_from and p.valid_until>=prior.valid_until):
+            raise ValueError('Substituição exige mesmo status e cobertura integral da vigência anterior.')
     if p.status != 'demo':
         for row in session.scalars(select(ParameterSet)):
             other = Parameters.model_validate(row.payload)
             if other.status == p.status and p.valid_from <= other.valid_until and other.valid_from <= p.valid_until:
+                if other.version in p.supersedes and p.valid_from<=other.valid_from and p.valid_until>=other.valid_until:
+                    continue
                 raise ValueError('Vigências sobrepostas no mesmo status; divida os intervalos explicitamente.')
+    if p.version in p.supersedes:
+        raise ValueError('Uma versão não pode substituir a si própria.')
     session.add(ParameterSet(version=p.version, payload=payload))
     session.commit()
 
@@ -63,16 +74,20 @@ def initialize(engine, sessions):
         store_parameters(session, p)
         career=CareerData.model_validate_json((Path(__file__).parent.parent / 'data/career-2026.json').read_text())
         store_career_data(session,career)
-        payroll=Parameters.model_validate_json((Path(__file__).parent.parent / 'data/payroll-2026.json').read_text())
-        # Preservar parâmetros completos que o administrador já tenha importado.
-        # A versão incluída no projeto é um padrão inicial, não sobrescreve outras versões.
-        if session.get(ParameterSet,payroll.version):
+        for filename in ('payroll-2026.json','payroll-2026-v2.json'):
+            seed_payroll(session,Path(__file__).parent.parent/'data'/filename)
+
+
+def seed_payroll(session,path):
+    payroll=Parameters.model_validate_json(path.read_text())
+    # Preservar versões administrativas; somente sucessoras explícitas se sobrepõem.
+    if session.get(ParameterSet,payroll.version):
+        store_parameters(session,payroll)
+    else:
+        existing=[Parameters.model_validate(row.payload) for row in session.scalars(select(ParameterSet))]
+        overlap=any(p.status=='verified' and p.version not in payroll.supersedes and payroll.valid_from<=p.valid_until and p.valid_from<=payroll.valid_until for p in existing)
+        if not overlap:
             store_parameters(session,payroll)
-        else:
-            existing=[Parameters.model_validate(row.payload) for row in session.scalars(select(ParameterSet))]
-            overlap=any(p.status=='verified' and payroll.valid_from<=p.valid_until and p.valid_from<=payroll.valid_until for p in existing)
-            if not overlap:
-                store_parameters(session,payroll)
 
 
 def store_career_data(session, p):
@@ -97,6 +112,8 @@ def resolve_parameters(session, competence, mode):
     if mode == 'real':
         payroll=[Parameters.model_validate(row.payload) for row in session.scalars(select(ParameterSet))]
         payroll=[p for p in payroll if p.status=='verified' and p.valid_from<=day<=p.valid_until]
+        replaced={v for p in payroll for v in p.supersedes}
+        payroll=[p for p in payroll if p.version not in replaced]
         if len(payroll)>1:
             raise CalculationError('Mais de uma versão de folha vigente; resolva a sobreposição dos parâmetros.')
         if payroll:
@@ -109,6 +126,8 @@ def resolve_parameters(session, competence, mode):
     valid = [Parameters.model_validate(r.payload) for r in session.scalars(select(ParameterSet))]
     valid = [p for p in valid if p.valid_from <= day <= p.valid_until
              and (p.status == 'demo' if mode == 'demo' else p.status == 'verified')]
+    replaced={v for p in valid for v in p.supersedes}
+    valid=[p for p in valid if p.version not in replaced]
     if not valid:
         raise CalculationError('Nenhuma tabela ' + ('demonstrativa' if mode == 'demo' else 'oficial auditada') + ' cadastrada para esta competência. Consulte Parâmetros e fontes.')
     if len(valid) != 1:

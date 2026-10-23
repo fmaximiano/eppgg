@@ -29,11 +29,12 @@ Para usar Neon, configure `DATABASE_URL` no processo com a connection string do 
 - Cenários locais: salvar, editar, duplicar, importar exportação JSON e comparar até três, com diferenças absolutas/percentuais e indicação do maior líquido mensal/anual.
 - Projeção estática: 11 folhas normais + 1 folha de férias com terço + 13º separado; rubricas e bases próprias. Não equivale à apuração efetiva do ano civil.
 - Evolução simples por seleção de posição e gráfico de diferença acumulada; simulação de atos com **pontos já homologados**, saldos separados, interstício, precedência da promoção, grau com vencimento superior, limites anuais e datas administrativas distintas.
-- Retroativos: diferenças estimadas entre cenários por competência de origem, com tabelas próprias de cada competência. Não representa tributação de RRA no pagamento.
+- Retroativos: diferenças estimadas por competência de origem. Rotina separada de RRA exclusivo para anos anteriores, com meses, contribuição oficial, pensão e despesas judiciais informadas.
+- Vínculos/fontes: consolidação dos cenários salvos, RPPS por cargo, IPSEMG único e IR por fonte pagadora. Outras fontes salariais usam contribuições e valores efetivos do contracheque. Exporte a memória JSON de ambas as rotinas.
 
 ## Limites atuais
 
-Não estão implementados: homologação automática de títulos/eventos de carreira, todas as janelas/condições de protocolo, múltiplos vínculos/fontes, RRA, isenções fora das hipóteses cadastradas, aposentadorias/paridade, conciliação/importação de contracheques, pensão percentual com reflexos automáticos, férias e 13º proporcionais por avos ou benefícios com calendário de dias úteis. Alimentação/transporte podem ser lançados como rubricas com valor total, não são concedidos automaticamente.
+Não estão implementados: homologação automática de títulos/eventos de carreira, todas as janelas/condições de protocolo, isenções fora das hipóteses cadastradas, aposentadorias/paridade, conciliação/importação de contracheques, pensão percentual com reflexos automáticos, férias e 13º proporcionais por avos ou benefícios com calendário de dias úteis. Alimentação/transporte podem ser lançados como rubricas com valor total, não são concedidos automaticamente.
 
 No conjunto de 2026, IPSEMG inclui a regra até dois salários mínimos, adicional desde 59 anos com teto próprio, filhos com isenção aprovada e pais/irmãos com elegibilidade confirmada. Condição especial do titular e enquadramentos não cadastrados continuam bloqueados. Não se presume aprovação administrativa.
 
@@ -46,7 +47,7 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 - [Importar e versionar tabelas](docs/parametros.md).
 - [Implantar no Railway com Neon](docs/deploy.md).
 - `docs/legislacao/`: os 11 PDFs recebidos, preservados; checksums em `data/legal-sources.json`.
-- `data/payroll-2026.json`: parâmetros completos de líquido e memória anual de atualização das faixas RPPS.
+- `data/payroll-2026-v2.json`: folha vigente, com opção A, GDPI preservada, referências RRA e consolidação. `data/payroll-2026.json` permanece como histórico imutável, substituído explicitamente pela v2.
 - `data/career-2026.json`: carga real de 2026, 50 posições e 97 cargos/funções; cópias das fontes em `data/sources/`.
 - `data/historical-reference.json`: 50 posições transcritas do Anexo IV da Lei 18.974/2010 e do Anexo V da Lei 13.085/1998. **Referência histórica isolada, nunca usada automaticamente como tabela de 2026.**
 
@@ -74,4 +75,6 @@ python tests/browser_smoke.py
 
 A interface inicia no modo real; a API mantém `mode: demo` como padrão para compatibilidade com os cenários e integrações anteriores. Envie `mode: real` para calcular o líquido com os parâmetros reais vigentes.
 
-API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo em `/api/calculate`, `/api/compare`, `/api/commission-options`, `/api/career`, `/api/career/act`, `/api/retroactive` e `/api/export/{json|csv}`. Não existe endpoint público para modificar parâmetros. Cenários são enviados para cálculo, mas não gravados no banco pelo servidor; o navegador guarda as entradas em armazenamento local.
+API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo em `/api/rra`, `/api/multiple-employments`, `/api/calculate`, `/api/compare`, `/api/commission-options`, `/api/career`, `/api/career/act`, `/api/retroactive` e `/api/export/{json|csv}`. Não existe endpoint público para modificar parâmetros. Cenários são enviados para cálculo, mas não gravados no banco pelo servidor; o navegador guarda as entradas em armazenamento local.
+
+A opção A usa vencimento comissionado + GDPI elegível, substituindo o VB do efetivo. RPPS conserva a referência do cargo efetivo; contribuição facultativa considera somente o excedente da comissão ao VB substituído. [Regras de comissão, RRA e vínculos](docs/folhas-especificas.md).

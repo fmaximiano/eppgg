@@ -42,11 +42,18 @@ class Commission(StrictModel):
     mandatory_pension: bool = False
     pension_basis_a: Literal['paid', 'effective'] = 'paid'
     pension_basis_b: Literal['paid', 'effective'] = 'paid'
+    pension_excess_only_a: bool = False
     health: bool = True
     tax: bool = True
     vacation: bool = True
     thirteenth: bool = True
     source: str = Field(min_length=1)
+
+    @model_validator(mode='after')
+    def pension_replacement_scope(self):
+        if self.pension_excess_only_a and (self.a_keep_salary or self.pension_basis_a!='effective'):
+            raise ValueError('Contribuição por excedente em A exige substituição do VB e base de referência do efetivo.')
+        return self
 
 
 class FunctionPayment(StrictModel):
@@ -121,6 +128,7 @@ class Parameters(StrictModel):
     evidence: list[dict] = Field(default_factory=list)
     pension_revaluation: list[dict] = Field(default_factory=list)
     pending: list[str] = Field(default_factory=list)
+    supersedes: list[str] = Field(default_factory=list)
 
     @model_validator(mode='after')
     def coherent(self):
@@ -277,6 +285,81 @@ class CompareRequest(StrictModel):
 class RetroRequest(StrictModel):
     entries: list[tuple[Scenario, Scenario]] = Field(min_length=1, max_length=60)
     treatment: Literal['competence_difference'] = 'competence_difference'
+
+
+class RRARequest(StrictModel):
+    payment_competence: str = Field(pattern=r'^\d{4}-(0[1-9]|1[0-2])$')
+    mode: Literal['real', 'official'] = 'real'
+    last_origin_year: int = Field(ge=1900, le=9998)
+    months: Decimal = Field(ge=Decimal('.0001'), le=1200)
+    taxable_income: Decimal = Field(gt=0, le=100000000)
+    exempt_income: Decimal = Field(default=Decimal('0'), ge=0, le=100000000)
+    official_pension: Decimal = Field(default=Decimal('0'), ge=0, le=100000000)
+    alimony: Decimal = Field(default=Decimal('0'), ge=0, le=100000000)
+    legal_expenses: Decimal = Field(default=Decimal('0'), ge=0, le=100000000)
+    other_deductions: Decimal = Field(default=Decimal('0'), ge=0, le=100000000)
+
+    @model_validator(mode='after')
+    def prior_years_only(self):
+        day=date.fromisoformat(self.payment_competence+'-01')
+        if self.last_origin_year>=day.year:
+            raise ValueError('RRA exclusivo exige rendimentos de anos anteriores ao pagamento. Separe valores do ano corrente.')
+        if self.official_pension+self.alimony+self.legal_expenses>self.taxable_income:
+            raise ValueError('Deduções do RRA não podem superar o rendimento tributável informado.')
+        return self
+
+
+class ReportedPayroll(StrictModel):
+    name: str = Field(min_length=1,max_length=80)
+    gross: Decimal = Field(ge=0,le=100000000)
+    taxable_income: Decimal = Field(ge=0,le=100000000)
+    official_pension: Decimal = Field(default=Decimal('0'),ge=0,le=100000000)
+    deductible_complementary: Decimal = Field(default=Decimal('0'),ge=0,le=100000000)
+    alimony: Decimal = Field(default=Decimal('0'),ge=0,le=100000000)
+    alimony_deductible: bool = False
+    other_deductions: Decimal = Field(default=Decimal('0'),ge=0,le=100000000)
+    ipsemg_base: Decimal | None = Field(default=None,ge=0,le=100000000)
+
+    @model_validator(mode='after')
+    def taxable_portion(self):
+        if self.taxable_income>self.gross:
+            raise ValueError('Rendimento tributável informado não pode superar o bruto da fonte.')
+        return self
+
+
+class Employment(StrictModel):
+    payer: str = Field(min_length=1, max_length=100)
+    scenario: Scenario | None = None
+    reported: ReportedPayroll | None = None
+
+    @model_validator(mode='after')
+    def one_kind(self):
+        if (self.scenario is None)==(self.reported is None):
+            raise ValueError('Informe cenário EPPGG ou valores do contracheque, uma única modalidade por vínculo.')
+        return self
+
+
+class MultipleEmploymentsRequest(StrictModel):
+    employments: list[Employment] = Field(min_length=2, max_length=5)
+    lawful_accumulation_confirmed: bool
+
+    @model_validator(mode='after')
+    def same_person_period(self):
+        if not self.lawful_accumulation_confirmed:
+            raise ValueError('Confirme que a acumulação dos vínculos é legalmente permitida.')
+        first=self.employments[0].scenario
+        if first is None:
+            raise ValueError('O primeiro vínculo deve ser um cenário EPPGG de referência.')
+        person_fields=('age','health_enrolled','beneficiaries','special_health','tax_dependents','project_annual')
+        for employment in self.employments:
+            s=employment.scenario
+            if s is None:
+                continue
+            if s.competence!=first.competence or s.mode!=first.mode:
+                raise ValueError('Os vínculos devem ter a mesma competência e modo.')
+            if any(getattr(s,k)!=getattr(first,k) for k in person_fields):
+                raise ValueError('Idade, adesão, família, dependentes fiscais e projeção anual devem ser iguais nos vínculos da mesma pessoa.')
+        return self
 
 
 class CareerRequest(StrictModel):

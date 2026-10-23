@@ -26,6 +26,9 @@ def main():
             assert result.json()['monthly']['net']=='5889.55'
             actual=client.post('/api/calculate',json={'mode':'real','health_enrolled':True})
             assert actual.status_code==200 and actual.json()['monthly']['net']=='4903.07'
+            assert actual.json()['parameters']['version']=='eppgg-folha-real-2026-v2'
+            a=client.post('/api/calculate',json={'mode':'real','commission':'DAD-6','remuneration_option':'a'})
+            assert a.status_code==200 and a.json()['monthly']['gross']=='6648.98'
             p=Parameters.model_validate_json((Path(__file__).parents[1]/'data/demo.json').read_text())
             p.version=version;p.status='verified';p.verified_at=date(2026,10,23)
             p.valid_from=date(2027,1,1);p.valid_until=date(2027,12,31);p.effective_competence='2027-01'
@@ -40,6 +43,11 @@ def main():
             assert actual.status_code==200 and actual.json()['monthly']['net']=='5108.42'
             assert result.json()['parameters']['version']==version
             assert result.json()['monthly']['net']=='5889.55'
+            rra=client.post('/api/rra',json={'payment_competence':'2026-10','last_origin_year':2025,'months':'12','taxable_income':'60000'})
+            assert rra.status_code==200 and rra.json()['income_tax']=='5595.24'
+            with sessions() as session:
+                old=session.get(ParameterSet,'eppgg-folha-real-2026-v1')
+                assert old.payload['commissions'][0]['allow_a'] is False
         with engine.connect() as connection:
             from sqlalchemy import text
             assert connection.execute(text('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).scalar() is True

@@ -41,3 +41,11 @@ Confira o conjunto importado com casos de referência e contracheques anonimizad
 Funções possuem cadastro próprio em `functions`, separado de `commissions`. `Scenario.function` seleciona a rubrica integral e `function_pension` registra opção contributiva quando permitida. `requires_commission_kind` vincula GTED a DAD e GTEI a DAI; funções sem autorização de acumulação no cadastro bloqueiam a combinação com comissão. O percentual de 50% da opção B não incide sobre a função.
 
 O modo `real` prefere um conjunto completo verificado; sem ele, utiliza apenas o catálogo remuneratório e mantém descontos/líquido nulos. A inicialização insere a folha incluída no repositório se não existir outra versão verificada com vigência sobreposta; nunca sobrescreve parâmetros administrativos existentes.
+
+## Sucessão de versões e opção A
+
+`supersedes` declara as versões substituídas integralmente pela nova versão, no mesmo status. Os alvos devem existir no banco, com toda sua vigência coberta. A importação permite apenas essas sobreposições explícitas; versões antigas continuam imutáveis e disponíveis no histórico. O resolvedor seleciona a sucessora vigente em `real` e `official`. A inicialização carrega v1 e v2 nessa ordem, preservando conjuntos administrativos distintos.
+
+Na folha v2, `allow_a: true`, `a_keep_salary: false`, `a_keep_gdpi: true`, `pension_basis_a: effective` e `pension_excess_only_a: true`. O último campo evita contar o VB de referência novamente quando a comissão integral integra a base por opção: com GDPI contributiva, base = VB+GDPI sem opção; com opção, max(VB, comissão)+GDPI. O comportamento das versões antigas e das fixtures não é alterado.
+
+O importador `scripts/build_payroll_v2.py` lê v1 e o PDF fiscal com hash fixo e gera uma sucessora; não altera v1 nem o catálogo. Para gerar v2, use `python scripts/build_payroll_v2.py /caminho/para/manual-rfb-2026.pdf`.

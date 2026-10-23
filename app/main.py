@@ -16,6 +16,8 @@ from .calculator import CalculationError, calculate, money
 from .career import project, simulate_act
 from .database import create_db, initialize, database_health, resolve_parameters, ParameterSet, CareerDataSet
 from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters, CareerData
+from .schemas import RRARequest, MultipleEmploymentsRequest
+from .special_payroll import calculate_rra, consolidate_employments
 
 ROOT = Path(__file__).parent
 
@@ -91,13 +93,12 @@ def create_app(database_url=None):
     @app.get('/api/sources')
     def sources():
         with sessions() as session:
-            versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes','evidence','pension_revaluation','pending')}
+            versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes','evidence','pension_revaluation','pending','supersedes')}
                         for r in [*session.scalars(select(ParameterSet)),*session.scalars(select(CareerDataSet))]]
         return {'versions': versions, 'attachments': json.loads((ROOT.parent / 'data/legal-sources.json').read_text()),
                 'pending': ['Confronto das faixas RPPS reconstruídas com tabela estadual/contracheque',
-                            'Conferência da opção A e manutenção das parcelas de cada cargo',
-                            'Múltiplas fontes/vínculos, RRA e isenções fora dos enquadramentos implementados',
-                            'Confronto com contracheques do vínculo e da competência'],
+                            'Regimes externos ao RPPS estadual, aposentados e isenções não cadastradas',
+                            'Conferência dos atos de acumulação e documentos do pagamento RRA'],
                 'historical_findings': ['Decreto 46.640/2014: F=0,0005 em 2015, 0,0006 em 2016 e 0,0007 desde 2017; não retroagir o fator atual.',
                                         'Decreto 46.956/2016: P remete ao Anexo V da Lei 13.085/1998, respeitado o §6º do art.16.',
                                         'Decreto 47.081/2016: revogou §7º do art.9º do Decreto 46.030/2012; não aplicar a vedação antiga de curso integral.',
@@ -193,6 +194,19 @@ def create_app(database_url=None):
         return encoded({'entries': rows, 'total_net_difference': money(sum((x['net_difference'] for x in rows), Decimal('0'))) if all(x['net_difference'] is not None for x in rows) else None,
                         'total_gross_difference':money(sum((x['gross_difference'] for x in rows),Decimal('0'))),
                         'warning': 'Diferenças estimadas nas competências de origem. Não calcula IR de RRA, juros, atualização ou líquido da folha de pagamento retroativo.'})
+
+    @app.post('/api/rra')
+    def rra(r: RRARequest):
+        with sessions() as session:
+            p=resolve_parameters(session,r.payment_competence,r.mode)
+        return encoded(calculate_rra(r,p))
+
+    @app.post('/api/multiple-employments')
+    def multiple_employments(r: MultipleEmploymentsRequest):
+        s=r.employments[0].scenario
+        with sessions() as session:
+            p=resolve_parameters(session,s.competence,s.mode)
+        return encoded(consolidate_employments(r,p))
 
     @app.post('/api/export/{kind}')
     def export(kind: str, s: Scenario):
