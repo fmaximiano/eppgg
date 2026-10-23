@@ -1,26 +1,15 @@
-# Validação desta implementação
+# Validação da implementação
 
-Executada no ambiente de desenvolvimento, em 23/10/2026:
+Executada no ambiente de desenvolvimento em 23/10/2026, incluindo o cálculo líquido real de 2026:
 
-- Suíte: `.venv/bin/python -m pytest -q` — **61 passed**. Um aviso de depreciação de dependência no TestClient; nenhuma falha.
-- `tests/browser_smoke.py` — passou em Chromium, larguras de 1440 e 390 pixels. Fluxos de cálculo, GDPI abaixo do mínimo, cenários salvos/editados, comparação, evolução simples, fontes, download e bloqueio sem tabelas oficiais. Sem erros JavaScript ou overflow horizontal nesses fluxos.
-- `tests/postgres_smoke.py` — passou em PostgreSQL 17 descartável com TLS: criação de schema, importação idempotente, persistência entre instâncias e cálculo HTTP. Conexão criptografada confirmada em `pg_stat_ssl`. Recursos de teste removidos ao terminar.
-- Imagem Docker original construída com dependências travadas e hashes verificados, usando a CA confiável do proxy no ambiente de desenvolvimento. Após relato de incompatibilidade do construtor do Railway, o mount de segredo usado nessa validação foi removido do Dockerfile de implantação. A imagem original testada e a correção de compatibilidade são verificações distintas; nenhum deploy real no Railway foi validado nesta execução. Nenhuma verificação de certificado ou checksum foi desativada.
-- Imagem executada como usuário não root, usando `PORT=9070`; `/health` e `/api/calculate` responderam corretamente. O teste inicial encontrou permissões restritas nos arquivos copiados; corrigido com leitura explícita para o usuário da imagem e revalidado.
-- `node --check app/static/app.js` e compilação Python passaram.
-- Correção de compatibilidade Railway: `docker build --check .` passou sem avisos após remover o mount de segredo. Essa checagem valida o Dockerfile, mas não executa a instalação de dependências nem substitui o redeploy no Railway.
-- Checksums dos 11 PDFs recebidos conferidos na suíte. Transcrição histórica separada dos parâmetros demonstrativos.
+- `.venv/bin/python -m pytest -q`: **102 testes aprovados**. Cobertura das 50 posições reais, GDPI, faixas RPPS, regime com teto, opção contributiva em cargos/funções, IPSEMG por idade/renda/família, IRRF e redução, dispensa mensal de retenção, férias, 13º, comparações, carreira, retroativos e exportações. Um aviso de depreciação de dependência no TestClient.
+- `python tests/browser_smoke.py`: Chromium em 1440 e 390 pixels. Abertura com líquido real, adesão IPSEMG, inclusão de filho, bloqueio de isenção sem aprovação, função integral, DAD/GTED, comparação pelo líquido, catálogo, demonstração, cenários salvos/editados, carreira, fontes, download e bloqueio de competência sem dados. Sem erros JavaScript nem overflow horizontal nesses fluxos.
+- `tests/postgres_smoke.py`: PostgreSQL 17 descartável com TLS. Criação do schema, carga real automática, cálculo HTTP com e sem IPSEMG, importação idempotente e persistência entre duas instâncias do aplicativo. Criptografia confirmada em `pg_stat_ssl`; contêiner e credenciais descartados após o teste. Não se usou banco de produção.
+- Inicialização SQLite repetida com sucesso. Teste específico garante que a carga padrão não substitui versão administrativa verificada já existente.
+- Cargas reproduzidas das cópias oficiais; hashes das nove fontes remuneratórias e das onze fontes fiscais adicionais conferidos. Importador fiscal fixa os hashes esperados. As referências de reajustes de 2024/2025 estão identificadas, mas suas cópias não foram obtidas; veja [memória do líquido](liquido-2026.md).
+- `docker build --check .`: passou sem avisos. O Dockerfile usa instruções convencionais, sem o mount de segredo incompatível com o builder relatado pelo usuário. Essa checagem não executa a instalação de dependências nem equivale a um deploy.
+- `node --check app/static/app.js`, compilação Python e `git diff --check` aprovados.
 
-**Não validados:** deploy real no Railway, conexão ao projeto Neon do usuário, valores oficiais de 2026, conferência com contracheques, casos especiais listados no README e restauração deste ambiente em uma nova tarefa. A integração PostgreSQL local demonstra a compatibilidade do driver/schema com o protocolo usado pelo Neon; não comprova acesso a uma conta Neon específica.
+O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto R$6.417,25, RPPS R$795,88 e IRRF R$512,95: líquido R$5.108,42 sem IPSEMG ou R$4.903,07 com adesão e titular de 35 anos. As faixas progressivas são arredondadas após a soma; a memória conserva as parcelas sem arredondamento intermediário.
 
-O app está preparado para desenvolvimento e demonstração; a liberação como simulador oficial depende de dados auditados e das rotinas especiais ainda pendentes. Os arquivos Docker/Railway não constituem uma implantação realizada.
-
-## Inclusão dos dados remuneratórios reais de 2026
-
-- Suíte ampliada: **72 testes aprovados**, incluindo as 50 posições reais, valores publicados de cada família de cargo/função, hashes das nove fontes preservadas, quota de 50% da pontuação GDPI, GTE paga integralmente, pré-requisitos e exportações sem líquido fictício.
-- Teste funcional em Chromium nas larguras de 1440 e 390 pixels: abertura em Reais · bruto, seleção de FGD, combinação DAD/GTED, comparação bruta, catálogo completo, cenários salvos/editados, fluxos demonstrativos, carreira, fontes e exportação. Sem erros JavaScript ou overflow horizontal nesses fluxos.
-- Inicialização repetida do banco local preservou o catálogo real e as versões existentes. O novo catálogo fica em tabela própria e não promove as fixtures demonstrativas a parâmetros de folha.
-- Carga reproduzida das cópias oficiais com `scripts/build_career_data.py`, hashes conferidos e validação do contrato `CareerData`.
-- `docker build --check .`, compilação Python e checagem de sintaxe JavaScript aprovados nesta etapa. Não foi executado novo deploy real no Railway nem conexão a uma conta Neon específica.
-
-O modo real apura bruto e projeções brutas, com descontos e líquido nulos. A opção A de comissão real permanece não habilitada até conferir a manutenção das parcelas no enquadramento. Esses limites são visíveis na interface e nos resultados exportados.
+**Limites da validação:** sem novo deploy real no Railway, sem acesso ao projeto Neon do usuário e sem conciliação com contracheques. O PostgreSQL local confirma compatibilidade de driver/schema e persistência, não acesso a uma conta Neon específica. A reconstrução das faixas estaduais e seu arredondamento devem ser confrontados com tabela/folha estadual. A opção A de comissão, RRA, múltiplas fontes e demais exceções descritas no README continuam fora do escopo. Testes verificam regras implementadas; não constituem homologação governamental.

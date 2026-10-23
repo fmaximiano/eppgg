@@ -15,7 +15,7 @@ from sqlalchemy import select
 from .calculator import CalculationError, calculate, money
 from .career import project, simulate_act
 from .database import create_db, initialize, database_health, resolve_parameters, ParameterSet, CareerDataSet
-from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters
+from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters, CareerData
 
 ROOT = Path(__file__).parent
 
@@ -91,14 +91,13 @@ def create_app(database_url=None):
     @app.get('/api/sources')
     def sources():
         with sessions() as session:
-            versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes')}
+            versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes','evidence','pension_revaluation','pending')}
                         for r in [*session.scalars(select(ParameterSet)),*session.scalars(select(CareerDataSet))]]
         return {'versions': versions, 'attachments': json.loads((ROOT.parent / 'data/legal-sources.json').read_text()),
-                'pending': ['Líquido real: limites RPPS e base contributiva do enquadramento',
-                            'Exceções IPSEMG, incidência no 13º e atualização dos pisos/tetos',
-                            'Auditoria de incidências de férias, auxílios e vantagens pessoais',
+                'pending': ['Confronto das faixas RPPS reconstruídas com tabela estadual/contracheque',
                             'Conferência da opção A e manutenção das parcelas de cada cargo',
-                            'Confronto do líquido real com contracheques'],
+                            'Múltiplas fontes/vínculos, RRA e isenções fora dos enquadramentos implementados',
+                            'Confronto com contracheques do vínculo e da competência'],
                 'historical_findings': ['Decreto 46.640/2014: F=0,0005 em 2015, 0,0006 em 2016 e 0,0007 desde 2017; não retroagir o fator atual.',
                                         'Decreto 46.956/2016: P remete ao Anexo V da Lei 13.085/1998, respeitado o §6º do art.16.',
                                         'Decreto 47.081/2016: revogou §7º do art.9º do Decreto 46.030/2012; não aplicar a vedação antiga de curso integral.',
@@ -106,7 +105,22 @@ def create_app(database_url=None):
 
     @app.get('/api/career-data')
     def career_data(competence: str = '2026-10'):
-        return parameters(competence,'real')
+        try:
+            s=Scenario(competence=competence,mode='real')
+        except ValueError:
+            raise HTTPException(422,'Competência inválida.')
+        from datetime import date
+        day=date.fromisoformat(s.competence+'-01')
+        with sessions() as session:
+            catalogs=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
+            catalogs=[p for p in catalogs if p.valid_from<=day<=p.valid_until]
+            if len(catalogs)!=1:
+                raise CalculationError('Nenhum catálogo remuneratório real único para a competência.')
+            result=catalogs[0].model_dump()
+            payroll=resolve_parameters(session,s.competence,'real')
+            result['payroll_available']=isinstance(payroll,Parameters)
+            result['payroll_version']=payroll.version if result['payroll_available'] else None
+            return encoded(result)
 
     @app.get('/api/historical-reference')
     def historical_reference():

@@ -21,7 +21,7 @@ def test_home_health_and_functional_request(client):
 
 
 def test_invalid_api_requests_and_missing_parameters(client):
-    for payload in [{'adi':101},{'mode':'official'},{'competence':'2027-01'},{'level':'VI'},{'competence':'2026-13'},{'unknown':'field'}]:
+    for payload in [{'adi':101},{'mode':'official','competence':'2027-01'},{'competence':'2027-01'},{'level':'VI'},{'competence':'2026-13'},{'unknown':'field'}]:
         assert client.post('/api/calculate',json=payload).status_code==422
     assert client.get('/api/parameters?competence=garbage').status_code==422
     assert client.get('/api/parameters?mode=invalid').status_code==422
@@ -60,10 +60,11 @@ def test_version_immutable_import_and_official_resolution(client,parameters):
     p.version='audit-test'
     p.status='verified'
     p.verified_at=date(2026,10,23)
+    p.valid_from=date(2027,1,1);p.valid_until=date(2027,12,31);p.effective_competence='2027-01'
     with sessions() as s:
         store_parameters(s,p)
         store_parameters(s,p)
-        assert resolve_parameters(s,'2026-10','official').version=='audit-test'
+        assert resolve_parameters(s,'2027-10','official').version=='audit-test'
         modified=p.model_copy(deep=True)
         modified.positions[0].salary=D('123')
         with pytest.raises(ValueError,match='diferente'):store_parameters(s,modified)

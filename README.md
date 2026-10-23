@@ -2,7 +2,7 @@
 
 Aplicação web em **Python 3.12 + FastAPI**, com interface em português e persistência de parâmetros em **PostgreSQL/Neon**. Implantação por Docker no **Railway**. Não exige cadastro para simular, exportar ou guardar até três cenários no navegador.
 
-**Estado: remuneração real de 2026 disponível; líquido real ainda não liberado.** O aplicativo abre em **Reais · bruto**, com 50 posições, 52 cargos e 45 funções/gratificações transcritos da SEPLAG e legislação consolidada. O modo real não mistura esses valores com descontos fictícios: apresenta bruto e projeções brutas, com líquido “A conferir”. [Fontes, regras e limites da carga](docs/dados-reais.md). O modo **Demonstrativos** conserva `data/demo.json`, explicitamente fictício; **Folha auditada** exige parâmetros completos de descontos conferidos. Não é uma calculadora oficial de folha.
+**Líquido estimado de 2026 disponível no modo Dados reais.** A remuneração contempla 50 posições, 52 cargos e 45 funções/gratificações. A folha aplica RPPS progressivo, IPSEMG conforme adesão e família, IRRF com redução de 2026 e descontos informados. O conjunto completo é carregado automaticamente no banco, separado das fixtures demonstrativas. [Regras, memória dos reajustes e limites do líquido](docs/liquido-2026.md). Não é uma calculadora oficial de folha.
 
 ## Rodar localmente
 
@@ -13,7 +13,7 @@ python3 -m venv .venv
 .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Sem `DATABASE_URL`, usa SQLite (`eppgg.db`, ignorado pelo Git). Não precisa de credenciais para desenvolver. O servidor inicializa as tabelas e insere, de maneira idempotente, o conjunto demonstrativo e o catálogo remuneratório real de 2026. A carga real também ocorre automaticamente em um deploy com Neon; não requer importação manual após o deploy.
+Sem `DATABASE_URL`, usa SQLite (`eppgg.db`, ignorado pelo Git). Não precisa de credenciais para desenvolver. O servidor inicializa as tabelas e insere, de maneira idempotente, o conjunto demonstrativo, o catálogo remuneratório e a folha real de 2026. A carga real também ocorre automaticamente em um deploy com Neon; não requer importação manual após o deploy.
 
 Para usar Neon, configure `DATABASE_URL` no processo com a connection string do banco e `sslmode=require` (ou `verify-full` com a cadeia confiável). Não imprima nem versione a URL. `.env.example` é apenas um modelo; para carregar um `.env` local ignorado, use `uvicorn ... --env-file .env`. A conexão usa psycopg 3; URLs `postgresql://` são convertidas para o driver correto. Valores de `sslmode` que desativam TLS são rejeitados.
 
@@ -21,9 +21,8 @@ Para usar Neon, configure `DATABASE_URL` no processo com a connection string do 
 
 - Núcleo mensal: matriz explícita de nível/grau, GDPI por avaliações, quota legal explícita da pontuação (50% no conjunto real de 2026), limiar individual de 70%, ausência de AI, hipótese legal de notas de 70% e proporcionalidade.
 - Comissões: alternativas A/B habilitadas por cargo, retenção de vencimento/GDPI e contribuição facultativa independente. Não presume que DAD, DAI e funções tenham o mesmo enquadramento.
-- Os descontos descritos abaixo estão disponíveis no modo demonstrativo ou em conjuntos completos de folha; no modo real atual somente o bruto é apurado.
 - RPPS por faixas progressivas, regime com teto do RGPS e simulação de contribuição complementar sobre o excedente.
-- IPSEMG comum: adesão, titular, cônjuge, filhos, pisos, tetos, adicional etário e teto conjunto com filhos menores. Dependentes do IR separados dos beneficiários de saúde.
+- IPSEMG: adesão, titular, cônjuge, filhos, pisos, tetos, adicional etário e teto conjunto com filhos menores. Dependentes do IR separados dos beneficiários de saúde.
 - IRRF: deduções legais versus simplificado, dependentes, pensão elegível, complementar elegível e redução de 2026 pela renda tributável anterior às deduções. IPSEMG não deduzido como previdência.
 - Rubricas configuráveis com fonte, natureza, proporcionalidade e incidências separadas em IR/RPPS/IPSEMG/férias/13º. Consignações após as bases.
 - Memória auditável em JSON e demonstrativo em CSV, sem fórmulas executáveis em células fornecidas pelo usuário.
@@ -34,9 +33,9 @@ Para usar Neon, configure `DATABASE_URL` no processo com a connection string do 
 
 ## Limites atuais
 
-Não estão implementados: homologação automática de títulos/eventos de carreira, todas as janelas/condições de protocolo, múltiplos vínculos/fontes, RRA, isenções especiais, aposentadorias/paridade, conciliação/importação de contracheques, pensão percentual com reflexos automáticos, férias e 13º proporcionais por avos ou benefícios com calendário de dias úteis. Alimentação/transporte podem ser lançados como rubricas com valor total, não são concedidos automaticamente.
+Não estão implementados: homologação automática de títulos/eventos de carreira, todas as janelas/condições de protocolo, múltiplos vínculos/fontes, RRA, isenções fora das hipóteses cadastradas, aposentadorias/paridade, conciliação/importação de contracheques, pensão percentual com reflexos automáticos, férias e 13º proporcionais por avos ou benefícios com calendário de dias úteis. Alimentação/transporte podem ser lançados como rubricas com valor total, não são concedidos automaticamente.
 
-IPSEMG bloqueia condições especiais, pais/irmãos sem regra de elegibilidade, filhos acima de 38 anos e faixa de até dois salários mínimos sem regra cadastrada. A incidência no 13º precisa estar explicitamente cadastrada. Não substitua bloqueios por regras aproximadas.
+No conjunto de 2026, IPSEMG inclui a regra até dois salários mínimos, adicional desde 59 anos com teto próprio, filhos com isenção aprovada e pais/irmãos com elegibilidade confirmada. Condição especial do titular e enquadramentos não cadastrados continuam bloqueados. Não se presume aprovação administrativa.
 
 As notas de GDPI devem corresponder ao período legal de avaliação. O app não decide automaticamente o enquadramento funcional em afastamentos. A projeção anual pressupõe remuneração estável e direito integral às folhas; não prevê reajustes ou atos futuros. O gráfico representa valores constantes.
 
@@ -47,6 +46,7 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 - [Importar e versionar tabelas](docs/parametros.md).
 - [Implantar no Railway com Neon](docs/deploy.md).
 - `docs/legislacao/`: os 11 PDFs recebidos, preservados; checksums em `data/legal-sources.json`.
+- `data/payroll-2026.json`: parâmetros completos de líquido e memória anual de atualização das faixas RPPS.
 - `data/career-2026.json`: carga real de 2026, 50 posições e 97 cargos/funções; cópias das fontes em `data/sources/`.
 - `data/historical-reference.json`: 50 posições transcritas do Anexo IV da Lei 18.974/2010 e do Anexo V da Lei 13.085/1998. **Referência histórica isolada, nunca usada automaticamente como tabela de 2026.**
 
@@ -72,6 +72,6 @@ python tests/browser_smoke.py
 
 `tests/postgres_smoke.py` insere uma versão sintética de teste, verifica persistência entre instâncias e conexão TLS e remove essa versão ao terminar. Não audita regras legais reais.
 
-A interface inicia no modo real; a API mantém `mode: demo` como padrão para compatibilidade com os cenários e integrações anteriores. Envie `mode: real` para usar o catálogo remuneratório real.
+A interface inicia no modo real; a API mantém `mode: demo` como padrão para compatibilidade com os cenários e integrações anteriores. Envie `mode: real` para calcular o líquido com os parâmetros reais vigentes.
 
 API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo em `/api/calculate`, `/api/compare`, `/api/commission-options`, `/api/career`, `/api/career/act`, `/api/retroactive` e `/api/export/{json|csv}`. Não existe endpoint público para modificar parâmetros. Cenários são enviados para cálculo, mas não gravados no banco pelo servidor; o navegador guarda as entradas em armazenamento local.

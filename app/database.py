@@ -63,6 +63,16 @@ def initialize(engine, sessions):
         store_parameters(session, p)
         career=CareerData.model_validate_json((Path(__file__).parent.parent / 'data/career-2026.json').read_text())
         store_career_data(session,career)
+        payroll=Parameters.model_validate_json((Path(__file__).parent.parent / 'data/payroll-2026.json').read_text())
+        # Preservar parâmetros completos que o administrador já tenha importado.
+        # A versão incluída no projeto é um padrão inicial, não sobrescreve outras versões.
+        if session.get(ParameterSet,payroll.version):
+            store_parameters(session,payroll)
+        else:
+            existing=[Parameters.model_validate(row.payload) for row in session.scalars(select(ParameterSet))]
+            overlap=any(p.status=='verified' and payroll.valid_from<=p.valid_until and p.valid_from<=payroll.valid_until for p in existing)
+            if not overlap:
+                store_parameters(session,payroll)
 
 
 def store_career_data(session, p):
@@ -85,6 +95,12 @@ def resolve_parameters(session, competence, mode):
     from .calculator import CalculationError
     day = date.fromisoformat(competence + '-01')
     if mode == 'real':
+        payroll=[Parameters.model_validate(row.payload) for row in session.scalars(select(ParameterSet))]
+        payroll=[p for p in payroll if p.status=='verified' and p.valid_from<=day<=p.valid_until]
+        if len(payroll)>1:
+            raise CalculationError('Mais de uma versão de folha vigente; resolva a sobreposição dos parâmetros.')
+        if payroll:
+            return payroll[0]
         valid=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
         valid=[p for p in valid if p.valid_from <= day <= p.valid_until]
         if len(valid)!=1:

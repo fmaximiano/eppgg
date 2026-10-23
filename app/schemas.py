@@ -72,8 +72,9 @@ class HealthRules(StrictModel):
     age_surcharge: Decimal = Field(default=Decimal('.01'), ge=0, le=1)
     surcharge_age: int = Field(default=60, ge=0, le=120)
     minimum_wage: Decimal = Field(gt=0)
-    low_income_rule: Literal['unresolved', 'standard'] = 'unresolved'
+    low_income_rule: Literal['unresolved', 'standard', 'statutory'] = 'unresolved'
     thirteenth_incidence: bool | None = None
+    legal_exceptions: bool = False
 
     @model_validator(mode='after')
     def check_limits(self):
@@ -113,9 +114,13 @@ class Parameters(StrictModel):
     reduction_until: Decimal = Field(gt=0)
     reduction_intercept: Decimal = Field(ge=0)
     reduction_slope: Decimal = Field(ge=0)
+    tax_withholding_minimum: Decimal = Field(default=Decimal('0'), ge=0)
     vacation_extra_pension: bool
     vacation_extra_health: bool
     career_rules: dict = Field(default_factory=dict)
+    evidence: list[dict] = Field(default_factory=list)
+    pension_revaluation: list[dict] = Field(default_factory=list)
+    pending: list[str] = Field(default_factory=list)
 
     @model_validator(mode='after')
     def coherent(self):
@@ -209,6 +214,14 @@ class Beneficiary(StrictModel):
     relationship: Literal['spouse', 'child', 'parent', 'sibling']
     age: int = Field(ge=0, le=120)
     special_condition: bool = False
+    exemption_approved: bool = False
+    eligibility_confirmed: bool = False
+
+    @model_validator(mode='after')
+    def exemption_scope(self):
+        if self.exemption_approved and (self.relationship != 'child' or not self.special_condition):
+            raise ValueError('Isenção especial exige filho/equiparado com condição especial e aprovação do IPSEMG.')
+        return self
 
 
 class Scenario(StrictModel):

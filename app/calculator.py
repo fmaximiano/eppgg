@@ -28,7 +28,7 @@ def progressive(base, bands):
     return money(total), memory
 
 
-def income_tax(income, legal_deductions, dependents, p):
+def income_tax(income, legal_deductions, dependents, p, *, exclusive=False):
     legal = legal_deductions + dependents * p.tax_dependent
     deduction = max(legal, p.tax_simplified)
     base = max(ZERO, income - deduction)
@@ -40,11 +40,16 @@ def income_tax(income, legal_deductions, dependents, p):
             reduction = min(before, p.reduction_full_max)
         elif income <= p.reduction_until:
             reduction = min(before, money(max(ZERO, p.reduction_intercept - p.reduction_slope * income)))
+    calculated=money(before-reduction)
+    waived=not exclusive and ZERO<calculated<=p.tax_withholding_minimum
+    amount=ZERO if waived else calculated
     return {'income': money(income), 'legal_deductions': money(legal),
             'simplified_deduction': p.tax_simplified, 'deduction': money(deduction),
             'method': 'legal' if legal >= p.tax_simplified else 'simplified',
             'base': money(base), 'rate': band.rate, 'bracket_deduction': band.deduction,
-            'before_reduction': before, 'reduction': reduction, 'amount': money(before - reduction)}
+            'before_reduction': before, 'reduction': reduction,'calculated_amount':calculated,
+            'waiver_applied':waived,'waiver_amount':calculated-amount,
+            'minimum_withholding':p.tax_withholding_minimum,'exclusive':exclusive,'amount':money(amount)}
 
 
 def health(base, s, p, payroll='monthly'):
@@ -56,6 +61,8 @@ def health(base, s, p, payroll='monthly'):
             raise CalculationError('Incidência IPSEMG no 13º ainda não cadastrada. Desative projeção anual ou cadastre a regra.')
         if not h.thirteenth_incidence:
             return ZERO, []
+    if h.legal_exceptions:
+        return statutory_health(base,s,h)
     if s.special_health or any(b.special_condition for b in s.beneficiaries):
         raise CalculationError('IPSEMG: invalidez, deficiência e doenças raras exigem regra específica ainda não implementada.')
     if base <= 2 * h.minimum_wage and h.low_income_rule == 'unresolved':
@@ -83,6 +90,66 @@ def health(base, s, p, payroll='monthly'):
     return money(sum((r['amount'] for r in rows), ZERO)), rows
 
 
+def statutory_health(base, s, h):
+    """Lei 25.143/2025, arts.4º e 6º; Decreto 48.981/2025, arts.4º–5º."""
+    if s.special_health:
+        raise CalculationError('Condição especial do titular exige análise própria; a isenção automática prevista aqui é para filho com isenção aprovada pelo IPSEMG.')
+    beneficiaries=s.beneficiaries
+    relationships={b.relationship for b in beneficiaries}
+    if sum(b.relationship=='spouse' for b in beneficiaries)>1:
+        raise CalculationError('IPSEMG: apenas um cônjuge/companheiro pode ser informado.')
+    if sum(b.relationship=='parent' for b in beneficiaries)>2:
+        raise CalculationError('IPSEMG: podem ser informados no máximo dois pais.')
+    if 'parent' in relationships and relationships & {'spouse','child','sibling'}:
+        raise CalculationError('IPSEMG: pais não podem ser acumulados com cônjuge, filhos ou irmãos neste enquadramento.')
+    if 'sibling' in relationships and relationships & {'spouse','child','parent'}:
+        raise CalculationError('IPSEMG: irmãos não podem ser acumulados com cônjuge, filhos ou pais.')
+    for b in beneficiaries:
+        if b.relationship in ('parent','sibling') and not b.eligibility_confirmed:
+            raise CalculationError('IPSEMG: confirme elegibilidade e dependência econômica para pais/irmãos.')
+        if b.relationship in ('child','sibling') and b.age>=39 and not b.special_condition:
+            raise CalculationError('IPSEMG: filho/irmão a partir de 39 anos exige enquadramento especial comprovado.')
+        if b.relationship=='child' and b.special_condition and not b.exemption_approved:
+            raise CalculationError('IPSEMG: a isenção do filho com condição especial deve estar aprovada pelo Instituto.')
+
+    low_income=base <= 2*h.minimum_wage and h.low_income_rule=='statutory'
+    if low_income:
+        # Sem piso e sem adicional etário; filhos <21 isentos e 21–38 com teto próprio.
+        rows=[{'name':'Titular · até dois salários mínimos','amount':money(base*h.rate)}]
+        for b in beneficiaries:
+            if b.relationship=='child':
+                amount=ZERO if b.exemption_approved or b.age<21 else money(min(base*h.rate,h.child_21_to38))
+            else:
+                amount=money(base*h.rate)
+            rows.append({'name':beneficiary_label(b)+' · regra de baixa renda','amount':amount})
+        return money(sum((r['amount'] for r in rows),ZERO)),rows
+
+    def percentage(age):
+        regular=money(min(h.maximum,max(h.minimum,base*h.rate)))
+        additional=money(min(h.maximum,base*h.age_surcharge)) if age>=h.surcharge_age else ZERO
+        return regular,additional
+
+    children=sum(b.relationship=='child' and b.age<21 and not b.exemption_approved for b in beneficiaries)
+    titular,additional=percentage(s.age)
+    combined=money(min(h.maximum,titular+children*h.child_under21)+additional)
+    rows=[{'name':'Titular + filhos menores de 21 (teto conjunto)','amount':combined,
+           'titular':titular,'age_additional':additional,'children':children,'maximum':h.maximum}]
+    for b in beneficiaries:
+        if b.relationship=='child':
+            if b.exemption_approved:
+                rows.append({'name':'Filho/equiparado · isenção aprovada IPSEMG','amount':ZERO})
+            elif b.age>=21:
+                rows.append({'name':'Filho de 21 a 38 anos','amount':h.child_21_to38})
+        else:
+            regular,additional=percentage(b.age)
+            rows.append({'name':beneficiary_label(b),'amount':regular+additional,'regular':regular,'age_additional':additional})
+    return money(sum((r['amount'] for r in rows),ZERO)),rows
+
+
+def beneficiary_label(b):
+    return {'child':'Filho/equiparado','spouse':'Cônjuge/companheiro','parent':'Pai/mãe','sibling':'Irmão/irmã'}[b.relationship]
+
+
 def earning(name, amount, source, *, tax=True, pension=True, health=True, vacation=True, thirteenth=True):
     return {'name': name, 'amount': money(amount), 'source': source, 'tax': tax, 'pension': pension,
             'health': health, 'vacation': vacation, 'thirteenth': thirteenth}
@@ -107,7 +174,7 @@ def earnings(s, p):
             raise CalculationError('Cargo comissionado não cadastrado para a competência.')
         option = s.remuneration_option
         if not getattr(commission, 'allow_' + option):
-            if isinstance(p,CareerData) and option=='a':
+            if s.mode=='real' and option=='a':
                 raise CalculationError('Opção A real ainda não habilitada: confira a manutenção das parcelas no enquadramento concreto.')
             raise CalculationError('Opção remuneratória não permitida para este cargo.')
         keep_salary = getattr(commission, option + '_keep_salary')
@@ -173,7 +240,7 @@ def payroll(rows, s, p, kind='monthly', reference_pension=ZERO):
     ipsemg, health_rows = health(bases['health'], s, p, kind)
     alimony = s.alimony
     legal = pension + (complement if s.complementary_deductible else ZERO) + (alimony if s.alimony_deductible else ZERO)
-    tax = income_tax(bases['tax'], legal, s.tax_dependents, p)
+    tax = income_tax(bases['tax'], legal, s.tax_dependents, p,exclusive=kind=='thirteenth')
     # Consignações e coparticipação são informadas como mensais; não duplicar no 13º.
     other = s.other_deductions + sum((money(r.amount * (s.fraction if r.proportional else 1)) for r in s.rubrics if r.nature == 'deduction'), ZERO) if kind != 'thirteenth' else ZERO
     copay = s.copay if kind != 'thirteenth' else ZERO
@@ -217,7 +284,8 @@ def calculate(s: Scenario, p: Parameters | CareerData):
         'version': p.version, 'status': p.status, 'valid_from': p.valid_from, 'valid_until': p.valid_until,
         'effective_competence': p.effective_competence, 'verified_at': p.verified_at,
         'source': p.source, 'sources': p.sources}, 'rounding': 'Decimal, ROUND_HALF_UP, centavos por rubrica e por tributo; RPPS arredondado após soma das faixas.',
-        'monthly': monthly, 'gdpi': gdpi, 'annual': annual, 'warnings': warnings}
+        'monthly': monthly, 'gdpi': gdpi, 'annual': annual, 'warnings': warnings,
+        'pending':p.pending,'evidence':p.evidence,'pension_revaluation':p.pension_revaluation}
 
 
 def calculate_compensation(s,p,rows,gdpi):

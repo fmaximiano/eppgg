@@ -1,6 +1,6 @@
 # Dados reais da carreira · carga 2026
 
-O aplicativo abre em **Reais · bruto**, usando valores transcritos de fontes oficiais consultadas em **23/10/2026**. A implantação carrega `data/career-2026.json` automaticamente, inclusive no Neon configurado por `DATABASE_URL`; não depende de uma importação manual posterior.
+O aplicativo abre em **Dados reais**, usando valores transcritos de fontes oficiais consultadas em **23/10/2026**. A implantação carrega `data/career-2026.json` automaticamente, inclusive no Neon configurado por `DATABASE_URL`; não depende de uma importação manual posterior.
 
 ## O que foi inserido
 
@@ -19,7 +19,7 @@ São **52 cargos e 45 funções/gratificações**. Os valores foram lidos indivi
 
 Exemplos da carga: I-A R$3.773,24; I-B R$4.404,05; V-J R$13.538,20; DAD-6 R$4.004,97; DAD-12 e DAI-40 R$10.922,63; FGD-15 e FGI-14 R$3.197,81. Os valores de GTE são os publicados na tabela consultada, sem reajuste adicional presumido.
 
-As cópias de quatro PDFs e cinco páginas legais estão em `data/sources/`. Cada evidência possui URL, data de conferência e SHA-256 no JSON. A página **Parâmetros e fontes** permite consultar todas as posições e todos os níveis, além de abrir os documentos oficiais. `/api/career-data` e `/api/parameters?mode=real&competence=2026-10` expõem o catálogo.
+As cópias de quatro PDFs e cinco páginas legais estão em `data/sources/`. Cada evidência possui URL, data de conferência e SHA-256 no JSON. A página **Parâmetros e fontes** permite consultar todas as posições e todos os níveis, além de abrir os documentos oficiais. `/api/career-data` expõe o catálogo. `/api/parameters?mode=real&competence=2026-10` expõe o conjunto completo de folha vigente.
 
 ## Correção da GDPI
 
@@ -41,11 +41,9 @@ A opção B de comissão segue efetivo + 50%, conforme art.27 da LD 174 e art.20
 
 ## Descontos e líquido
 
-O conjunto remuneratório real é armazenado em `career_data_sets`, separado dos parâmetros completos de folha (`parameter_sets`). Não copia faixas RPPS fictícias, teto RGPS fictício ou incidências da demonstração. Enquanto faltarem os parâmetros completos do enquadramento, o modo real retorna `net: null` e `deductions: null` e apresenta **A conferir**, em vez de um líquido fabricado. O comparador mostra diferenças brutas e não elege uma opção pelo líquido desconhecido.
+O catálogo remuneratório permanece imutável em `career_data_sets`. O conjunto completo `data/payroll-2026.json`, em `parameter_sets`, acrescenta as regras fiscais e é selecionado automaticamente pelo modo real. Não lê nem promove `data/demo.json`. Com parâmetros completos vigentes, comparações, evolução, retroativos estimados e exportações usam o líquido. Sem esses parâmetros, o catálogo isolado continua retornando líquido nulo.
 
-As projeções e as diferenças retroativas desse modo são **brutas**. O horizonte disponibilizado vai até dezembro de 2026; não significa garantia de que nenhuma norma será alterada após a data da consulta. O modo **Folha auditada** continua exigindo um conjunto completo de parâmetros verificados; **Demonstrativos** mantém as fixtures fictícias anteriores.
-
-Foi possível conferir também os textos atuais de RPPS, IPSEMG e a tabela de IR de 2026, mas isso não confirma os limites monetários estaduais atualizados nem todas as incidências do vínculo. O Portal do Servidor, fonte adicional para essa conferência, respondeu 403 no proxy deste ambiente. A liquidação real continua pendente dessa etapa e de confronto com folhas.
+Veja [líquido de 2026](liquido-2026.md) para as regras RPPS/IPSEMG/IRRF, reconstrução anual das faixas, evidências e limitações. O horizonte cadastrado vai até dezembro de 2026; não garante ausência de alteração normativa posterior à consulta. A opção A de comissão permanece desabilitada.
 
 ## Reprodução da carga
 

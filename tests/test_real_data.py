@@ -90,12 +90,12 @@ def test_real_commission_and_functions_not_subject_to_same_percentage(real_data)
     with pytest.raises(CalculationError):calculate(Scenario(mode='real',function='GTED-1'),real_data)
 
 
-def test_real_data_loaded_idempotently_and_not_promoted_to_payroll(client,real_data):
+def test_real_payroll_loaded_idempotently_separate_from_catalog(client,real_data):
     result=client.post('/api/calculate',json={'mode':'real'})
     assert result.status_code==200
     assert result.json()['monthly']['gross']=='6417.25'
-    assert result.json()['monthly']['net'] is None
-    assert client.post('/api/calculate',json={'mode':'official'}).status_code==422
+    assert result.json()['monthly']['net']=='5108.42'
+    assert client.post('/api/calculate',json={'mode':'official'}).status_code==200
     assert client.post('/api/calculate',json={'mode':'real','competence':'2025-12'}).status_code==422
     with client.app.state.sessions() as session:
         store_career_data(session,real_data)
@@ -106,16 +106,16 @@ def test_real_data_loaded_idempotently_and_not_promoted_to_payroll(client,real_d
         with pytest.raises(ValueError,match='conteúdo diferente'):store_career_data(session,changed)
 
 
-def test_real_comparison_does_not_rank_unknown_net(client):
+def test_real_comparison_ranks_actual_net(client):
     r=client.post('/api/commission-options',json={'mode':'real','commission':'DAD-6','remuneration_option':'b','function':'GTED-1'})
     assert r.status_code==200
     r=r.json()
     assert len(r['results'])==2
-    assert r['best_monthly'] is None and r['best_annual'] is None
+    assert r['best_monthly']==r['best_annual']==1
     assert r['best_gross']==1
     assert r['results'][0]['scenario']['function'] is None
     assert r['results'][1]['difference']['gross']=='2252.49'
-    assert all(x['difference']['monthly'] is None for x in r['results'])
+    assert D(r['results'][1]['difference']['monthly'])>0
 
 
 def test_real_exports_keep_inputs_reusable_and_do_not_export_fake_deductions(client):
@@ -126,8 +126,9 @@ def test_real_exports_keep_inputs_reusable_and_do_not_export_fake_deductions(cli
     csv=client.post('/api/export/csv',json=payload)
     assert csv.status_code==200
     assert '6417.25' not in csv.text
-    assert '9615.06' in csv.text
-    assert 'não apurados' in csv.text
+    assert '7302.64' in csv.text
+    assert ';RPPS;' in csv.text and ';IRRF;' in csv.text
+    assert 'não apurados' not in csv.text
 
 
 def test_real_catalog_career_and_retroactive(client):
@@ -139,13 +140,13 @@ def test_real_catalog_career_and_retroactive(client):
     r=client.post('/api/career',json={'scenario':{'mode':'real'},'future_level':'I','future_grade':'B','years':5})
     assert r.status_code==200
     r=r.json()
-    assert r['monthly_difference'] is None
+    assert r['monthly_difference']=='887.61'
     assert D(r['gross_monthly_difference'])>0
-    assert r['series'][-1]['accumulated_difference'] is None
+    assert D(r['series'][-1]['accumulated_difference'])==5*D(r['annual_difference'])
     assert D(r['series'][-1]['accumulated_gross_difference'])==5*D(r['gross_annual_difference'])
     r=client.post('/api/retroactive',json={'entries':[[{'mode':'real'},{'mode':'real','grade':'B'}]]})
     assert r.status_code==200
-    assert r.json()['total_net_difference'] is None
+    assert r.json()['total_net_difference']=='887.61'
     assert D(r.json()['total_gross_difference'])>0
 
 
