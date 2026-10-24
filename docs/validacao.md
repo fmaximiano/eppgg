@@ -23,3 +23,10 @@ O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto 
 - Catálogo com 51 referências entre legislação, jurisprudência, orientações e tabelas oficiais, organizado em oito assuntos. O navegador verifica ausência de metadados de desenvolvimento e referências à conversa nas telas de resultados e fontes.
 - Links federais e estaduais apontam aos portais oficiais. Alguns portais retornaram 403/503 neste ambiente; isso não constitui validação de disponibilidade permanente dos destinos. A Instrução Normativa SEPLAG remete à conferência pública do SEI/MG, com dados de autenticação do documento. As portarias de 2024/2025 remetem à consulta identificada no Diário Oficial da União.
 - Sem mudança nas fórmulas, parâmetros imutáveis ou schema do banco nesta revisão.
+
+## Organização dos cargos e funções
+
+- DAD/GTED e DAI/GTEI em grupos próprios, com FGD/FGI separados. O catálogo de remuneração segue a mesma ordem.
+- Chromium em 1440 e 390 pixels: seleção de DAD e DAI, habilitação da gratificação correspondente, bloqueio e limpeza de FGD/FGI, troca entre as famílias, reabilitação ao retirar o cargo, limpeza do formulário e recuperação de cenários salvos. Sem erros JavaScript ou overflow horizontal nos fluxos verificados.
+- A seleção fica desabilitada durante o carregamento para evitar perda de escolhas ao limpar o formulário. Contribuições facultativas são limpas quando a parcela correspondente deixa de estar selecionada.
+- Suíte de cálculo e APIs: **134 testes aprovados**. Checagem JavaScript e `git diff --check` aprovadas. Nenhuma alteração nas fórmulas ou nos parâmetros legais.

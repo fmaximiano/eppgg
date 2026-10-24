@@ -45,6 +45,8 @@ function updateGrades(levelId,gradeId) { const level=$(levelId), grade=$(gradeId
 async function loadParameters() {
   const request=++generation;
   params=null; lastResult=null;
+  $$('[data-family]').forEach(select=>select.disabled=true);
+  field('remuneration_option').disabled=true;$('#compare-options').disabled=true;
   $('#result').replaceChildren();
   $('#version-label').textContent='Consultando valores da carreira…';
   try {
@@ -52,14 +54,17 @@ async function loadParameters() {
     if(request!==generation)return;
     params=data;
     positionOptions('#level','#grade'); positionOptions('#future-level','#future-grade');
-    const commission=$('#commission'), old=commission.value;
-    commission.replaceChildren(new Option('Selecione um cargo',''),...data.commissions.map(c=>new Option(`${c.code} · ${currency(c.amount)}`,c.code)));
-    if(data.commissions.some(c=>c.code===old))commission.value=old;
-    else field('remuneration_option').value='none';
-    const fn=$('#function'),oldFunction=fn.value;
-    fn.replaceChildren(new Option('Nenhuma',''),...(data.functions || []).map(f=>new Option(`${f.code} · ${currency(f.amount)}`,f.code)));
-    if((data.functions || []).some(f=>f.code===oldFunction))fn.value=oldFunction;
+    for(const family of ['DAD','GTED','DAI','GTEI','FGD','FGI']){
+      const rows=[...data.commissions,...(data.functions || [])].filter(item=>item.kind===family);
+      const select=$('#'+family.toLowerCase());
+      select.replaceChildren(new Option(['DAD','DAI'].includes(family)?'Sem '+family:'Nenhuma',''),...rows.map(item=>new Option(`${item.code} · ${currency(item.amount)}`,item.code)));
+    }
+    if(!data.commissions.some(item=>item.code===field('commission').value)){
+      field('commission').value='';field('remuneration_option').value='none';
+    }
+    if(!(data.functions || []).some(item=>item.code===field('function').value))field('function').value='';
     updateCommissionChoices();
+    field('remuneration_option').disabled=false;
     $('#version-label').textContent=`Valores aplicáveis de ${dateLabel(data.valid_from)} a ${dateLabel(data.valid_until)}`;
     $('#mode-notice').textContent=data.status==='demo'?' Este arquivo contém valores de exemplo. Faça uma nova simulação para usar os valores da carreira.':' Confira o enquadramento do seu vínculo e acompanhe o detalhamento dos proventos e descontos.';
     $('#calculation-error').classList.add('hidden');
@@ -96,7 +101,22 @@ function scenario() {
 }
 function schedule() {clearTimeout(timer);timer=setTimeout(()=>{if(params && form.checkValidity())calculate();},400);}
 form.addEventListener('input',event=>{if(!['competence','mode','level','grade'].includes(event.target.name))schedule();});
-form.addEventListener('change',event=>{if(event.target.name==='commission')updateCommissionChoices();if(['competence','mode'].includes(event.target.name))loadParameters();else if(event.target.name==='level'){updateGrades('#level','#grade');schedule();}else schedule();});
+form.addEventListener('change',event=>{
+  const family=event.target.dataset.family;
+  if(family){
+    if(['DAD','DAI'].includes(family)){
+      field('commission').value=event.target.value;
+      const cargo=params?.commissions.find(item=>item.code===event.target.value);
+      if(!cargo)field('remuneration_option').value='none';
+      else if(field('remuneration_option').value==='none')field('remuneration_option').value=cargo.allow_b?'b':'a';
+    }else field('function').value=event.target.value;
+    updateCommissionChoices();
+  }
+  if(event.target.name==='remuneration_option')updateCommissionChoices();
+  if(['competence','mode'].includes(event.target.name))loadParameters();
+  else if(event.target.name==='level'){updateGrades('#level','#grade');schedule();}
+  else schedule();
+});
 form.addEventListener('submit',event=>{event.preventDefault();clearTimeout(timer);calculate();});
 $('#future-level').addEventListener('change',()=>updateGrades('#future-level','#future-grade'));
 function showCalculationError(error) {$('#calculation-error').textContent=error.message;$('#calculation-error').classList.remove('hidden');$('#result').innerHTML='<div class="empty panel">Confira os dados indicados para obter uma nova simulação.</div>';lastResult=null;}
@@ -150,7 +170,7 @@ async function loadScenario(s){
   $('#beneficiaries').replaceChildren();(s.beneficiaries || []).forEach(beneficiaryRow);
   $('#rubrics').replaceChildren();(s.rubrics || []).forEach(rubricRow);
   showTab('calculator');await loadParameters();
-  if(params){field('level').value=s.level;updateGrades('#level','#grade');field('grade').value=s.grade;field('commission').value=s.commission || '';field('function').value=s.function || '';field('remuneration_option').value=s.remuneration_option || 'none';updateCommissionChoices();await calculate();}
+  if(params){field('level').value=s.level;updateGrades('#level','#grade');field('grade').value=s.grade;field('commission').value=s.commission || '';field('function').value=s.function || '';field('remuneration_option').value=s.remuneration_option || 'none';field('commission_pension').checked=Boolean(s.commission_pension);field('function_pension').checked=Boolean(s.function_pension);updateCommissionChoices();await calculate();}
 }
 function comparisonMarkup(r) {
   const metrics=[['Bruto mensal',x=>currency(x.monthly.gross)],['Diferença bruta vs. primeiro',x=>currency(x.difference.gross)],['RPPS',x=>currency(x.monthly.pension?.amount)],['IPSEMG',x=>currency(x.monthly.health?.amount)],['IRRF',x=>currency(x.monthly.income_tax?.amount)],['Líquido mensal',x=>currency(x.monthly.net)],['Líquido anual estimado',x=>currency(x.annual?.net)],['Diferença mensal vs. primeiro',x=>currency(x.difference.monthly)],['Variação mensal',x=>x.difference.monthly_percent==null?'—':number(x.difference.monthly_percent)+'%'],['Diferença anual vs. primeiro',x=>currency(x.difference.annual)],['Variação anual',x=>x.difference.annual_percent==null?'—':number(x.difference.annual_percent)+'%']];
@@ -160,7 +180,7 @@ $('#run-compare').addEventListener('click',async()=>{try{$('#comparison-result')
 $('#compare-options').addEventListener('click',async()=>{try{const result=await api('/api/commission-options',scenario());showTab('compare');$('#comparison-result').innerHTML=comparisonMarkup(result);}catch(error){toast(error.message);}});
 $('#import-scenario').addEventListener('click',()=>$('#import-file').click());
 $('#import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error('Arquivo excede 1 MB.');let data;try{data=JSON.parse(await file.text());}catch{throw new Error('Não foi possível ler este arquivo. Escolha uma simulação guardada pelo Horizonte.');}const s=data.scenario || data;if(!['real','official'].includes(s.mode))throw new Error('Este arquivo não utiliza a tabela da carreira. Crie uma nova simulação.');if(saved.length>=3)throw new Error('Exclua um cenário antes de importar.');const valid=await api('/api/calculate',s);saved.push(valid.scenario);persist();toast('Cenário validado e importado.');}catch(error){toast(error.message);}event.target.value='';});
-$('#reset').addEventListener('click',()=>{clearTimeout(timer);editingIndex=null;$('#save').textContent='＋ Salvar cenário';form.reset();$('#beneficiaries').replaceChildren();$('#rubrics').replaceChildren();loadParameters();});
+$('#reset').addEventListener('click',()=>{clearTimeout(timer);editingIndex=null;$('#save').textContent='＋ Salvar cenário';form.reset();field('commission').value='';field('function').value='';field('mode').value='real';$('#beneficiaries').replaceChildren();$('#rubrics').replaceChildren();loadParameters();});
 $('#project-career').addEventListener('click',async()=>{try{const r=await api('/api/career',{scenario:scenario(),future_level:$('#future-level').value,future_grade:$('#future-grade').value,years:Number($('#future-years').value)});const max=Math.max(1,...r.series.map(x=>Math.abs(Number(x.accumulated_difference))));$('#career-result').innerHTML=`<div class="panel"><h2>Sua perspectiva de evolução</h2>${metric('Diferença bruta mensal',currency(r.gross_monthly_difference))}${metric('Diferença bruta anual',currency(r.gross_annual_difference))}${metric('Diferença líquida mensal',currency(r.monthly_difference))}${metric('Diferença anual estática',currency(r.annual_difference))}${r.series.every(x=>x.accumulated_difference!=null)?`<svg class="chart" viewBox="0 0 720 220" role="img" aria-label="Diferença líquida acumulada por ano">${r.series.map((x,i)=>{const w=650/r.series.length,h=Math.abs(Number(x.accumulated_difference))/max*135;return `<rect class="chart-bar ${i===r.series.length-1?'accent':''}" x="${40+i*w}" y="${170-h}" width="${w*.65}" height="${h}" rx="4"/><text x="${40+i*w}" y="195">${x.year}a</text>`;}).join('')}</svg>`:''}<div class="table-scroll"><table><thead><tr><th>ANO</th><th>DIFERENÇA ACUMULADA · ${r.monthly_difference===null?'BRUTA':'LÍQUIDA'}</th></tr></thead><tbody>${r.series.map(x=>`<tr><td>${x.year}</td><td>${currency(x.accumulated_difference ?? x.accumulated_gross_difference)}</td></tr>`).join('')}</tbody></table></div><p class="field-help">${escape(r.assumptions)} Barras mostram a magnitude; a tabela preserva o sinal das diferenças.</p></div>`;}catch(error){$('#career-result').innerHTML=`<div class="error" role="alert">${escape(error.message)}</div>`;}});
 $('#act-form').addEventListener('submit',async event=>{event.preventDefault();try{const f=event.target,r={scenario:scenario()};for(const key of ['requirement_date','protocol_date','publication_date','financial_date','level_start','blocked_until'])r[key]=f.elements.namedItem(key).value || null;for(const key of ['probation_complete','satisfactory','in_effective_exercise'])r[key]=f.elements.namedItem(key).checked;for(const key of ['progression_balance','promotion_balance','validated_event_points'])r[key]=f.elements.namedItem(key).value;r.prior_progressions_this_year=Number(f.elements.namedItem('prior_progressions_this_year').value);const result=await api('/api/career/act',r);$('#act-result').innerHTML=`<div class="callout"><strong>${escape({promotion:'Promoção',progression:'Progressão',none:'Sem movimentação elegível'}[result.act])}</strong> · Nível ${escape(result.target.level)}, grau ${escape(result.target.grade)}${metric('Saldo progressão',number(result.progression_balance))}${metric('Saldo promoção',number(result.promotion_balance))}${metric('Pontos consumidos',number(result.points_used))}${metric('Interstício completa em',result.interstice_completed_on)}<p>${escape(result.warning)}</p><p class="field-help">${escape(result.source)}</p></div>`;}catch(error){$('#act-result').innerHTML=`<div class="error" role="alert">${escape(error.message)}</div>`;}});
 $('#calculate-retro').addEventListener('click',async()=>{
@@ -272,10 +292,25 @@ renderSaved();loadParameters();
 
 function updateCommissionChoices() {
   if(!params)return;
-  const c=params.commissions.find(item=>item.code===field('commission').value);
-  for(const option of field('remuneration_option').options) {
-    option.disabled=option.value!=='none' && Boolean(c) && !c['allow_'+option.value];
+  let cargo=params.commissions.find(item=>item.code===field('commission').value);
+  if(field('remuneration_option').value==='none')cargo=null;
+  if(!cargo){field('commission').value='';field('remuneration_option').value='none';}
+  const fn=(params.functions || []).find(item=>item.code===field('function').value);
+  const compatible=fn && (fn.requires_commission_kind?cargo?.kind===fn.requires_commission_kind:!cargo);
+  if(!compatible){field('function').value='';field('function_pension').checked=false;}
+  for(const family of ['DAD','GTED','DAI','GTEI','FGD','FGI']){
+    const select=$('#'+family.toLowerCase());
+    select.value=['DAD','DAI'].includes(family)?(cargo?.kind===family?cargo.code:''):(compatible && fn.kind===family?fn.code:'');
+    select.disabled=['FGD','FGI'].includes(family)?Boolean(cargo):family==='GTED'?cargo?.kind!=='DAD':family==='GTEI'?cargo?.kind!=='DAI':false;
   }
+  for(const option of field('remuneration_option').options){
+    option.disabled=option.value!=='none' && (!cargo || !cargo['allow_'+option.value]);
+  }
+  field('function_pension').disabled=!compatible || !fn.optional_pension;
+  if(field('function_pension').disabled)field('function_pension').checked=false;
+  field('commission_pension').disabled=!cargo || !cargo.optional_pension;
+  if(field('commission_pension').disabled)field('commission_pension').checked=false;
+  $('#compare-options').disabled=!cargo;
 }
 
 function renderRealResult(r) {
@@ -290,7 +325,7 @@ function renderRealResult(r) {
 async function loadRealCatalog() {
   const data=await api('/api/career-data');
   const panel=document.createElement('div');panel.className='panel real-catalog';
-  const families=['DAD','DAI','FGD','FGI','GTED','GTEI'];
+  const families=['DAD','GTED','DAI','GTEI','FGD','FGI'];
   panel.innerHTML=`<h2>Vencimentos, cargos e funções · 2026</h2><p>50 posições, 52 cargos e 45 funções/gratificações. Valores publicados pela SEPLAG para a competência de 2026.</p><details><summary>Vencimento básico e pontuação GDPI · todas as posições</summary><div class="table-scroll"><table><thead><tr><th>POSIÇÃO</th><th>VB</th><th>PONTOS TABELA</th><th>PONTOS VARIÁVEIS · 50%</th></tr></thead><tbody>${data.positions.map(p=>`<tr><td>${escape(p.level)}-${escape(p.grade)}</td><td>${currency(p.salary)}</td><td>${number(p.points)}</td><td>${number(Number(p.points)*Number(data.gdpi_point_share))}</td></tr>`).join('')}</tbody></table></div></details>${families.map(family=>{const rows=[...data.commissions,...data.functions].filter(v=>v.kind===family);return `<details><summary>${family} · ${rows.length} níveis</summary><div class="table-scroll"><table><thead><tr><th>CARGO / FUNÇÃO</th><th>VALOR INTEGRAL</th></tr></thead><tbody>${rows.map(v=>`<tr><td>${escape(v.code)}</td><td>${currency(v.amount)}</td></tr>`).join('')}</tbody></table></div></details>`;}).join('')}`;
   $('#sources-content').append(panel);
 }
