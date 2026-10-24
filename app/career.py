@@ -12,8 +12,8 @@ def project(request, parameters):
     gross_delta=money(future['monthly']['gross']-current['monthly']['gross'])
     gross_annual_delta=money(future['annual']['gross']-current['annual']['gross']) if current['annual'] and future['annual'] else None
     assumptions = 'Mudança imediata para posição selecionada; valores constantes, sem atos automáticos ou reajustes futuros.'
-    if request.scenario.quinquennia or request.scenario.ade_percent:
-        assumptions += ' Mantém quantidade de quinquênios e percentual vigente do ADE. As bases padrão acompanham o VB; bases específicas informadas permanecem fixas. Não prevê novas aquisições nem atualização anual do ADE.'
+    if request.scenario.quinquennia or request.scenario.ade_percent or request.scenario.ade_calculation != 'granted_percentage':
+        assumptions += ' Mantém quantidade de quinquênios e avaliações do ADE, ou percentual dos cenários anteriores. As bases padrão acompanham o VB; bases específicas informadas permanecem fixas. Não prevê novas aquisições nem atualização anual do ADE.'
     return {'current': current, 'future': future, 'monthly_difference': delta, 'annual_difference': annual_delta,
             'gross_monthly_difference':gross_delta,'gross_annual_difference':gross_annual_delta,
             'series': [{'year': i, 'current': current['annual']['net'] if current['annual'] else None,

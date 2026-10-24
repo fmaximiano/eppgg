@@ -13,7 +13,7 @@ ROOT = Path(__file__).parents[1]
 
 @pytest.fixture
 def payroll():
-    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v3.json').read_text())
+    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v4.json').read_text())
 
 
 def additions(result):
@@ -115,3 +115,44 @@ def test_new_version_is_idempotent_and_keeps_prior_history(client, payroll):
     catalog = client.get('/api/sources').json()['catalog']
     section = next(s for s in catalog['sections'] if s['id'] == 'personal-additions')
     assert len(section['items']) == 12
+
+
+@pytest.mark.parametrize('count,percent', [(0,'0'),(2,'0'),(3,'6'),(4,'6'),(5,'10'),(9,'10'),(10,'20'),(14,'20'),(15,'30'),(20,'40'),(25,'50'),(30,'60'),(34,'60'),(35,'70'),(80,'70')])
+def test_satisfactory_evaluation_band_boundaries(payroll, count, percent):
+    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count), payroll)
+    row = additions(r)['ADE']
+    assert row['calculation']['rate'] == D(percent)/100
+    assert row['calculation']['evaluations'] == count
+    assert row['calculation']['method'] == 'evaluations'
+    assert 'aproveitamento integral' in row['calculation']['assumption']
+
+
+def test_entry_year_and_direct_evaluations_agree_and_export(client):
+    base = {'mode':'real','personal_additions_regime':'ade_option','quinquennia':2,'health_enrolled':True}
+    by_year = {**base,'ade_calculation':'entry_year','ade_entry_year':2021}
+    by_count = {**base,'ade_calculation':'evaluations','ade_evaluations':5}
+    year = client.post('/api/calculate',json=by_year).json()
+    count = client.post('/api/calculate',json=by_count).json()
+    assert year['monthly']['net'] == count['monthly']['net'] == '5440.22'
+    assert additions(year)['ADE']['calculation']['entry_year'] == 2021
+    assert additions(year)['ADE']['calculation']['evaluations'] == 5
+    saved = client.post('/api/export/json',json=by_year).json()
+    assert client.post('/api/calculate',json=saved['scenario']).json() == saved
+    csv = client.post('/api/export/csv',json=by_year).text
+    assert 'Avaliações satisfatórias: 5.' in csv and 'Ano de ingresso: 2021.' in csv
+    next_year = client.post('/api/calculate',json={**by_year,'competence':'2026-01','ade_entry_year':2026}).json()
+    assert additions(next_year)['ADE']['amount'] == '0.00'
+
+
+@pytest.mark.parametrize('extra', [
+    {'ade_calculation':'entry_year'},
+    {'ade_calculation':'entry_year','ade_entry_year':2027},
+    {'ade_calculation':'entry_year','ade_entry_year':2020.5},
+    {'ade_calculation':'entry_year','ade_entry_year':2020,'ade_evaluations':6},
+    {'ade_calculation':'evaluations'},
+    {'ade_calculation':'evaluations','ade_evaluations':-1},
+    {'ade_calculation':'evaluations','ade_evaluations':3.5},
+    {'ade_calculation':'evaluations','ade_evaluations':5,'ade_percent':10},
+])
+def test_automatic_ade_rejects_ambiguous_or_invalid_inputs(client,extra):
+    assert client.post('/api/calculate',json={'mode':'real','personal_additions_regime':'ade',**extra}).status_code == 422

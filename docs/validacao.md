@@ -55,3 +55,9 @@ O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto 
 - Versão v3 com substituição explícita e idempotente de v1/v2; arquivos anteriores preservados. A orientação Seplag arquivada tem hash conferido pelos testes.
 - ADE pelo percentual vigente concedido, informado pelo usuário. Não determina automaticamente percentual anual, elegibilidade ou composição histórica das bases. Pesquisa e limites detalhados em [adicionais pessoais](adicionais-pessoais.md).
 - Nenhum deploy em Railway ou acesso ao Neon de produção nesta etapa.
+
+## ADE por ingresso ou avaliações · 24/10/2026
+
+- **174 testes aprovados**: limites das faixas (incluindo menos de três e mais de 35 avaliações), equivalência entre ingresso em2021 e cinco avaliações em2026, entradas conflitantes/negativas/fracionárias, exportações e preservação de cenários com percentuais antigos.
+- Interface em1440 e390 pixels: adicionais pessoais permanentemente abertos; alternância entre ano e quantidade; campos inativos excluídos do cálculo; remoção das observações e quadro de avaliação solicitados; fluxo geral de comparação/carreira preservado, sem erros JavaScript ou rolagem horizontal.
+- Versão v4 acrescenta a hipótese explícita de avaliações satisfatórias e aproveitamento integral da faixa. Por ingresso, avaliações estimadas = ano da competência menos ano de ingresso. Versões anteriores permanecem imutáveis.

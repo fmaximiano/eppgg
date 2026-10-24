@@ -158,22 +158,31 @@ def earning(name, amount, source, *, tax=True, pension=True, health=True, vacati
 def personal_additions(s, p, salary):
     """Direitos reconhecidos no vínculo; não concede tempo nem homologa ADE.
 
-    O percentual vigente do ADE é informado, sem inferi-lo da ADI da GDPI.
+    As simulações por avaliações usam a faixa integral, com avaliações satisfatórias.
+    O percentual informado é preservado somente para cenários anteriores.
     Bases informadas são integrais e só depois recebem a fração do mês.
     """
-    if not (s.quinquennia or s.ade_percent):
+    automatic_ade = s.ade_calculation != 'granted_percentage'
+    if not (s.quinquennia or s.ade_percent or automatic_ade):
         return []
     rules = getattr(p, 'personal_additions_rules', {})
     if not rules:
         raise CalculationError('Não há regras de quinquênio e ADE cadastradas nesta versão de parâmetros.')
-    if s.ade_percent / 100 > rules.ade_max_rate:
+    evaluations = None
+    ade_rate = s.ade_percent / 100
+    if automatic_ade:
+        if rules.ade_method != 'satisfactory_evaluations':
+            raise CalculationError('Cálculo do ADE por avaliações não disponível nesta versão de parâmetros.')
+        evaluations = int(s.competence[:4]) - s.ade_entry_year if s.ade_calculation == 'entry_year' else s.ade_evaluations
+        ade_rate = max((c.rate for c in rules.ade_reference_ceilings if evaluations >= c.evaluations), default=ZERO)
+    if ade_rate > rules.ade_max_rate:
         raise CalculationError('Percentual do ADE superior ao máximo cadastrado para a competência.')
     rows = []
     for name, quantity, rate, informed_base, source_key in (
         ('Quinquênio', s.quinquennia, rules.quinquennium_rate * s.quinquennia, s.quinquennium_base, 'quinquennium'),
-        ('ADE', None, s.ade_percent / 100, s.ade_base, 'ade'),
+        ('ADE', None, ade_rate, s.ade_base, 'ade'),
     ):
-        if not rate:
+        if not rate and not (name == 'ADE' and automatic_ade):
             continue
         base = salary if informed_base is None else informed_base
         item = earning(name, base * rate * s.fraction, p.sources[source_key])
@@ -181,8 +190,11 @@ def personal_additions(s, p, salary):
             'base': base, 'base_origin': 'effective_salary' if informed_base is None else 'recognized_base',
             'rate': rate, 'quantity': quantity, 'fraction': s.fraction,
             'regime': s.personal_additions_regime,
-            'method': 'recognized_quinquennia' if name == 'Quinquênio' else 'granted_percentage',
+            'method': 'recognized_quinquennia' if name == 'Quinquênio' else s.ade_calculation,
         }
+        if name == 'ADE' and automatic_ade:
+            item['calculation'].update(evaluations=evaluations, entry_year=s.ade_entry_year,
+                assumption='Avaliações anuais satisfatórias e aproveitamento integral da faixa. Ano de ingresso: diferença entre o ano da competência e o ingresso.')
         rows.append(item)
     return rows
 

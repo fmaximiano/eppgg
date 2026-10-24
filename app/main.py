@@ -229,6 +229,10 @@ def create_app(database_url=None):
             if 'calculation' in row:
                 c = row['calculation']
                 source += f" Base integral: R${c['base']:.2f}; percentual: {c['rate']*100}%; fração: {c['fraction']}."
+                if c.get('evaluations') is not None:
+                    source += f" Avaliações satisfatórias: {c['evaluations']}."
+                    if c.get('entry_year') is not None:
+                        source += f" Ano de ingresso: {c['entry_year']}."
             writer.writerow([s.competence, safe(row['name']),
                              format(row['amount'], '.2f'),
                              ('Sim' if row['tax'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',
