@@ -14,6 +14,7 @@
   --teal: #17685d;
   --teal-dark: #104d45;
   --on-teal: #fff; /* texto sobre fundo verde */
+  --brand-sun: #f2b84b; /* sol do logotipo */
   --teal-muted: #c9e1d7; /* texto secundário sobre fundo verde */
   --focus-ring: #c8ddd5;
 
@@ -538,8 +539,21 @@ th:last-child {
 .brand-icon-bg {
   fill: var(--teal);
 }
-.brand-icon-bars {
+/* Sol nascendo sobre um horizonte em degrau: o nome e a progressão na carreira. */
+.brand-icon-sun {
+  fill: var(--brand-sun);
+}
+.brand-icon-rays,
+.brand-icon-horizon {
   fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.brand-icon-rays {
+  stroke: var(--brand-sun);
+  stroke-width: 2.6;
+}
+.brand-icon-horizon {
   stroke: var(--on-teal);
   stroke-width: 3;
 }
@@ -1579,6 +1593,7 @@ footer strong {
     --teal: #4fb3a0;
     --teal-dark: #63c4b1;
     --on-teal: #0c1413;
+    --brand-sun: #f6c15a;
     --teal-muted: #1d3f39;
     --focus-ring: #2b5a51;
 

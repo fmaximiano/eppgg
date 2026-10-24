@@ -8,10 +8,7 @@
       content="Simulador de remuneração EPPGG de Minas Gerais com memória de cálculo e cenários comparáveis."
     />
     <title>Horizonte · Calculadora EPPGG MG</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%2317685d'/%3E%3Cpath d='M8 29V17h6v12m3 0V11h6v18m3 0V6h6v23' stroke='white' stroke-width='3'/%3E%3C/svg%3E"
-    />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <link rel="stylesheet" href="/static/style.css" />
     <!-- Sem defer: aplica o tema antes da primeira pintura, evitando o piscar. -->
     <script src="/static/theme.js"></script>
@@ -25,7 +22,9 @@
         <a class="brand" href="/" aria-label="Horizonte, início">
           <svg class="brand-icon" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
             <rect class="brand-icon-bg" width="40" height="40" rx="10" />
-            <path class="brand-icon-bars" d="M8 29V17h6v12m3 0V11h6v18m3 0V6h6v23" />
+            <path class="brand-icon-sun" d="M14 25a8 8 0 0 1 16 0Z" />
+            <path class="brand-icon-rays" d="M22 9v3M13.8 13l2 2M30.2 13l-2 2" />
+            <path class="brand-icon-horizon" d="M7 31h8v-6h18" />
           </svg>
           <span>
             horizonte
@@ -308,14 +307,9 @@
                     autocomplete="off"
                     data-decimal="100"
                     placeholder="Igual à ADI da GDPI"
-                    aria-describedby="ade-adi-help"
                     disabled
                   />
                 </label>
-                <p class="field-help" id="ade-adi-help">
-                  O ADE é atualizado em 1º de outubro com a última ADI concluída, que pode ser
-                  diferente da ADI vigente na GDPI. Abaixo de 70, não há ADE no exercício.
-                </p>
                 <input name="ade_percent" type="hidden" value="0" />
                 <details>
                   <summary>
