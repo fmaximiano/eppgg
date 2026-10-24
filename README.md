@@ -57,6 +57,7 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 - `app/templates/index.html` e `app/static/{app.js,style.css}`: todas as abas. Cada aba tem endereço próprio (`/#compare`, `/#career`, `/#hypotheses`, `/#sources`).
 - `app/static/hypotheses.js`: aba de cenários hipotéticos, que usa o cenário preenchido na Calculadora.
 - `style.css` é dividido em seções numeradas (tokens, base, componentes, uma seção por aba, responsivo e impressão). Use os tokens do `:root`: cores, escala de espaçamento (`--space-*`) e raios (`--radius-*`), sem valores soltos.
+- O modo escuro segue a preferência do sistema e só redefine os tokens (seção 12 do `style.css`): cores novas precisam de um par claro/escuro.
 - Formatação com [Prettier](https://prettier.io) (`.prettierrc.json`): `npx prettier --write app/static app/templates`.
 
 ## Testes

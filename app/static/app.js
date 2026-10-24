@@ -166,15 +166,82 @@ function showTab(id) {
   });
   history.replaceState(null, '', id === 'calculator' ? location.pathname : '#' + id);
   document.dispatchEvent(new CustomEvent('tab:shown', { detail: id }));
+  updateNetBar();
   if (id === 'sources') return loadSources();
   if (id === 'compare') renderSaved();
 }
 $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
-$$('[data-goto]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.goto)));
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-goto]');
+  if (target) showTab(target.dataset.goto);
+});
 // Avisa outras áreas (como os cenários hipotéticos) que o cenário da Calculadora mudou.
 function announceScenario() {
+  updateFormHints();
+  updateNetBar();
   document.dispatchEvent(new CustomEvent('scenario:updated', { detail: lastResult }));
 }
+
+// Resumo do que está preenchido em cada seção recolhível do formulário.
+function updateFormHints() {
+  const value = (name) => Number(field(name).value || 0);
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const hints = {
+    bases:
+      field('personal_additions_regime').value === 'none'
+        ? 'Sem adicionais'
+        : field('quinquennium_base').value || field('ade_base').value
+          ? 'Base informada'
+          : 'VB do cargo efetivo',
+    pension: [
+      field('capped_pension').checked ? 'Teto do RGPS' : 'RPPS sem teto',
+      value('complementary_percent')
+        ? `complementar ${number(value('complementary_percent'))}%`
+        : '',
+      field('commission_pension').checked && !field('commission_pension').disabled
+        ? 'inclui comissão'
+        : '',
+    ],
+    health: field('health_enrolled').checked
+      ? [
+          'Aderiu',
+          plural($$('#beneficiaries .beneficiary').length, 'beneficiário', 'beneficiários'),
+        ]
+      : 'Sem adesão',
+    tax: [
+      value('tax_dependents')
+        ? plural(value('tax_dependents'), 'dependente', 'dependentes')
+        : 'Sem dependentes',
+      value('alimony') ? `pensão ${currency(value('alimony'))}` : '',
+      value('other_deductions') ? `outros ${currency(value('other_deductions'))}` : '',
+    ],
+    rubrics: [
+      value('fraction') === 1 ? 'Mês integral' : `${number(value('fraction') * 100)}% do mês`,
+      $$('#rubrics .rubric').length
+        ? plural($$('#rubrics .rubric').length, 'rubrica', 'rubricas')
+        : '',
+    ],
+  };
+  for (const [key, hint] of Object.entries(hints))
+    $(`[data-hint="${key}"]`).textContent = [hint].flat().filter(Boolean).join(' · ');
+}
+form.addEventListener('input', updateFormHints);
+form.addEventListener('change', updateFormHints);
+
+// No celular, mantém o líquido à vista enquanto o resultado está fora da tela.
+let resultInView = false;
+function updateNetBar() {
+  const visible =
+    Boolean(lastResult?.monthly) && $('#calculator').classList.contains('active') && !resultInView;
+  $('#net-bar').hidden = !visible;
+  document.body.classList.toggle('has-net-bar', visible);
+  if (visible) $('#net-bar-value').textContent = currency(lastResult.monthly.net);
+}
+new IntersectionObserver((entries) => {
+  resultInView = entries[0].isIntersecting;
+  updateNetBar();
+}).observe($('.output-panel'));
+$('#net-bar-link').addEventListener('click', () => $('#result').scrollIntoView({ block: 'start' }));
 
 function options(select, values, old) {
   select.replaceChildren(...values.map((v) => new Option(v, v)));
@@ -605,8 +672,12 @@ function renderSaved() {
           (s, i) =>
             `<article class="panel saved-card"><span class="pill">SIMULAÇÃO SALARIAL</span><h3>${escape(s.name)}</h3><p>${escape(s.competence)} · Nível ${escape(s.level)}, grau ${escape(s.grade)}<br>${!s.gdpi_eligible ? 'GDPI não considerada' : s.gdpi_evaluation === 'no_institutional' ? `ADI/AED ${escape(s.adi)}% · sem AI` : s.gdpi_evaluation === 'statutory_70' ? 'Hipótese legal · notas de 70%' : `ADI ${escape(s.adi)}% · AI ${escape(s.ai)}%`}</p><div class="actions"><button class="secondary load-scenario" data-index="${i}">Editar</button><button class="secondary duplicate-scenario" data-index="${i}" ${saved.length >= 3 ? 'disabled' : ''}>Duplicar</button><button class="text-button delete-scenario" data-index="${i}">Excluir</button></div></article>`,
         )
-        .join('')
-    : '<div class="empty panel">Nenhum cenário salvo. Monte sua simulação e clique em “Salvar cenário”.</div>';
+        .join('') +
+      (saved.length < 3
+        ? `<article class="saved-card add-card"><h3>${saved.length === 1 ? 'Falta um para comparar' : 'Mais uma possibilidade'}</h3><p>Altere a Calculadora e clique em “Salvar cenário”. Cabem até três.</p><div class="actions"><button class="secondary" data-goto="calculator">Ir para a Calculadora</button></div></article>`
+        : '')
+    : `<div class="panel empty-state"><h3>Nenhum cenário salvo ainda</h3><ol><li>Monte uma simulação na Calculadora.</li><li>Clique em “Salvar cenário”. Cabem até três.</li><li>Volte aqui para comparar líquidos mensais e anuais.</li></ol><div class="actions"><button class="primary" id="save-current" ${$('#save').disabled ? 'disabled' : ''}>＋ Salvar o cenário atual</button><button class="secondary" data-goto="calculator">Ir para a Calculadora</button></div></div>`;
+  $('#save-current')?.addEventListener('click', () => $('#save').click());
   $$('.delete-scenario').forEach((b) =>
     b.addEventListener('click', () => {
       saved.splice(Number(b.dataset.index), 1);
@@ -786,6 +857,19 @@ $('#project-career').addEventListener('click', async () => {
     $('#career-result').innerHTML =
       `<div class="error" role="alert">${escape(error.message)}</div>`;
   }
+});
+// Na primeira visita à aba, já projeta a próxima posição da tabela em vez de abrir vazia.
+document.addEventListener('tab:shown', (event) => {
+  if (event.detail !== 'career' || !params || !$('.career-placeholder')) return;
+  const positions = params.positions.map((p) => `${p.level}-${p.grade}`);
+  const next = positions[positions.indexOf(`${field('level').value}-${field('grade').value}`) + 1];
+  if (!next) return;
+  const [level, grade] = next.split('-');
+  $('#future-level').value = level;
+  updateGrades('#future-level', '#future-grade');
+  $('#future-grade').value = grade;
+  updateActions();
+  if (!$('#project-career').disabled) $('#project-career').click();
 });
 $('#calculate-retro').addEventListener('click', async () => {
   try {

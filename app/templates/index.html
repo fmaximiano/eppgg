@@ -10,7 +10,7 @@
     <title>Horizonte · Calculadora EPPGG MG</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23115e59'/%3E%3Cpath d='M8 29V17h6v12m3 0V11h6v18m3 0V6h6v23' stroke='white' stroke-width='3'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%2317685d'/%3E%3Cpath d='M8 29V17h6v12m3 0V11h6v18m3 0V6h6v23' stroke='white' stroke-width='3'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/app.js" defer></script>
@@ -21,7 +21,10 @@
     <header class="topbar">
       <div class="topbar-inner">
         <a class="brand" href="/" aria-label="Horizonte, início">
-          <span class="brand-icon" aria-hidden="true">▥</span>
+          <svg class="brand-icon" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+            <rect class="brand-icon-bg" width="40" height="40" rx="10" />
+            <path class="brand-icon-bars" d="M8 29V17h6v12m3 0V11h6v18m3 0V6h6v23" />
+          </svg>
           <span>
             horizonte
             <span class="brand-sub">EPPGG · MINAS GERAIS</span>
@@ -55,7 +58,6 @@
         <div class="workspace">
           <aside class="input-panel panel">
             <div class="panel-heading">
-              <span class="step">01</span>
               <h2>Seu cenário</h2>
               <button id="reset" class="text-button">Limpar</button>
             </div>
@@ -72,9 +74,13 @@
               </div>
               <input type="hidden" name="mode" value="real" />
               <p class="field-help" id="version-label">Consultando valores da carreira…</p>
+              <h3 class="form-step">
+                <span class="step">01</span>
+                Carreira e desempenho
+              </h3>
               <div class="position-evaluation">
                 <div>
-                  <h3>Posição na carreira</h3>
+                  <h4>Posição na carreira</h4>
                   <div class="field-row">
                     <label>
                       Nível
@@ -87,7 +93,7 @@
                   </div>
                 </div>
                 <div>
-                  <h3>Avaliação de desempenho</h3>
+                  <h4>Avaliação de desempenho</h4>
                   <div class="field-row">
                     <label>
                       ADI / AED (%)
@@ -131,7 +137,10 @@
                   Elegível à GDPI neste período
                 </label>
               </div>
-              <h3>Cargos e funções</h3>
+              <h3 class="form-step">
+                <span class="step">02</span>
+                Cargos e funções
+              </h3>
               <input type="hidden" name="commission" id="commission" />
               <input type="hidden" name="function" id="function" />
               <div class="commission-groups">
@@ -211,7 +220,10 @@
                 Contribuir sobre a função, quando permitido
               </label>
               <section id="personal-additions">
-                <h3>Adicionais pessoais · Quinquênio e ADE</h3>
+                <h3 class="form-step">
+                  <span class="step">03</span>
+                  Adicionais pessoais · Quinquênio e ADE
+                </h3>
                 <label>
                   Enquadramento do vínculo
                   <select name="personal_additions_regime">
@@ -274,7 +286,10 @@
                 </div>
                 <input name="ade_percent" type="hidden" value="0" />
                 <details>
-                  <summary>Bases específicas dos adicionais</summary>
+                  <summary>
+                    Bases específicas dos adicionais
+                    <span class="summary-hint" data-hint="bases"></span>
+                  </summary>
                   <p class="field-help">
                     Em branco, usa o vencimento básico do cargo efetivo. Se o seu ato de concessão
                     estabelecer outra composição, informe a base mensal integral do respectivo
@@ -309,8 +324,15 @@
                   </div>
                 </details>
               </section>
+              <h3 class="form-step">
+                <span class="step">04</span>
+                Descontos e ajustes
+              </h3>
               <details>
-                <summary>Previdência e contribuição</summary>
+                <summary>
+                  Previdência e contribuição
+                  <span class="summary-hint" data-hint="pension"></span>
+                </summary>
                 <label class="check">
                   <input type="checkbox" name="commission_pension" disabled />
                   Incluir comissão no RPPS, se permitido
@@ -342,7 +364,10 @@
                 </p>
               </details>
               <details>
-                <summary>IPSEMG e familiares</summary>
+                <summary>
+                  IPSEMG e familiares
+                  <span class="summary-hint" data-hint="health"></span>
+                </summary>
                 <label class="check">
                   <input name="health_enrolled" type="checkbox" />
                   Aderiu ao IPSEMG Saúde
@@ -383,7 +408,10 @@
                 </p>
               </details>
               <details>
-                <summary>Imposto de renda e descontos</summary>
+                <summary>
+                  Imposto de renda e descontos
+                  <span class="summary-hint" data-hint="tax"></span>
+                </summary>
                 <label>
                   Dependentes exclusivos do IR
                   <input name="tax_dependents" type="number" min="0" max="30" value="0" required />
@@ -410,7 +438,10 @@
                 <p class="field-help">IPSEMG Saúde não é deduzido automaticamente da base do IR.</p>
               </details>
               <details>
-                <summary>Rubricas e proporcionalidade</summary>
+                <summary>
+                  Rubricas e proporcionalidade
+                  <span class="summary-hint" data-hint="rubrics"></span>
+                </summary>
                 <label>
                   Fração do mês / exercício
                   <input
@@ -453,8 +484,11 @@
       <section id="compare" class="view" aria-label="Comparar cenários">
         <div class="section-heading">
           <div>
-            <h2>Um próximo passo. Até três possibilidades.</h2>
-            <p>Salve cenários da mesma competência para comparar líquidos mensais e anuais.</p>
+            <h2>Comparar cenários</h2>
+            <p>
+              Um próximo passo, até três possibilidades: salve cenários da mesma competência e
+              compare líquidos mensais e anuais.
+            </p>
           </div>
           <div class="actions">
             <button id="import-scenario" class="secondary">Recuperar simulação</button>
@@ -575,8 +609,11 @@
       <section id="career" class="view" aria-label="Evolução de carreira">
         <div class="section-heading">
           <div>
-            <h2>Visualize sua próxima posição.</h2>
-            <p>Compare a posição atual com outra da mesma tabela e competência.</p>
+            <h2>Evolução de carreira</h2>
+            <p>
+              Visualize sua próxima posição: compare a atual com outra da mesma tabela e
+              competência.
+            </p>
           </div>
         </div>
         <div class="career-layout">
@@ -649,8 +686,11 @@
       <section id="hypotheses" class="view" aria-label="Cenários hipotéticos">
         <div class="section-heading">
           <div>
-            <h2>E se a carreira mudasse?</h2>
-            <p>Simule mudanças possíveis na remuneração a partir do cenário da Calculadora.</p>
+            <h2>Cenários hipotéticos</h2>
+            <p>
+              E se a carreira mudasse? Simule mudanças possíveis na remuneração a partir do cenário
+              da Calculadora.
+            </p>
           </div>
         </div>
         <div class="panel hyp-base">
@@ -749,8 +789,15 @@
         </div>
       </section>
       <section id="sources" class="view" aria-label="Legislação e fontes">
-        <h2>Transparência em cada número.</h2>
-        <p>Consulte as normas da carreira e as publicações oficiais que fundamentam os cálculos.</p>
+        <div class="section-heading">
+          <div>
+            <h2>Legislação e fontes</h2>
+            <p>
+              Transparência em cada número: as normas da carreira e as publicações oficiais que
+              fundamentam os cálculos.
+            </p>
+          </div>
+        </div>
         <div id="sources-content"></div>
       </section>
       <footer>
@@ -762,6 +809,13 @@
         <span>Especialista em Políticas Públicas e Gestão Governamental</span>
       </footer>
     </main>
+    <div id="net-bar" class="net-bar" hidden>
+      <div>
+        <span>Líquido mensal estimado</span>
+        <strong id="net-bar-value"></strong>
+      </div>
+      <button type="button" class="secondary" id="net-bar-link">Ver demonstrativo</button>
+    </div>
     <div id="toast" class="toast hidden" role="status"></div>
   </body>
 </html>

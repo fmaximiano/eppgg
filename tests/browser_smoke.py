@@ -83,7 +83,7 @@ def check_hypotheses(page):
     card.locator('summary').filter(has_text='Tabela hipotética').click()
     expect(page.locator('#hyp-level-vi tr')).to_have_count(10)
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nas hipóteses'
-    page.locator('[data-goto=calculator]').click()
+    page.locator('#hypotheses [data-goto=calculator]').click()
     expect(page.locator('#calculator')).to_be_visible()
 
 
@@ -98,6 +98,14 @@ def main():
             page.goto(os.getenv('APP_URL','http://127.0.0.1:8000'),wait_until='networkidle')
             expect(page.locator('header .tabs .tab')).to_have_count(5)
             expect(page.locator('header #save')).to_be_visible()
+            expect(page.locator('header .brand-icon')).to_be_visible()
+            expect(page.locator('.form-step')).to_have_count(4)
+            expect(page.locator('[data-hint=health]')).to_have_text('Sem adesão')
+            expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')
+            page.locator('[data-tab=compare]').click()
+            expect(page.locator('.empty-state')).to_contain_text('Nenhum cenário salvo')
+            page.locator('.empty-state [data-goto=calculator]').click()
+            expect(page.locator('#calculator')).to_be_visible()
             for tab in page.locator('header .tab').all():
                 box=tab.bounding_box()
                 assert box and box['x']>=0 and box['x']+box['width']<=width, 'Aba fora da largura visível'
