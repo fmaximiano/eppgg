@@ -126,6 +126,8 @@ def test_real_exports_keep_inputs_reusable_and_do_not_export_fake_deductions(cli
     csv=client.post('/api/export/csv',json=payload)
     assert csv.status_code==200
     assert '6417.25' not in csv.text
+    assert csv.text.startswith('\ufeffCompetência;Rubrica;Valor (R$);IR;RPPS;IPSEMG;Fundamento')
+    assert 'eppgg-folha' not in csv.text and ';True;' not in csv.text and ';False;' not in csv.text
     assert '7302.64' in csv.text
     assert ';RPPS;' in csv.text and ';IRRF;' in csv.text
     assert 'não apurados' not in csv.text

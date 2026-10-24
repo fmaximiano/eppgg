@@ -95,7 +95,7 @@ def create_app(database_url=None):
         with sessions() as session:
             versions = [{k: r.payload.get(k) for k in ('version', 'status', 'valid_from', 'valid_until', 'source', 'verified_at', 'notes','evidence','pension_revaluation','pending','supersedes')}
                         for r in [*session.scalars(select(ParameterSet)),*session.scalars(select(CareerDataSet))]]
-        return {'versions': versions, 'attachments': json.loads((ROOT.parent / 'data/legal-sources.json').read_text()),
+        return {'catalog': json.loads((ROOT.parent / 'data/public-sources.json').read_text()), 'versions': versions, 'attachments': json.loads((ROOT.parent / 'data/legal-sources.json').read_text()),
                 'pending': ['Confronto das faixas RPPS reconstruídas com tabela estadual/contracheque',
                             'Regimes externos ao RPPS estadual, aposentados e isenções não cadastradas',
                             'Conferência dos atos de acumulação e documentos do pagamento RRA'],
@@ -223,26 +223,26 @@ def create_app(database_url=None):
             value = str(value)
             return "'" + value if value.lstrip().startswith(('=', '+', '-', '@', '\t', '\r', '\n')) else value
 
-        writer.writerow(['Competência', 'Versão', 'Status', 'Rubrica', 'Valor', 'IR', 'RPPS', 'IPSEMG', 'Fonte'])
+        writer.writerow(['Competência', 'Rubrica', 'Valor (R$)', 'IR', 'RPPS', 'IPSEMG', 'Fundamento'])
         for row in result['monthly']['earnings']:
-            writer.writerow([s.competence, result['parameters']['version'], result['parameters']['status'], safe(row['name']),
+            writer.writerow([s.competence, safe(row['name']),
                              format(row['amount'], '.2f'),
-                             row['tax'] if result['monthly']['net'] is not None else 'não apurado',
-                             row['pension'] if result['monthly']['net'] is not None else 'não apurado',
-                             row['health'] if result['monthly']['net'] is not None else 'não apurado',safe(row['source'])])
+                             ('Sim' if row['tax'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',
+                             ('Sim' if row['pension'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',
+                             ('Sim' if row['health'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',safe(row['source'])])
         m = result['monthly']
         if m['net'] is None:
-            writer.writerow([s.competence,result['parameters']['version'],result['parameters']['status'],'Bruto',format(m['gross'],'.2f')])
-            writer.writerow([s.competence,result['parameters']['version'],result['parameters']['status'],'Descontos e líquido não apurados; consultar pendências'])
+            writer.writerow([s.competence,'Bruto',format(m['gross'],'.2f')])
+            writer.writerow([s.competence,'Descontos e líquido não disponíveis para esta competência'])
             return Response('\ufeff'+output.getvalue(),media_type='text/csv; charset=utf-8',
                             headers={'Content-Disposition':'attachment; filename="remuneracao-real-eppgg.csv"'})
         for name, amount, key in [('RPPS', m['pension']['amount'], 'pension'), ('Complementar', m['complementary'], 'pension'),
                                   ('IPSEMG', m['health']['amount'], 'health'), ('Coparticipação', m['health']['copay'], 'health'),
                                   ('IRRF', m['income_tax']['amount'], 'tax'), ('Pensão alimentícia', m['alimony'], 'tax'),
                                   ('Outros descontos', m['other_deductions'], 'tax')]:
-            writer.writerow([s.competence, result['parameters']['version'], result['parameters']['status'], name,
+            writer.writerow([s.competence, name,
                              format(-amount, '.2f'), '', '', '', safe(result['parameters']['sources'][key])])
-        writer.writerow([s.competence, result['parameters']['version'], result['parameters']['status'], 'Líquido', format(m['net'], '.2f')])
+        writer.writerow([s.competence, 'Líquido', format(m['net'], '.2f')])
         return Response('\ufeff' + output.getvalue(), media_type='text/csv; charset=utf-8',
                         headers={'Content-Disposition': 'attachment; filename="demonstrativo-eppgg.csv"'})
 

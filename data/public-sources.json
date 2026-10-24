@@ -1,0 +1,309 @@
+{
+  "title": "Legislação e fontes oficiais",
+  "description": "Normas e publicações que fundamentam a remuneração, os descontos e o desenvolvimento na carreira EPPGG de Minas Gerais. Os textos consolidados devem ser consultados em conjunto com suas alterações.",
+  "sections": [
+    {
+      "id": "career",
+      "title": "Carreira, progressão e promoção",
+      "items": [
+        {
+          "title": "Lei nº 18.974/2010",
+          "description": "Reestrutura a carreira EPPGG e disciplina sua organização, ingresso e desenvolvimento.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/18974/2010/?cons=1"
+        },
+        {
+          "title": "Lei nº 15.961/2005",
+          "description": "Estabelece carreiras do Poder Executivo e disposições sobre enquadramento e desenvolvimento funcional.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/15961/2005/?cons=1"
+        },
+        {
+          "title": "Lei nº 13.085/1998",
+          "description": "Institui carreiras de gestão governamental e a GDPI; o art. 16 e o Anexo V fundamentam a gratificação.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/13085/1998/?cons=1"
+        },
+        {
+          "title": "Lei nº 15.304/2004",
+          "description": "Reorganiza carreiras do Executivo e revoga dispositivos anteriores sobre remuneração e cargos comissionados.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/15304/2004/?cons=1"
+        },
+        {
+          "title": "Decreto nº 45.600/2011",
+          "description": "Dispõe sobre a gestão da carreira EPPGG, o exercício das atribuições e a formação dos servidores.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/45600/2011/?cons=1"
+        },
+        {
+          "title": "Decreto nº 46.030/2012",
+          "description": "Regulamenta progressão, promoção e GDPI da carreira EPPGG. Consulte o texto consolidado com as alterações posteriores.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46030/2012/?cons=1"
+        },
+        {
+          "title": "Instrução Normativa SEPLAG nº 001/2018",
+          "description": "Orienta requerimentos, documentação, pontuação, saldos e procedimentos de progressão e promoção. Consulta no SEI/MG: documento 1601301, código de autenticação A7F55C18.",
+          "url": "https://www.sei.mg.gov.br/sei/controlador_externo.php?acao=documento_conferir&id_orgao_acesso_externo=0"
+        }
+      ]
+    },
+    {
+      "id": "gdpi",
+      "title": "GDPI e revisão da remuneração",
+      "items": [
+        {
+          "title": "Lei nº 20.336/2012",
+          "description": "Altera regras remuneratórias e a pontuação da GDPI, incluindo disposições da Lei nº 13.085/1998.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/20336/2012/?cons=1"
+        },
+        {
+          "title": "Lei nº 21.334/2014",
+          "description": "Dispõe sobre remuneração e incorpora a parcela fixa da GDPI ao vencimento básico a partir de 2015.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/21334/2014/?cons=1"
+        },
+        {
+          "title": "Decreto nº 46.640/2014",
+          "description": "Altera a fórmula e os fatores da GDPI, com referências distintas para 2015, 2016 e a partir de 2017.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46640/2014/?cons=1"
+        },
+        {
+          "title": "Decreto nº 46.956/2016",
+          "description": "Atualiza a definição de pontos utilizados na GDPI, observada a quota variável de 50% da pontuação.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46956/2016/?cons=1"
+        },
+        {
+          "title": "Decreto nº 47.081/2016",
+          "description": "Altera hipóteses relacionadas a afastamento para curso e revoga restrição anterior do regulamento da carreira.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/47081/2016/?cons=1"
+        },
+        {
+          "title": "Decreto nº 47.256/2017",
+          "description": "Altera o regulamento da carreira e inclui o exercício de cargo comissionado ou função gratificada nas situações de percepção da GDPI.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/47256/2017/?cons=1"
+        },
+        {
+          "title": "Decreto nº 47.558/2018",
+          "description": "Atualiza regras de avaliação e hipóteses de percepção da GDPI no regulamento da carreira.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/47558/2018/?cons=1"
+        },
+        {
+          "title": "Lei nº 25.804/2026",
+          "description": "Concede revisão geral de 5,4% e estabelece a vigência dos valores remuneratórios utilizados em 2026.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/25804/2026/?cons=1"
+        }
+      ]
+    },
+    {
+      "id": "commissions",
+      "title": "Cargos comissionados e funções",
+      "items": [
+        {
+          "title": "Lei Delegada nº 174/2007",
+          "description": "Organiza os cargos e funções da administração direta: DAD, FGD e gratificações temporárias estratégicas. O art. 27 disciplina as opções remuneratórias.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LDL/174/2007/?cons=1"
+        },
+        {
+          "title": "Lei Delegada nº 175/2007",
+          "description": "Organiza os cargos e funções da administração autárquica e fundacional: DAI, FGI e gratificações temporárias estratégicas. O art. 20 disciplina as opções remuneratórias.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LDL/175/2007/?cons=1"
+        },
+        {
+          "title": "Lei Delegada nº 182/2011",
+          "description": "Altera as leis delegadas de cargos e funções, incluindo a opção de remuneração do efetivo acrescida de 50% do cargo comissionado.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LDL/182/2011/?cons=1"
+        }
+      ]
+    },
+    {
+      "id": "pension",
+      "title": "Previdência e atualização das faixas",
+      "items": [
+        {
+          "title": "Lei Complementar nº 64/2002",
+          "description": "Organiza o RPPS de Minas Gerais. Os arts. 26 a 28 tratam de base contributiva, contribuição por cargo e alíquotas progressivas.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LCP/64/2002/?cons=1"
+        },
+        {
+          "title": "Lei Complementar nº 156/2020",
+          "description": "Altera a legislação previdenciária estadual, incluindo alíquotas progressivas e atualização monetária dos limites de contribuição.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LCP/156/2020/?cons=1"
+        },
+        {
+          "title": "Lei Complementar nº 132/2014",
+          "description": "Institui o regime de previdência complementar dos servidores estaduais e trata da limitação dos benefícios ao teto do RGPS, conforme o enquadramento do vínculo.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LCP/132/2014/?cons=1"
+        },
+        {
+          "title": "Emenda à Constituição de Minas Gerais nº 104/2020",
+          "description": "Altera a Constituição de Minas Gerais em matéria previdenciária. O enquadramento depende da data de ingresso e das opções do servidor.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/EMC/104/2020/?cons=1"
+        },
+        {
+          "title": "Portaria SEPRT nº 636/2021",
+          "description": "Referência de reajuste de 5,45% utilizada na atualização dos limites previdenciários de 2021.",
+          "url": "https://www.gov.br/previdencia/pt-br/assuntos/rpps/legislacao-dos-rpps/portarias/portarias_todas/portaria-seprt-no-636-de-13-de-janeiro-de-2021.pdf"
+        },
+        {
+          "title": "Portaria MTP/ME nº 12/2022",
+          "description": "Publica o reajuste de 10,16% e valores previdenciários de 2022.",
+          "url": "https://www.gov.br/previdencia/pt-br/assuntos/rpps/legislacao-dos-rpps/portarias/portarias_todas/portaria-interministerial-mtp-me-no-12-de-17-de-janeiro-de-2022.pdf"
+        },
+        {
+          "title": "Portaria MPS/MF nº 26/2023",
+          "description": "Publica o reajuste de 5,93% e valores previdenciários de 2023.",
+          "url": "https://www.gov.br/previdencia/pt-br/assuntos/rpps/legislacao-dos-rpps/portarias/portarias_todas/portaria-interministerial-mps-mf-no-26-de-10-de-janeiro-de-2023.pdf"
+        },
+        {
+          "title": "Portaria MPS/MF nº 2/2024",
+          "description": "Reajuste de 3,71% considerado na atualização anual dos limites previdenciários. O link abre a consulta da publicação no Diário Oficial da União.",
+          "url": "https://www.in.gov.br/consulta/-/buscar/dou?q=%22PORTARIA%20INTERMINISTERIAL%20MPS/MF%20N%C2%BA%202%22%20%222024%22"
+        },
+        {
+          "title": "Portaria MPS/MF nº 6/2025",
+          "description": "Reajuste de 4,77% considerado na atualização anual dos limites previdenciários. O link abre a consulta da publicação no Diário Oficial da União.",
+          "url": "https://www.in.gov.br/consulta/-/buscar/dou?q=%22PORTARIA%20INTERMINISTERIAL%20MPS/MF%20N%C2%BA%206%22%20%222025%22"
+        },
+        {
+          "title": "Portaria MPS/MF nº 13/2026",
+          "description": "Publica reajuste de 3,90%, salário mínimo de R$1.621 e teto RGPS de R$8.475,55 para 2026.",
+          "url": "https://www.gov.br/previdencia/pt-br/assuntos/rpps/documentos/PortariaInterministerialMPSMF13de9dejaneirode2026.pdf"
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "title": "IPSEMG e beneficiários",
+      "items": [
+        {
+          "title": "Lei nº 25.143/2025",
+          "description": "Define titulares, dependentes, contribuições de assistência à saúde, pisos, tetos, adicional etário, baixa renda e atualização dos valores. O art. 6º também trata do 13º e de múltiplos vínculos.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/25143/2025/?cons=1"
+        },
+        {
+          "title": "Decreto nº 48.981/2025",
+          "description": "Regulamenta a assistência à saúde do IPSEMG, incluindo inscrição de beneficiários e comprovação das hipóteses especiais de dependência e isenção.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/48981/2025/?cons=1"
+        },
+        {
+          "title": "ANS · faixas etárias dos planos de saúde",
+          "description": "Explica as faixas etárias de referência, incluindo a última faixa, de 59 anos ou mais, utilizada no adicional do IPSEMG.",
+          "url": "https://www.gov.br/ans/pt-br/assuntos/consumidor/reajuste-variacao-de-mensalidade/reajuste-por-mudanca-de-faixa-etaria"
+        }
+      ]
+    },
+    {
+      "id": "tax",
+      "title": "Imposto de renda e RRA",
+      "items": [
+        {
+          "title": "Lei federal nº 7.713/1988",
+          "description": "Regras do imposto de renda da pessoa física. O art. 12-A disciplina a tributação exclusiva dos rendimentos recebidos acumuladamente de anos anteriores.",
+          "url": "https://www.planalto.gov.br/ccivil_03/leis/l7713.htm"
+        },
+        {
+          "title": "Lei federal nº 9.250/1995",
+          "description": "Regras do IRPF e deduções legais, incluindo dependentes, contribuições previdenciárias e pensão alimentícia nas hipóteses legais.",
+          "url": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm"
+        },
+        {
+          "title": "Lei federal nº 9.430/1996",
+          "description": "O art. 67 prevê a dispensa de retenção mensal de imposto até R$10 nas hipóteses aplicáveis.",
+          "url": "https://www.planalto.gov.br/ccivil_03/leis/l9430.htm"
+        },
+        {
+          "title": "Lei federal nº 13.149/2015",
+          "description": "Altera a legislação de imposto de renda e o tratamento dos rendimentos recebidos acumuladamente.",
+          "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13149.htm"
+        },
+        {
+          "title": "Lei federal nº 15.191/2025",
+          "description": "Atualiza os valores da tabela progressiva mensal do imposto de renda.",
+          "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15191.htm"
+        },
+        {
+          "title": "Lei federal nº 15.270/2025",
+          "description": "Institui a redução do imposto de renda utilizada a partir de 2026, conforme o rendimento tributável.",
+          "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15270.htm"
+        },
+        {
+          "title": "Decreto federal nº 9.580/2018 · Regulamento do Imposto de Renda",
+          "description": "Consolida regras de tributação, retenção, deduções e tratamento dos rendimentos recebidos acumuladamente.",
+          "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm"
+        },
+        {
+          "title": "Instrução Normativa RFB nº 1.500/2014",
+          "description": "Regulamenta a tributação dos rendimentos da pessoa física; os arts. 36 a 42 tratam do RRA de anos anteriores.",
+          "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=57670"
+        },
+        {
+          "title": "Receita Federal · tributação de 2026",
+          "description": "Apresenta a tabela mensal, dedução por dependente, desconto simplificado e valores da redução do IR em 2026.",
+          "url": "https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+        },
+        {
+          "title": "Receita Federal · exemplos de aplicação da redução",
+          "description": "Demonstra como aplicar a redução do imposto de renda sobre os rendimentos de 2026.",
+          "url": "https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/exemplos-de-aplicacao-da-lei-15-270-2025"
+        },
+        {
+          "title": "Receita Federal · Perguntas e Respostas IRPF 2026",
+          "description": "A questão 251 explica o enquadramento do RRA de anos anteriores, a multiplicação da tabela pelo número de meses e as despesas dedutíveis.",
+          "url": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/dirpf/p-r-irpf-2026-v1-00-2026-04-23.pdf/@@download/file"
+        }
+      ]
+    },
+    {
+      "id": "rights",
+      "title": "Férias, 13º e garantias constitucionais",
+      "items": [
+        {
+          "title": "Constituição Federal · arts. 7º, 37, 39 e 40",
+          "description": "Fundamenta férias com adicional de um terço, 13º, regras de remuneração, acumulação de cargos e previdência dos servidores públicos.",
+          "url": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm"
+        },
+        {
+          "title": "Lei nº 869/1952",
+          "description": "Estatuto dos Funcionários Públicos Civis de Minas Gerais: disposições sobre exercício, direitos, vantagens e férias.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/869/1952/?cons=1"
+        },
+        {
+          "title": "STF · Tema 163 da repercussão geral",
+          "description": "Trata da não incidência de contribuição previdenciária sobre parcelas não incorporáveis aos proventos, incluindo o terço de férias.",
+          "url": "https://jurisprudencia.stf.jus.br/pages/search?base=acordaos&queryString=%22Tema%20163%22"
+        },
+        {
+          "title": "STF · Tema 808 da repercussão geral",
+          "description": "Trata da não incidência de imposto de renda sobre juros de mora pelo atraso no pagamento de remuneração de emprego, cargo ou função.",
+          "url": "https://jurisprudencia.stf.jus.br/pages/search?base=acordaos&queryString=%22Tema%20808%22"
+        }
+      ]
+    },
+    {
+      "id": "tables",
+      "title": "Tabelas oficiais de remuneração",
+      "items": [
+        {
+          "title": "SEPLAG · vencimentos da carreira EPPGG em 2026",
+          "description": "Tabela do Grupo I, com vencimentos por nível e grau; a carreira EPPGG consta na página 2.",
+          "url": "https://www.mg.gov.br/system/files/media/planejamento/documento_detalhado/2026/grupo_1_-atualizacao-54-2026.pdf"
+        },
+        {
+          "title": "SEPLAG · DAD, FGD e GTE da administração direta",
+          "description": "Valores publicados para cargos de direção, funções gratificadas e gratificações temporárias estratégicas.",
+          "url": "https://www.mg.gov.br/system/files/media/planejamento/documento_detalhado/2026/dad_fgd_gted.pdf"
+        },
+        {
+          "title": "SEPLAG · cargos DAI",
+          "description": "Valores dos cargos de direção e assessoramento da administração autárquica e fundacional.",
+          "url": "https://www.mg.gov.br/system/files/media/planejamento/documento_detalhado/2026/dai.pdf"
+        },
+        {
+          "title": "SEPLAG · FGI e GTEI",
+          "description": "Valores das funções gratificadas e gratificações temporárias estratégicas da administração indireta.",
+          "url": "https://www.mg.gov.br/system/files/media/planejamento/documento_detalhado/2026/fgi_gtei.pdf"
+        },
+        {
+          "title": "INSS · limites previdenciários de 2026",
+          "description": "Consulta do salário mínimo e teto RGPS. As alíquotas do INSS não substituem as do RPPS estadual.",
+          "url": "https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal"
+        }
+      ]
+    }
+  ]
+}

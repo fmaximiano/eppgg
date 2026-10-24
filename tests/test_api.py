@@ -152,3 +152,21 @@ def test_progression_limits_and_unmet_interstice(client):
     assert r['promotion_balance']=='50'
     for changes in [{'satisfactory':False},{'probation_complete':False},{'blocked_until':'2026-12-31'}, {'protocol_date':'2026-09-01'}, {'financial_date':'2026-11-01'}]:
         assert client.post('/api/career/act',json=act_payload(**changes)).status_code==422
+
+
+def test_public_sources_catalog_covers_career_and_payroll(client):
+    from urllib.parse import urlparse
+    catalog=client.get('/api/sources').json()['catalog']
+    items=[item for group in catalog['sections'] for item in group['items']]
+    titles={item['title'] for item in items}
+    assert {'Lei nº 18.974/2010','Lei nº 15.961/2005','Lei nº 13.085/1998',
+            'Lei nº 20.336/2012','Lei nº 21.334/2014','Decreto nº 45.600/2011',
+            'Decreto nº 46.030/2012','Decreto nº 46.640/2014','Decreto nº 46.956/2016',
+            'Decreto nº 47.081/2016','Instrução Normativa SEPLAG nº 001/2018',
+            'Lei Complementar nº 64/2002','Lei nº 25.143/2025',
+            'Lei federal nº 15.270/2025','Instrução Normativa RFB nº 1.500/2014'}<=titles
+    assert len(titles)==len(items)
+    for item in items:
+        parsed=urlparse(item['url'])
+        assert parsed.scheme=='https' and (parsed.hostname.endswith('.gov.br') or parsed.hostname.endswith('.jus.br'))
+        assert len(item['description'])>30
