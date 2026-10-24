@@ -37,6 +37,64 @@ try {
   /* corrupt local storage is never executed */
 }
 
+// Competências em português: o <input type="month"> segue o idioma do navegador. O campo
+// original continua com o valor AAAA-MM (escondido), sincronizado com dois selects.
+const MONTHS = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+function monthPicker(input) {
+  const native = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  const label = input.closest('label')?.firstChild.textContent.trim() || 'Competência';
+  const month = document.createElement('select');
+  const year = document.createElement('select');
+  month.className = 'month-picker-month';
+  year.className = 'month-picker-year';
+  month.setAttribute('aria-label', `${label}: mês`);
+  year.setAttribute('aria-label', `${label}: ano`);
+  month.append(...MONTHS.map((name, i) => new Option(name, String(i + 1).padStart(2, '0'))));
+  const last = Math.max(new Date().getFullYear(), Number(input.value.slice(0, 4))) + 2;
+  for (let y = last; y >= 2000; y--) year.append(new Option(y, y));
+  const wrapper = document.createElement('span');
+  wrapper.className = 'month-picker';
+  wrapper.append(month, year);
+  input.type = 'hidden';
+  input.after(wrapper);
+  const sync = () => {
+    [year.value, month.value] = native.get.call(input).split('-');
+  };
+  // Atribuições feitas pelo código (cenário carregado, por exemplo) também atualizam os selects.
+  Object.defineProperty(input, 'value', {
+    get: () => native.get.call(input),
+    set: (value) => {
+      native.set.call(input, value);
+      sync();
+    },
+  });
+  for (const select of [month, year]) {
+    select.addEventListener('input', (event) => event.stopPropagation());
+    select.addEventListener('change', (event) => {
+      event.stopPropagation();
+      native.set.call(input, `${year.value}-${month.value}`);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  input.form?.addEventListener('reset', () => setTimeout(sync));
+  sync();
+}
+$$('input[type=month]').forEach(monthPicker);
+
 function toast(message) {
   $('#toast').textContent = message;
   $('#toast').classList.remove('hidden');

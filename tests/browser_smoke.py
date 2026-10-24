@@ -62,6 +62,14 @@ def check_conditional_fields(page):
     page.locator('#rubrics .remove').click()
 
 
+def select_month(page,selector,value):
+    year,month=value.split('-')
+    picker=page.locator(selector+' + .month-picker')
+    picker.locator('.month-picker-year').select_option(year)
+    picker.locator('.month-picker-month').select_option(month)
+    assert page.locator(selector).input_value()==value
+
+
 def check_hypotheses(page):
     page.locator('[data-tab=hypotheses]').click()
     assert page.evaluate('location.hash')=='#hypotheses'
@@ -227,8 +235,8 @@ def main():
             page.locator('summary').filter(has_text='Diferenças de competências anteriores').click()
             page.locator('#retro-before').select_option('0')
             page.locator('#retro-after').select_option('1')
-            page.locator('#retro-start').fill('2026-01')
-            page.locator('#retro-end').fill('2026-02')
+            select_month(page,'#retro-start','2026-01')
+            select_month(page,'#retro-end','2026-02')
             page.locator('#calculate-retro').click()
             expect(page.locator('#retro-result')).to_contain_text('Total das diferenças líquidas')
             expect(page.locator('#retro-result')).to_contain_text('2026-01')
@@ -255,10 +263,10 @@ def main():
             with page.expect_download() as downloaded:
                 page.locator('[data-format=json]').click()
             assert downloaded.value.suggested_filename.endswith('.json')
-            page.locator('[name=competence]').fill('2027-01')
+            select_month(page,'[name=competence]','2027-01')
             expect(page.locator('#calculation-error')).to_contain_text('Não há valores disponíveis')
             expect(page.locator('.stat-value')).to_have_count(0)
-            page.locator('[name=competence]').fill('2026-10')
+            select_month(page,'[name=competence]','2026-10')
             expect(page.locator('.stat-value')).to_have_count(3)
             reset_for_normal(page)
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
