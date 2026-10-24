@@ -11,6 +11,9 @@ def project(request, parameters):
     annual_delta = money(future['annual']['net'] - current['annual']['net']) if current['annual'] and future['annual'] and current['annual']['net'] is not None and future['annual']['net'] is not None else None
     gross_delta=money(future['monthly']['gross']-current['monthly']['gross'])
     gross_annual_delta=money(future['annual']['gross']-current['annual']['gross']) if current['annual'] and future['annual'] else None
+    assumptions = 'Mudança imediata para posição selecionada; valores constantes, sem atos automáticos ou reajustes futuros.'
+    if request.scenario.quinquennia or request.scenario.ade_percent:
+        assumptions += ' Mantém quantidade de quinquênios e percentual vigente do ADE. As bases padrão acompanham o VB; bases específicas informadas permanecem fixas. Não prevê novas aquisições nem atualização anual do ADE.'
     return {'current': current, 'future': future, 'monthly_difference': delta, 'annual_difference': annual_delta,
             'gross_monthly_difference':gross_delta,'gross_annual_difference':gross_annual_delta,
             'series': [{'year': i, 'current': current['annual']['net'] if current['annual'] else None,
@@ -18,7 +21,7 @@ def project(request, parameters):
                         'accumulated_gross_difference':money(gross_annual_delta*i) if gross_annual_delta is not None else None,
                         'accumulated_difference': money(annual_delta * i) if annual_delta is not None else None}
                        for i in range(1, request.years + 1)],
-            'assumptions': 'Mudança imediata para posição selecionada; valores constantes, sem atos automáticos ou reajustes futuros.'}
+            'assumptions': assumptions}
 
 
 def simulate_act(r, p):

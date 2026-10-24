@@ -225,11 +225,15 @@ def create_app(database_url=None):
 
         writer.writerow(['Competência', 'Rubrica', 'Valor (R$)', 'IR', 'RPPS', 'IPSEMG', 'Fundamento'])
         for row in result['monthly']['earnings']:
+            source = row['source']
+            if 'calculation' in row:
+                c = row['calculation']
+                source += f" Base integral: R${c['base']:.2f}; percentual: {c['rate']*100}%; fração: {c['fraction']}."
             writer.writerow([s.competence, safe(row['name']),
                              format(row['amount'], '.2f'),
                              ('Sim' if row['tax'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',
                              ('Sim' if row['pension'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',
-                             ('Sim' if row['health'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',safe(row['source'])])
+                             ('Sim' if row['health'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',safe(source)])
         m = result['monthly']
         if m['net'] is None:
             writer.writerow([s.competence,'Bruto',format(m['gross'],'.2f')])

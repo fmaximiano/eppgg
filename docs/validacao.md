@@ -47,3 +47,11 @@ O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto 
 - Evolução de carreira: controles e resultado em colunas alinhadas, painel inicial de orientação e retroativos organizados junto aos controles. Comparação: cartões proporcionais à quantidade de cenários, botões alinhados e fontes salariais em colunas.
 - Conferência visual e geométrica nas quatro abas em 320, 390, 1024, 1440 e 1920 pixels; sem rolagem horizontal da página. Recuperação de simulação validada em 390 e 1366 pixels, com o seletor de arquivo acessível pelo botão próprio.
 - Chromium funcional em 1440 e 390 pixels e suíte de **134 testes aprovados**. Nenhuma fórmula ou parâmetro legal alterado.
+
+## Quinquênio e ADE · 24/10/2026
+
+- Suíte: **150 testes aprovados**. Referência independente com dois quinquênios e ADE concedido de 10%, incidências, férias/13º, fração aplicada uma única vez, bases específicas, separação da ADI/GDPI, validação de combinações, exportações e evolução de carreira.
+- Chromium em 1440 e 390 pixels: fluxo geral preservado; fluxo específico de adicionais confere líquido de R$5.440,22, base alternativa, desativação de campos, abertura de cenário anterior sem herdar direitos e acesso às fontes. Sem erros JavaScript ou rolagem horizontal nos fluxos verificados.
+- Versão v3 com substituição explícita e idempotente de v1/v2; arquivos anteriores preservados. A orientação Seplag arquivada tem hash conferido pelos testes.
+- ADE pelo percentual vigente concedido, informado pelo usuário. Não determina automaticamente percentual anual, elegibilidade ou composição histórica das bases. Pesquisa e limites detalhados em [adicionais pessoais](adicionais-pessoais.md).
+- Nenhum deploy em Railway ou acesso ao Neon de produção nesta etapa.

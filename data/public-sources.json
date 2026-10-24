@@ -90,6 +90,72 @@
       ]
     },
     {
+      "id": "personal-additions",
+      "title": "Quinquênio e Adicional de Desempenho (ADE)",
+      "items": [
+        {
+          "title": "Constituição do Estado de Minas Gerais · ADCT, art. 112",
+          "description": "Preserva os adicionais por tempo de serviço nos vínculos alcançados pela regra de transição. A composição da base deve observar o direito adquirido e o ato de concessão.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/CON/1989/1989/?cons=1"
+        },
+        {
+          "title": "Emenda à Constituição Estadual nº 57/2003",
+          "description": "Altera o regime de vantagens pessoais, institui a transição dos adicionais por tempo de serviço e fundamenta o enquadramento no adicional de desempenho.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/EMC/57/2003/"
+        },
+        {
+          "title": "Emenda Constitucional Federal nº 19/1998",
+          "description": "Altera regras constitucionais de remuneração. O art. 37, XIV, e as ressalvas legais aos adicionais adquiridos até sua promulgação são relevantes para a composição histórica das bases.",
+          "url": "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc19.htm"
+        },
+        {
+          "title": "Lei nº 14.693/2003",
+          "description": "Institui o Adicional de Desempenho (ADE), vinculado às avaliações, e disciplina a opção pelo ADE para servidores com adicionais por tempo de serviço.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/14693/2003/?cons=1"
+        },
+        {
+          "title": "Lei nº 16.676/2007",
+          "description": "Altera a Lei nº 14.693/2003 e as regras do Adicional de Desempenho; deve ser consultada em conjunto com o texto consolidado.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/16676/2007/?cons=1"
+        },
+        {
+          "title": "Lei nº 17.329/2008",
+          "description": "Altera disposições do ADE, inclusive a relação com avaliações e a remuneração dos servidores abrangidos.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/17329/2008/?cons=1"
+        },
+        {
+          "title": "Lei nº 19.553/2011",
+          "description": "Altera a disciplina do ADE na Lei nº 14.693/2003. Integra o conjunto normativo indicado pela Seplag para o adicional.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/19553/2011/?cons=1"
+        },
+        {
+          "title": "Decreto nº 44.503/2007",
+          "description": "Regulamenta a concessão e o pagamento do ADE. A atualização anual considera a avaliação pertinente, distinta da avaliação usada em outras gratificações.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/44503/2007/?cons=1"
+        },
+        {
+          "title": "Decreto nº 44.732/2008",
+          "description": "Altera o regulamento do ADE, Decreto nº 44.503/2007; consulte as disposições na redação consolidada.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/44732/2008/?cons=1"
+        },
+        {
+          "title": "Decreto nº 46.032/2012",
+          "description": "Altera regras do regulamento do Adicional de Desempenho. Não se confunde com o Decreto nº 46.030/2012, relativo à carreira EPPGG e à GDPI.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46032/2012/?cons=1"
+        },
+        {
+          "title": "Decreto nº 46.756/2015",
+          "description": "Altera o Decreto nº 44.503/2007 e integra a regulamentação do ADE indicada na orientação oficial da Seplag.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46756/2015/?cons=1"
+        },
+        {
+          "title": "Seplag · Adicional de Desempenho",
+          "description": "Orientação oficial com destinatários, opção pelo ADE, atualização em outubro e faixas máximas de 6%, 10%, 20%, 30%, 40%, 50%, 60% e 70%, conforme avaliações satisfatórias.",
+          "url": "https://www.mg.gov.br/system/files/media/planejamento/documento_detalhado/2022/gestao-de-pessoas/direitos-e-deveres-do-servidor/adicional_de_desempenho_ade.pdf"
+        }
+      ]
+    },
+    {
       "id": "commissions",
       "title": "Cargos comissionados e funções",
       "items": [

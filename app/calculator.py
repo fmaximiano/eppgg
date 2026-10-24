@@ -155,6 +155,38 @@ def earning(name, amount, source, *, tax=True, pension=True, health=True, vacati
             'health': health, 'vacation': vacation, 'thirteenth': thirteenth}
 
 
+def personal_additions(s, p, salary):
+    """Direitos reconhecidos no vínculo; não concede tempo nem homologa ADE.
+
+    O percentual vigente do ADE é informado, sem inferi-lo da ADI da GDPI.
+    Bases informadas são integrais e só depois recebem a fração do mês.
+    """
+    if not (s.quinquennia or s.ade_percent):
+        return []
+    rules = getattr(p, 'personal_additions_rules', {})
+    if not rules:
+        raise CalculationError('Não há regras de quinquênio e ADE cadastradas nesta versão de parâmetros.')
+    if s.ade_percent / 100 > rules.ade_max_rate:
+        raise CalculationError('Percentual do ADE superior ao máximo cadastrado para a competência.')
+    rows = []
+    for name, quantity, rate, informed_base, source_key in (
+        ('Quinquênio', s.quinquennia, rules.quinquennium_rate * s.quinquennia, s.quinquennium_base, 'quinquennium'),
+        ('ADE', None, s.ade_percent / 100, s.ade_base, 'ade'),
+    ):
+        if not rate:
+            continue
+        base = salary if informed_base is None else informed_base
+        item = earning(name, base * rate * s.fraction, p.sources[source_key])
+        item['calculation'] = {
+            'base': base, 'base_origin': 'effective_salary' if informed_base is None else 'recognized_base',
+            'rate': rate, 'quantity': quantity, 'fraction': s.fraction,
+            'regime': s.personal_additions_regime,
+            'method': 'recognized_quinquennia' if name == 'Quinquênio' else 'granted_percentage',
+        }
+        rows.append(item)
+    return rows
+
+
 def earnings(s, p):
     pos = next((v for v in p.positions if (v.level, v.grade) == (s.level, s.grade)), None)
     if pos is None:
@@ -204,6 +236,7 @@ def earnings(s, p):
         rows.append(earning(function.code+' · integral',function.amount*s.fraction,function.source,
                             pension=s.function_pension,tax=function.tax,health=function.health,
                             vacation=function.vacation,thirteenth=function.thirteenth))
+    rows.extend(personal_additions(s, p, pos.salary))
     for r in s.rubrics:
         if r.nature == 'earning':
             rows.append(earning(r.name, r.amount * (s.fraction if r.proportional else 1), r.source,

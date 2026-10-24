@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class StrictModel(BaseModel):
@@ -90,6 +90,26 @@ class HealthRules(StrictModel):
         return self
 
 
+class AdeCeiling(StrictModel):
+    evaluations: int = Field(ge=3)
+    rate: Decimal = Field(gt=0, le=Decimal('.70'))
+
+
+class PersonalAdditionsRules(StrictModel):
+    quinquennium_rate: Decimal = Field(gt=0, le=1)
+    ade_max_rate: Decimal = Field(gt=0, le=Decimal('.70'))
+    ade_method: Literal['granted_percentage']
+    ade_reference_ceilings: list[AdeCeiling] = Field(min_length=1)
+
+    @model_validator(mode='after')
+    def coherent(self):
+        counts = [c.evaluations for c in self.ade_reference_ceilings]
+        rates = [c.rate for c in self.ade_reference_ceilings]
+        if counts != sorted(set(counts)) or rates != sorted(set(rates)) or rates[-1] > self.ade_max_rate:
+            raise ValueError('Faixas de referência do ADE devem ser crescentes e respeitar o máximo.')
+        return self
+
+
 class Parameters(StrictModel):
     version: str = Field(min_length=1, max_length=100)
     valid_from: date
@@ -129,6 +149,12 @@ class Parameters(StrictModel):
     pension_revaluation: list[dict] = Field(default_factory=list)
     pending: list[str] = Field(default_factory=list)
     supersedes: list[str] = Field(default_factory=list)
+    personal_additions_rules: PersonalAdditionsRules | None = None
+
+    @field_validator('personal_additions_rules', mode='before')
+    @classmethod
+    def empty_personal_rules(cls, value):
+        return value or None
 
     @model_validator(mode='after')
     def coherent(self):
@@ -151,6 +177,8 @@ class Parameters(StrictModel):
         for key in ('salary', 'gdpi', 'commission', 'pension', 'health', 'tax', 'vacation'):
             if not self.sources.get(key):
                 raise ValueError(f'Fonte obrigatória: {key}.')
+        if self.personal_additions_rules and any(not self.sources.get(key) for key in ('quinquennium', 'ade')):
+            raise ValueError('Adicionais pessoais exigem fontes de quinquênio e ADE.')
         if self.reduction_until <= self.reduction_full_income:
             raise ValueError('Limites da redução de IR inválidos.')
         return self
@@ -248,6 +276,11 @@ class Scenario(StrictModel):
     commission_pension: bool = False
     function: str | None = None
     function_pension: bool = False
+    personal_additions_regime: Literal['none', 'quinquennium', 'ade', 'ade_option'] = 'none'
+    quinquennia: int = Field(default=0, ge=0, le=20)
+    quinquennium_base: Decimal | None = Field(default=None, gt=0, le=10000000)
+    ade_percent: Decimal = Field(default=Decimal('0'), ge=0, le=70)
+    ade_base: Decimal | None = Field(default=None, gt=0, le=10000000)
     capped_pension: bool = False
     complementary_rate: Decimal = Field(default=Decimal('0'), ge=0, le=Decimal('.3'))
     complementary_deductible: bool = False
@@ -265,6 +298,14 @@ class Scenario(StrictModel):
 
     @model_validator(mode='after')
     def choices(self):
+        if (self.quinquennia or self.quinquennium_base is not None) and self.personal_additions_regime not in ('quinquennium', 'ade_option'):
+            raise ValueError('Quinquênios exigem direito preservado ou opção pelo ADE com quinquênios já adquiridos.')
+        if (self.ade_percent or self.ade_base is not None) and self.personal_additions_regime not in ('ade', 'ade_option'):
+            raise ValueError('ADE exige vínculo abrangido ou opção formal pelo adicional.')
+        if self.quinquennium_base is not None and not self.quinquennia:
+            raise ValueError('Base de quinquênio exige ao menos um quinquênio reconhecido.')
+        if self.ade_base is not None and not self.ade_percent:
+            raise ValueError('Base do ADE exige percentual vigente maior que zero.')
         if self.remuneration_option != 'none' and not self.commission:
             raise ValueError('Selecione um cargo para a opção remuneratória.')
         if self.commission_pension and self.remuneration_option == 'none':

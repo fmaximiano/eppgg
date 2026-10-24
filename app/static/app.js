@@ -30,7 +30,7 @@ async function api(path, body) {
 function showTab(id) {
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   $$('.tab').forEach(t=>{t.classList.toggle('active',t.dataset.tab===id); if(t.dataset.tab===id)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
-  if(id==='sources') loadSources();
+  if(id==='sources') return loadSources();
   if(id==='compare') renderSaved();
 }
 $$('.tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
@@ -101,6 +101,10 @@ function scenario() {
   s.age=s.health_enrolled?Number(field('age').value):35;s.tax_dependents=Number(field('tax_dependents').value);
   s.commission=field('commission').value || null;
   s.function=field('function').value || null;
+  s.personal_additions_regime=field('personal_additions_regime').value;
+  s.quinquennia=field('quinquennia').disabled?0:Number(field('quinquennia').value);
+  s.ade_percent=field('ade_percent').disabled?'0':field('ade_percent').value;
+  for(const name of ['quinquennium_base','ade_base'])s[name]=field(name).disabled || !field(name).value?null:field(name).value;
   s.complementary_rate=s.capped_pension?String(Number(field('complementary_percent').value)/100):'0';
   s.beneficiaries=(s.health_enrolled?$$('.beneficiary'):[]).map(div=>({relationship:$('.relationship',div).value,age:Number($('.beneficiary-age',div).value),special_condition:$('.special-condition',div).checked,exemption_approved:$('.exemption-approved',div).checked,eligibility_confirmed:$('.eligibility-confirmed',div).checked}));
   s.rubrics=$$('.rubric').map(div=>({name:$('.rubric-name-input',div).value,amount:$('.rubric-amount',div).value,nature:$('.rubric-nature',div).value,source:$('.rubric-source',div).value,...Object.fromEntries($$('[data-flag]',div).map(i=>[i.dataset.flag,i.checked]))}));
@@ -182,6 +186,8 @@ function renderSaved(){
 }
 async function loadScenario(s){
   clearTimeout(timer);
+  // Arquivos anteriores aos adicionais pessoais não podem herdar o vínculo aberto.
+  for(const [key,value] of Object.entries({personal_additions_regime:'none',quinquennia:0,ade_percent:'0',quinquennium_base:'',ade_base:''}))field(key).value=value;
   for(const [key,value] of Object.entries(s)){const input=field(key);if(!input || ['level','grade','commission','function'].includes(key))continue;if(input.type==='checkbox')input.checked=Boolean(value);else input.value=value;}
   field('complementary_percent').value=Number(s.complementary_rate || 0)*100;
   $('#beneficiaries').replaceChildren();(s.beneficiaries || []).forEach(beneficiaryRow);
@@ -228,10 +234,12 @@ function calculationNotes(r){
   if(r.annual)notes.push('O total anual considera remuneração constante, 13º integral e uma folha de férias com terço, sem reajustes futuros.');
   if(Number(r.scenario.alimony))notes.push('Os reflexos da pensão alimentícia em férias e 13º dependem da decisão judicial ou do acordo aplicável.');
   if(r.scenario.health_enrolled)notes.push('A inclusão de familiares e as isenções do IPSEMG dependem do reconhecimento dos requisitos pelo Instituto.');
+  if(r.scenario.quinquennia || Number(r.scenario.ade_percent))notes.push('Os adicionais pessoais consideram direitos reconhecidos no vínculo. O ADE usa o percentual vigente informado; as notas da GDPI não alteram esse percentual. Confira a composição das bases, especialmente quando houver cargo ou função.');
   if(r.parameters.status==='demo')notes.unshift('Este arquivo contém valores de exemplo. Faça uma nova simulação com a tabela da carreira antes de planejar sua remuneração.');
   return notes;
 }
 function earningReference(e){
+  if(e.calculation){const c=e.calculation;return `${e.name==='Quinquênio'?'CE/MG · ADCT, art. 112':'Lei nº 14.693/2003 · Decreto nº 44.503/2007'} · ${currency(c.base)} × ${number(Number(c.rate)*100)}% × ${number(c.fraction)}${c.base_origin==='recognized_base'?' · base reconhecida informada':''}`;}
   if(e.name==='Vencimento básico')return 'Lei nº 25.804/2026 · tabela de vencimentos SEPLAG';
   if(e.name==='GDPI')return 'Lei nº 13.085/1998 · Decreto nº 46.030/2012';
   if(/^(DAD|FGD|GTED)-/.test(e.name))return 'Lei Delegada nº 174/2007 · tabela SEPLAG';
@@ -359,6 +367,7 @@ function updateActions(){
 function updateControls(){
   updateEvaluationFields();
   updateCommissionChoices();
+  updatePersonalAdditions();
   if(!params){field('commission_pension').disabled=true;field('function_pension').disabled=true;$('#compare-options').disabled=true;}
   const capped=field('capped_pension').checked;
   field('complementary_percent').disabled=!capped;
@@ -375,6 +384,16 @@ function updateControls(){
   if(field('alimony_deductible').disabled)field('alimony_deductible').checked=false;
   updateSecondaryControls();updateActions();
 }
+function updatePersonalAdditions(){
+  const regime=field('personal_additions_regime').value;
+  const quinquennium=['quinquennium','ade_option'].includes(regime),ade=['ade','ade_option'].includes(regime);
+  field('quinquennia').disabled=!quinquennium;
+  field('ade_percent').disabled=!ade;
+  field('quinquennium_base').disabled=!quinquennium || Number(field('quinquennia').value)<=0;
+  field('ade_base').disabled=!ade || Number(field('ade_percent').value)<=0;
+  $('#personal-additions-help').textContent=regime==='ade_option'?'Informe somente os quinquênios já adquiridos antes da opção formal pelo ADE e o percentual vigente do adicional.':regime==='quinquennium'?'Informe a quantidade de quinquênios reconhecidos no vínculo alcançado pela regra de transição.':regime==='ade'?'Informe o percentual vigente concedido no vínculo. A avaliação anual do ADE é independente da GDPI.':'Selecione o enquadramento aplicável a este vínculo.';
+}
+$('#personal-sources').addEventListener('click',async()=>{await showTab('sources');const search=$('#source-search');if(search){search.value='Quinquênio';search.dispatchEvent(new Event('input'));}});
 $('#compare').addEventListener('input',updateSecondaryControls);
 $('#compare').addEventListener('change',updateSecondaryControls);
 for(const id of ['#future-grade','#future-years','#retro-before','#retro-after','#retro-start','#retro-end']){
