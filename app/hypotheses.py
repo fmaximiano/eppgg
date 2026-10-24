@@ -1151,43 +1151,75 @@ JS = r"""
 
     async function initializeProfile() {
       if (initializing) return;
-      initializing = true;
-
+    
+      const frameWindow = profileFrame.contentWindow;
+      let doc;
+    
       try {
-        profileWindow = profileFrame.contentWindow;
-        const doc = profileWindow.document;
+        doc = frameWindow.document;
+      } catch {
+        status.textContent =
+          "Não foi possível acessar a Calculadora. Confira os cabeçalhos de segurança.";
+        status.classList.add("hyp-error");
+        return;
+      }
+    
+      // Aguarda o carregamento da página real do formulário.
+      if (
+        !doc ||
+        doc.URL === "about:blank" ||
+        doc.readyState !== "complete"
+      ) {
+        return;
+      }
+    
+      initializing = true;
+    
+      try {
+        profileWindow = frameWindow;
+        profileForm = doc.querySelector("#scenario-form");
+    
+        if (
+          !profileForm ||
+          typeof profileWindow.scenario !== "function"
+        ) {
+          throw new Error(
+            "O formulário da Calculadora não foi encontrado na página carregada."
+          );
+        }
+    
         doc.documentElement.classList.add("hyp-profile");
         stylesheet(doc);
-
+    
         const scenario = parentScenario();
-
-        if (scenario && typeof profileWindow.loadScenario === "function") {
+    
+        if (
+          scenario &&
+          typeof profileWindow.loadScenario === "function"
+        ) {
           await profileWindow.loadScenario(scenario);
-        } else if (typeof profileWindow.loadParameters === "function") {
+        } else if (
+          typeof profileWindow.loadParameters === "function"
+        ) {
           await profileWindow.loadParameters();
         }
-
-        profileForm = doc.querySelector("#scenario-form");
-
-        if (!profileForm || typeof profileWindow.scenario !== "function") {
-          throw new Error("O formulário da Calculadora não foi encontrado.");
-        }
-
+    
         profileForm.addEventListener("input", scheduleAll);
         profileForm.addEventListener("change", scheduleAll);
         profileForm.addEventListener("submit", scheduleAll);
-
-        status.textContent = (
-          "Os dados deste painel são usados nos quatro cenários."
-        );
-
+    
+        status.classList.remove("hyp-error");
+        status.textContent =
+          "Os dados deste painel são usados nos quatro cenários.";
+    
         cards.forEach(card => run(card));
       } catch (error) {
-        status.textContent = (
+        status.textContent =
           "Não foi possível carregar os dados do vínculo. " +
-          error.message
-        );
+          error.message;
         status.classList.add("hyp-error");
+      } finally {
+        initializing = false;
       }
     }
 
