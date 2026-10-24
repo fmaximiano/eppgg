@@ -17,3 +17,8 @@
 @container salary-results (max-width:640px){.summary-grid{grid-template-columns:1fr;gap:8px}.stat{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:center;padding:13px 16px}.stat-label{grid-column:1;grid-row:1}.stat-value,.stat.net .stat-value{grid-column:2;grid-row:1 / span 2;margin:0;font-size:24px}.stat-sub{grid-column:1;grid-row:2}.subgrid{grid-template-columns:1fr}}
 @media(max-width:1000px){.workspace{grid-template-columns:minmax(0,1fr)}.summary-grid{position:static}}
 @media(max-width:760px){.input-panel{padding:16px}.input-panel input:not([type=checkbox]),.input-panel select{min-height:38px}}
+
+.position-evaluation{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:12px}.position-evaluation>div{min-width:0}.input-panel .position-evaluation .field-row{gap:8px}.remuneration-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin:12px 0}.remuneration-row label{margin-bottom:0}.remuneration-row #compare-options{min-height:34px;padding:6px 10px;font-size:11px;white-space:nowrap}
+@container scenario-panel (max-width:360px){.position-evaluation{grid-template-columns:1fr;gap:0}}
+@container scenario-panel (max-width:300px){.remuneration-row{grid-template-columns:1fr}.remuneration-row #compare-options{justify-self:end}}
+@media(max-width:760px){.remuneration-row #compare-options{min-height:38px}}
