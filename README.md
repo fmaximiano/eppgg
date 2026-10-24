@@ -80,3 +80,5 @@ API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo e
 A opção A usa vencimento comissionado + GDPI elegível, substituindo o VB do efetivo. RPPS conserva a referência do cargo efetivo; contribuição facultativa considera somente o excedente da comissão ao VB substituído. [Regras de comissão, RRA e vínculos](docs/folhas-especificas.md).
 
 A interface pública reúne a legislação da carreira e as publicações oficiais em uma página com busca por norma ou assunto, descrições e links institucionais. O catálogo editorial fica em `data/public-sources.json`, separado dos parâmetros imutáveis de cálculo. Os retroativos usam seleção de cenários e período; as opções técnicas de demonstração continuam apenas na API para compatibilidade.
+
+A navegação e o botão de salvar ficam no cabeçalho. A avaliação inicial utiliza somente ADI/AED, com a nota institucional vazia e inativa. Campos dependentes de adesão, regime, cargo, função e valores informados são habilitados conforme a situação. Os formulários de ato com saldos homologados e pagamento de RRA foram retirados da interface pública; os contratos de API existentes permanecem disponíveis.

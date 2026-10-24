@@ -30,3 +30,12 @@ O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto 
 - Chromium em 1440 e 390 pixels: seleção de DAD e DAI, habilitação da gratificação correspondente, bloqueio e limpeza de FGD/FGI, troca entre as famílias, reabilitação ao retirar o cargo, limpeza do formulário e recuperação de cenários salvos. Sem erros JavaScript ou overflow horizontal nos fluxos verificados.
 - A seleção fica desabilitada durante o carregamento para evitar perda de escolhas ao limpar o formulário. Contribuições facultativas são limpas quando a parcela correspondente deixa de estar selecionada.
 - Suíte de cálculo e APIs: **134 testes aprovados**. Checagem JavaScript e `git diff --check` aprovadas. Nenhuma alteração nas fórmulas ou nos parâmetros legais.
+
+## Cabeçalho, avaliação inicial e disponibilidade dos campos
+
+- Abas e botão de salvar no cabeçalho; abertura e aviso introdutório removidos. As quatro abas ficam visíveis no celular em duas colunas.
+- Formulários de ato com saldos homologados e pagamento de RRA removidos da interface, com seus contratos de API preservados.
+- Padrão da interface: ADI/AED 95 e enquadramento sem AI; nota institucional vazia e desabilitada. O caso inicial tem bruto R$6.474,11 e líquido R$5.135,88 sem IPSEMG. Os padrões e casos de referência da API não foram alterados.
+- Chromium em 1440 e 390 pixels: validação do cabeçalho, avaliação normal e automática, recuperação de notas manuais, elegibilidade GDPI, campos de previdência complementar, pensão, incidências de consignações, IPSEMG e isenção de beneficiário, cargos/funções, salvar, comparar, consolidar, evolução, retroativos e downloads.
+- Salvar, exportar e projetar usam uma simulação válida e atualizada. Campos de outra fonte salarial e ações dependentes de cenários permanecem inativos sem os pré-requisitos.
+- Suíte do motor e APIs: **134 testes aprovados**. Nenhuma fórmula ou tabela legal foi alterada.

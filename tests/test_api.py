@@ -9,7 +9,11 @@ from app.schemas import Parameters
 def test_home_health_and_functional_request(client):
     assert client.get('/health').json()=={'status':'ok','database':'connected'}
     page=client.get('/')
-    assert page.status_code==200 and 'Entenda sua remuneração' in page.text
+    assert page.status_code==200 and 'Áreas da calculadora' in page.text
+    assert 'Simular um ato com saldos homologados' not in page.text
+    assert 'Pagamento de RRA · anos anteriores' not in page.text
+    assert 'Entenda sua remuneração' not in page.text
+    assert 'value="no_institutional" selected' in page.text
     assert "script-src 'self'" in page.headers['content-security-policy']
     response=client.post('/api/calculate',json={})
     assert response.status_code==200

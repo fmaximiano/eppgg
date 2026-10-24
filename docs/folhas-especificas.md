@@ -12,7 +12,7 @@ O comparador passa a mostrar sem comissão, A e B. GTED/GTEI respeitam a espéci
 
 ## RRA exclusivo de anos anteriores
 
-Na aba **Evolução de carreira**, abra **Pagamento de RRA · anos anteriores**. A API é `POST /api/rra`. A rotina usa os valores do pagamento, não o somatório de líquidos mensais de origem. A página **Diferenças de competências anteriores** continua separada para apurar o crédito por competência.
+A apuração de RRA é mantida na API `POST /api/rra`, sem formulário na interface pública. A rotina usa os valores do pagamento, não o somatório de líquidos mensais de origem. A página **Diferenças de competências anteriores** continua separada para apurar o crédito por competência.
 
 A fonte é a Receita Federal, Perguntas e Respostas IRPF 2026, questão 251, pp. 131–132, e referências à Lei 7.713/1988, art.12-A, e IN RFB 1.500/2014, arts. 36–42. O manual foi preservado integralmente com SHA-256 em `data/sources/rfb-perguntas-respostas-2026.pdf`. Embora a edição trate da declaração do ano-calendário 2025, utiliza-se somente sua orientação de enquadramento; os valores da tabela vêm da competência de pagamento 2026 cadastrada.
 

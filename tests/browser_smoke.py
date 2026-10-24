@@ -7,6 +7,61 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 
 
+def normal_evaluation(page):
+    page.locator('[name=gdpi_evaluation]').select_option('normal')
+    page.locator('[name=ai]').fill('90')
+
+
+def reset_for_normal(page):
+    page.locator('#reset').click()
+    normal_evaluation(page)
+
+
+
+def check_conditional_fields(page):
+    for selector in ['[name=age]','[name=copay]','#add-beneficiary','[name=complementary_percent]','[name=complementary_deductible]','[name=alimony_deductible]']:
+        expect(page.locator(selector)).to_be_disabled()
+    page.locator('summary').filter(has_text='Previdência e contribuição').click()
+    page.locator('[name=capped_pension]').check()
+    expect(page.locator('[name=complementary_percent]')).to_be_enabled()
+    expect(page.locator('[name=complementary_deductible]')).to_be_disabled()
+    page.locator('[name=complementary_percent]').fill('8.5')
+    expect(page.locator('[name=complementary_deductible]')).to_be_enabled()
+    page.locator('[name=complementary_deductible]').check()
+    page.locator('[name=capped_pension]').uncheck()
+    expect(page.locator('[name=complementary_deductible]')).not_to_be_checked()
+    expect(page.locator('[name=complementary_percent]')).to_be_disabled()
+    page.locator('summary').filter(has_text='Imposto de renda e descontos').click()
+    page.locator('[name=alimony]').fill('100')
+    expect(page.locator('[name=alimony_deductible]')).to_be_enabled()
+    page.locator('[name=alimony_deductible]').check()
+    page.locator('[name=alimony]').fill('0')
+    expect(page.locator('[name=alimony_deductible]')).not_to_be_checked()
+    expect(page.locator('[name=alimony_deductible]')).to_be_disabled()
+    page.locator('[name=gdpi_evaluation]').select_option('statutory_70')
+    expect(page.locator('[name=adi]')).to_be_disabled()
+    expect(page.locator('[name=adi]')).to_have_value('70')
+    page.locator('[name=gdpi_evaluation]').select_option('no_institutional')
+    expect(page.locator('[name=adi]')).to_have_value('95')
+    expect(page.locator('[name=ai]')).to_have_value('')
+    page.locator('[name=gdpi_eligible]').uncheck()
+    expect(page.locator('[name=adi]')).to_be_disabled()
+    expect(page.locator('[name=gdpi_evaluation]')).to_be_disabled()
+    page.locator('[name=gdpi_eligible]').check()
+    expect(page.locator('[name=adi]')).to_be_enabled()
+    page.locator('summary').filter(has_text='Rubricas e proporcionalidade').click()
+    page.locator('#add-rubric').click()
+    page.locator('.rubric-name-input').fill('Parcela adicional')
+    page.locator('.rubric-amount').fill('100')
+    page.locator('[data-flag=tax]').check()
+    page.locator('.rubric-nature').select_option('deduction')
+    for flag in ['tax','pension','health','vacation','thirteenth']:
+        expect(page.locator('[data-flag='+flag+']')).to_be_disabled()
+        expect(page.locator('[data-flag='+flag+']')).not_to_be_checked()
+    expect(page.locator('[data-flag=proportional]')).to_be_enabled()
+    page.locator('#rubrics .remove').click()
+
+
 def main():
     with sync_playwright() as p:
         browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
@@ -16,6 +71,22 @@ def main():
             errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(os.getenv('APP_URL','http://127.0.0.1:8000'),wait_until='networkidle')
+            expect(page.locator('header .tabs .tab')).to_have_count(4)
+            expect(page.locator('header #save')).to_be_visible()
+            for tab in page.locator('header .tab').all():
+                box=tab.bounding_box()
+                assert box and box['x']>=0 and box['x']+box['width']<=width, 'Aba fora da largura visível'
+            expect(page.locator('.page-title,.notice,.header-note,.badge')).to_have_count(0)
+            expect(page.locator('#act-form,#rra-form')).to_have_count(0)
+            expect(page.locator('[name=gdpi_evaluation]')).to_have_value('no_institutional')
+            expect(page.locator('[name=ai]')).to_be_disabled()
+            expect(page.locator('[name=ai]')).to_have_value('')
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.474,11')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.135,88')
+            for selector in ['#compare-options','[name=function_pension]','[name=commission_pension]','[name=remuneration_option]','#run-compare','#consolidate-employments']:
+                expect(page.locator(selector)).to_be_disabled()
+            check_conditional_fields(page)
+            normal_evaluation(page)
             # A interface abre com dados reais de remuneração, com descontos e líquido.
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
             expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
@@ -24,11 +95,14 @@ def main():
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
             page.locator('#add-beneficiary').click()
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.839,83')
+            expect(page.locator('.eligibility-confirmed')).to_be_disabled()
+            expect(page.locator('.exemption-approved')).to_be_disabled()
             page.locator('.special-condition').check()
+            expect(page.locator('.exemption-approved')).to_be_enabled()
             expect(page.locator('#calculation-error')).to_contain_text('aprovada')
             page.locator('.exemption-approved').check()
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
-            page.locator('#reset').click()
+            reset_for_normal(page)
             page.locator('#dad').select_option('DAD-6')
             page.locator('[name=remuneration_option]').select_option('a')
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.648,98')
@@ -58,7 +132,7 @@ def main():
             page.locator('.delete-scenario').last.click()
             page.locator('.delete-scenario').click()
             page.locator('[data-tab=calculator]').click()
-            page.locator('#reset').click()
+            reset_for_normal(page)
             expect(page.locator('#fgd')).to_be_enabled()
             expect(page.locator('#fgi')).to_be_enabled()
             expect(page.locator('#gted')).to_be_disabled()
@@ -92,7 +166,7 @@ def main():
             expect(page.locator('#fgi')).to_be_enabled()
             page.locator('#fgi').select_option('FGI-14')
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('9.615,06')
-            page.locator('#reset').click()
+            reset_for_normal(page)
             expect(page.locator('#fgi')).to_have_value('')
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
             page.locator('#dad').select_option('DAD-6')
@@ -105,7 +179,7 @@ def main():
             page.locator('.real-catalog summary').first.click()
             expect(page.locator('.real-catalog')).to_contain_text('3.773,24')
             page.locator('[data-tab=calculator]').click()
-            page.locator('#reset').click()
+            reset_for_normal(page)
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
             expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
             page.locator('[name=adi]').fill('69')
@@ -145,13 +219,6 @@ def main():
             page.locator('#future-level').select_option('III')
             page.locator('#project-career').click()
             expect(page.locator('#career-result')).to_contain_text('Diferença líquida mensal')
-            page.locator('summary').filter(has_text='Pagamento de RRA').click()
-            page.locator('#rra-form [type=submit]').click()
-            expect(page.locator('#rra-result')).to_contain_text('5.595,24')
-            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow no RRA'
-            with page.expect_download() as downloaded:
-                page.locator('#export-rra').click()
-            assert downloaded.value.suggested_filename=='eppgg-rra.json'
             page.locator('[data-tab=sources]').click()
             expect(page.locator('#sources-content')).to_contain_text('Decreto nº 47.081/2016')
             links=page.locator('#source-groups a')
@@ -175,7 +242,7 @@ def main():
             expect(page.locator('.stat-value')).to_have_count(0)
             page.locator('[name=competence]').fill('2026-10')
             expect(page.locator('.stat-value')).to_have_count(3)
-            page.locator('#reset').click()
+            reset_for_normal(page)
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow horizontal'
             for detail in page.locator('#result details').all():detail.evaluate('(el)=>el.open=true')

@@ -7,6 +7,7 @@ const currency = n => n == null ? '—' : new Intl.NumberFormat('pt-BR',{style:'
 const number = n => new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n));
 const field = name => form.elements.namedItem(name);
 let params = null, lastResult = null, generation = 0, timer, toastTimer, editingIndex = null;
+let calculationBusy=false, previousEvaluation='no_institutional', manualGrades={adi:'95',ai:''};
 let saved = [];
 try { const value=JSON.parse(localStorage.getItem('eppgg.scenarios.v1') || '[]'); if (Array.isArray(value)) saved=value.slice(0,3).filter(s=>s && typeof s==='object' && !Array.isArray(s) && ['real','official'].includes(s.mode)); } catch { /* corrupt local storage is never executed */ }
 
@@ -33,7 +34,6 @@ function showTab(id) {
   if(id==='compare') renderSaved();
 }
 $$('.tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
-$('#view-sources').addEventListener('click',()=>showTab('sources'));
 
 function options(select, values, old) { select.replaceChildren(...values.map(v=>new Option(v,v))); if(values.includes(old))select.value=old; }
 function positionOptions(levelId,gradeId) {
@@ -44,7 +44,8 @@ function positionOptions(levelId,gradeId) {
 function updateGrades(levelId,gradeId) { const level=$(levelId), grade=$(gradeId); options(grade,(params?.positions || []).filter(p=>p.level===level.value).map(p=>p.grade),grade.value); }
 async function loadParameters() {
   const request=++generation;
-  params=null; lastResult=null;
+  params=null; lastResult=null;calculationBusy=false;
+  updateControls();
   $$('[data-family]').forEach(select=>select.disabled=true);
   field('remuneration_option').disabled=true;$('#compare-options').disabled=true;
   $('#result').replaceChildren();
@@ -63,13 +64,12 @@ async function loadParameters() {
       field('commission').value='';field('remuneration_option').value='none';
     }
     if(!(data.functions || []).some(item=>item.code===field('function').value))field('function').value='';
-    updateCommissionChoices();
-    field('remuneration_option').disabled=false;
+    updateControls();
     $('#version-label').textContent=`Valores aplicáveis de ${dateLabel(data.valid_from)} a ${dateLabel(data.valid_until)}`;
-    $('#mode-notice').textContent=data.status==='demo'?' Este arquivo contém valores de exemplo. Faça uma nova simulação para usar os valores da carreira.':' Confira o enquadramento do seu vínculo e acompanhe o detalhamento dos proventos e descontos.';
+
     $('#calculation-error').classList.add('hidden');
     await calculate();
-  } catch(error) {if(request!==generation)return;$('#calculate').disabled=false;$('#version-label').textContent='Nenhuma tabela disponível';$('#level').replaceChildren();$('#grade').replaceChildren();$('#future-level').replaceChildren();$('#future-grade').replaceChildren();showCalculationError(error);}
+  } catch(error) {if(request!==generation)return;$('#version-label').textContent='Nenhuma tabela disponível';$('#level').replaceChildren();$('#grade').replaceChildren();$('#future-level').replaceChildren();$('#future-grade').replaceChildren();showCalculationError(error);updateControls();}
 }
 function beneficiaryRow(value={relationship:'child',age:10,special_condition:false}) {
   const div=document.createElement('div');div.className='mini-panel beneficiary';
@@ -77,6 +77,7 @@ function beneficiaryRow(value={relationship:'child',age:10,special_condition:fal
   $('.relationship',div).value=value.relationship;
   $('.remove',div).addEventListener('click',()=>{div.remove();schedule();});
   $('#beneficiaries').append(div);
+  updateBeneficiaryControls(div);
 }
 $('#add-beneficiary').addEventListener('click',()=>{if($$('.beneficiary').length>=30)return toast('Limite de 30 beneficiários.');beneficiaryRow();schedule();});
 function rubricRow(value={name:'',amount:'0',nature:'earning',source:'Informado pelo usuário; incidências a conferir',tax:false,pension:false,health:false,vacation:false,thirteenth:false,proportional:false}) {
@@ -85,24 +86,39 @@ function rubricRow(value={name:'',amount:'0',nature:'earning',source:'Informado 
   $('.rubric-nature',div).value=value.nature;
   $('.remove',div).addEventListener('click',()=>{div.remove();schedule();});
   $('#rubrics').append(div);
+  updateRubricControls(div);
 }
 $('#add-rubric').addEventListener('click',()=>{if($$('.rubric').length>=50)return toast('Limite de 50 rubricas.');rubricRow();});
 function scenario() {
   const s={};
   for(const name of ['name','competence','mode','level','grade','adi','ai','fraction','gdpi_evaluation','remuneration_option','copay','alimony','other_deductions'])s[name]=field(name).value;
   for(const name of ['gdpi_eligible','commission_pension','function_pension','capped_pension','complementary_deductible','health_enrolled','special_health','alimony_deductible','project_annual'])s[name]=field(name).checked;
-  for(const name of ['age','tax_dependents'])s[name]=Number(field(name).value);
+  const automatic=s.gdpi_evaluation==='statutory_70';
+  s.adi=automatic?'70':s.gdpi_eligible?(field('adi').value || '0'):'0';
+  s.ai=automatic?'70':s.gdpi_eligible && s.gdpi_evaluation==='normal'?(field('ai').value || '0'):'0';
+  if(!s.health_enrolled){s.copay='0';s.special_health=false;}
+  if(!s.capped_pension){s.complementary_deductible=false;}
+  s.age=s.health_enrolled?Number(field('age').value):35;s.tax_dependents=Number(field('tax_dependents').value);
   s.commission=field('commission').value || null;
   s.function=field('function').value || null;
-  s.complementary_rate=String(Number(field('complementary_percent').value)/100);
-  s.beneficiaries=$$('.beneficiary').map(div=>({relationship:$('.relationship',div).value,age:Number($('.beneficiary-age',div).value),special_condition:$('.special-condition',div).checked,exemption_approved:$('.exemption-approved',div).checked,eligibility_confirmed:$('.eligibility-confirmed',div).checked}));
+  s.complementary_rate=s.capped_pension?String(Number(field('complementary_percent').value)/100):'0';
+  s.beneficiaries=(s.health_enrolled?$$('.beneficiary'):[]).map(div=>({relationship:$('.relationship',div).value,age:Number($('.beneficiary-age',div).value),special_condition:$('.special-condition',div).checked,exemption_approved:$('.exemption-approved',div).checked,eligibility_confirmed:$('.eligibility-confirmed',div).checked}));
   s.rubrics=$$('.rubric').map(div=>({name:$('.rubric-name-input',div).value,amount:$('.rubric-amount',div).value,nature:$('.rubric-nature',div).value,source:$('.rubric-source',div).value,...Object.fromEntries($$('[data-flag]',div).map(i=>[i.dataset.flag,i.checked]))}));
   return s;
 }
-function schedule() {clearTimeout(timer);timer=setTimeout(()=>{if(params && form.checkValidity())calculate();},400);}
-form.addEventListener('input',event=>{if(!['competence','mode','level','grade'].includes(event.target.name))schedule();});
+function schedule(){
+  if(params){generation++;calculationBusy=false;}
+  lastResult=null;updateControls();clearTimeout(timer);
+  if(!form.checkValidity()){
+    $('#result').innerHTML='<div class="empty panel">Preencha os campos indicados para atualizar a simulação.</div>';
+    return;
+  }
+  timer=setTimeout(()=>{if(params)calculate();},400);
+}
+form.addEventListener('input',event=>{if(!event.target.dataset.family && !['competence','mode','level','grade'].includes(event.target.name))schedule();});
 form.addEventListener('change',event=>{
   const family=event.target.dataset.family;
+  if(!family && !['competence','mode','level','grade'].includes(event.target.name))return;
   if(family){
     if(['DAD','DAI'].includes(family)){
       field('commission').value=event.target.value;
@@ -118,15 +134,15 @@ form.addEventListener('change',event=>{
   else schedule();
 });
 form.addEventListener('submit',event=>{event.preventDefault();clearTimeout(timer);calculate();});
-$('#future-level').addEventListener('change',()=>updateGrades('#future-level','#future-grade'));
+$('#future-level').addEventListener('change',()=>{updateGrades('#future-level','#future-grade');updateActions();});
 function showCalculationError(error) {$('#calculation-error').textContent=error.message;$('#calculation-error').classList.remove('hidden');$('#result').innerHTML='<div class="empty panel">Confira os dados indicados para obter uma nova simulação.</div>';lastResult=null;}
 async function calculate() {
-  if(!params)return;
+  if(!params || !form.checkValidity())return;
   const request=++generation;
-  $('#calculate').disabled=true;
+  calculationBusy=true;updateActions();
   try {const result=await api('/api/calculate',scenario());if(request!==generation)return;lastResult=result;$('#calculation-error').classList.add('hidden');renderResult(result);}
   catch(error){if(request===generation)showCalculationError(error);}
-  finally{if(request===generation)$('#calculate').disabled=false;}
+  finally{if(request===generation){calculationBusy=false;updateActions();}}
 }
 function metric(label,value){return `<div class="metric-row"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`;}
 function renderResult(r) {
@@ -136,7 +152,7 @@ function renderResult(r) {
   const rows=m.earnings.map(e=>row(e.name,e.amount,earningReference(e),false,[e.tax?'IR':'',e.pension?'RPPS':'',e.health?'IPSEMG':'',e.vacation?'Férias':'',e.thirteenth?'13º':''].filter(Boolean).join(' · '))).join('');
   const deductions=[['RPPS · contribuição progressiva',m.pension.amount,'Lei Complementar nº 64/2002'],['Previdência complementar',m.complementary,'Percentual informado sobre o excedente ao teto'],['IPSEMG Saúde',m.health.amount,'Lei nº 25.143/2025 · Decreto nº 48.981/2025'],['Coparticipação IPSEMG',m.health.copay,'Valor informado'],['IRRF',t.amount,'Tabela e redução do imposto de renda de 2026'],['Pensão alimentícia',m.alimony,'Valor informado por folha; dedução condicionada ao enquadramento'],['Outros descontos e consignações',m.other_deductions,'Valores informados após as bases legais']].filter(([,value])=>Number(value)!==0).map(([name,value,source])=>row(name,value,source,true)).join('');
   const annual=r.annual;
-  $('#result').innerHTML=`<div class="summary-grid"><div class="stat"><span class="stat-label"><i class="dot"></i> Remuneração bruta</span><span class="stat-value">${currency(m.gross)}</span><span class="stat-sub">Proventos da competência</span></div><div class="stat"><span class="stat-label"><i class="dot gold"></i> Descontos totais</span><span class="stat-value">${currency(m.deductions)}</span><span class="stat-sub">Contribuições e deduções</span></div><div class="stat net"><span class="stat-label">Seu líquido mensal ↗</span><span class="stat-value">${currency(m.net)}</span><span class="stat-sub">Estimativa ${r.parameters.status==='demo'?'demonstrativa':'da competência'}</span></div></div>
+  $('#result').innerHTML=`<div class="summary-grid"><div class="stat"><span class="stat-label"><i class="dot"></i> Remuneração bruta</span><span class="stat-value">${currency(m.gross)}</span><span class="stat-sub">Proventos da competência</span></div><div class="stat"><span class="stat-label"><i class="dot gold"></i> Descontos totais</span><span class="stat-value">${currency(m.deductions)}</span><span class="stat-sub">Contribuições e deduções</span></div><div class="stat net"><span class="stat-label">Seu líquido mensal</span><span class="stat-value">${currency(m.net)}</span><span class="stat-sub">Estimativa ${r.parameters.status==='demo'?'demonstrativa':'da competência'}</span></div></div>
 +  <div class="panel"><div class="result-title"><div><h2>Seu demonstrativo</h2><p>${escape(r.scenario.name)} · ${escape(r.scenario.competence)} · Nível ${escape(r.scenario.level)}, grau ${escape(r.scenario.grade)}</p></div><span class="pill ${r.parameters.status==='verified'?'verified':''}">ESTIMATIVA</span></div><div class="table-scroll"><table><thead><tr><th>RUBRICA / FUNDAMENTO</th><th>VALOR MENSAL</th></tr></thead><tbody>${rows}${deductions}<tr class="total-row"><td>Líquido estimado</td><td class="amount">${currency(m.net)}</td></tr></tbody></table></div><div class="export-bar"><span>Guarde seu demonstrativo e os dados da simulação.</span><div class="actions"><button class="secondary export" data-format="csv">↓ Baixar planilha</button><button class="secondary export" data-format="json">↓ Guardar simulação</button></div></div></div>
 +  <div class="subgrid"><div class="panel"><div class="small-title">DESEMPENHO & PRODUTIVIDADE</div><h2>Sua GDPI em detalhe</h2><div class="big-inline">${currency(g.actual)}</div>${metric('Fator de avaliação',number(Number(g.evaluation)*100)+'%')}${metric('Teto com notas de 100%',currency(g.ceiling))}${metric('Pontos × fator × vencimento de referência',`${number(g.effective_points ?? g.points)} × ${g.factor} × ${currency(g.reference_salary)}`)}<p class="field-help">Pontos variáveis × fator legal × vencimento de referência × avaliação × proporção do mês.</p>${!g.eligible?'<div class="callout">GDPI zerada: elegibilidade ou nota mínima individual não atendida.</div>':''}</div><div class="panel"><div class="small-title">OLHANDO PARA O ANO</div><h2>Além do salário mensal</h2>${annual?`<div class="big-inline">${currency(annual.net)}</div><p class="field-help">Estimativa anual com remuneração constante</p>${metric('13º líquido (folha separada)',currency(annual.thirteenth.net))}${metric('Férias + terço · líquido da folha',currency(annual.vacation.net))}${metric('Diferença líquida da folha de férias',currency(annual.vacation_increment_net))}<p class="field-help">11 remunerações mensais, uma folha de férias com terço e o 13º integral, sem reajustes ou alterações de vínculo.</p>`:'<p>Projeção anual desativada neste cenário.</p>'}</div></div>
 +  <div class="panel breakdown"><h2>Por dentro dos descontos</h2><details><summary>Previdência · base ${currency(m.pension.base)}</summary>${metric('Remuneração contributiva antes do teto',currency(m.bases.pension))}${Number(m.pension.effective_reference_addition)?metric('Base do efetivo mantida sem pagamento',currency(m.pension.effective_reference_addition)):''}${m.pension.bands.map(b=>metric(`${currency(b.from)} a ${b.until==null?'sem limite':currency(b.until)} · ${number(Number(b.rate)*100)}%`,`${currency(b.base)} × ${number(Number(b.rate)*100)}%`)).join('')}${metric('Contribuição após soma das faixas',currency(m.pension.amount))}${r.pension_revaluation?.length?`<p class="field-help">Limites recompostos anualmente conforme LC 64/2002, art.28, §5º; a atualização de cada ano aparece abaixo.</p>${r.pension_revaluation.map(y=>metric(String(y.year)+' · reajuste '+number(Number(y.index)*100)+'%',y.upper_limits.map(currency).join(' / '))).join('')}`:''}</details><details><summary>Imposto de renda · ${t.method==='legal'?'deduções legais':'desconto simplificado'} mais vantajoso</summary>${metric('Rendimento tributável (referência da redução)',currency(t.income))}${metric('Deduções legais',currency(t.legal_deductions))}${metric('Simplificado disponível',currency(t.simplified_deduction))}${metric('Dedução escolhida',currency(t.deduction))}${metric('Base após deduções',currency(t.base))}${metric('Alíquota / parcela a deduzir',`${number(Number(t.rate)*100)}% / ${currency(t.bracket_deduction)}`)}${metric('IR pela tabela',currency(t.before_reduction))}${metric('Redução legal',currency(t.reduction))}${t.waiver_applied?metric('Dispensa de retenção até R$10',currency(t.waiver_amount)):''}${metric('IRRF',currency(t.amount))}<div class="callout">A redução considera o rendimento tributável antes das deduções. IPSEMG Saúde não reduz a base mensal do IR.</div></details><details><summary>IPSEMG · base ${currency(m.bases.health)}</summary>${m.health.beneficiaries.map(b=>metric(b.name,currency(b.amount))).join('')}${!m.health.beneficiaries.length?'<p class="field-help">Sem desconto de assistência nesta folha.</p>':''}</details>${annual?`<details><summary>Memória das folhas de férias e 13º</summary>${['vacation','thirteenth'].map(k=>`<h3>${k==='vacation'?'Férias com terço':'13º separado'}</h3>${metric('Bruto',currency(annual[k].gross))}${metric('RPPS',currency(annual[k].pension.amount))}${metric('IPSEMG',currency(annual[k].health.amount))}${metric('IRRF desta folha',currency(annual[k].income_tax.amount))}${metric('Demais descontos',currency(Number(annual[k].deductions)-Number(annual[k].pension.amount)-Number(annual[k].health.amount)-Number(annual[k].income_tax.amount)))}${metric('Líquido',currency(annual[k].net))}`).join('')}<p class="field-help">Confira os valores considerados em cada folha antes de planejar suas despesas.</p></details>`:''}<details><summary>Condições da estimativa</summary>${metric('Vigência',`${dateLabel(r.parameters.valid_from)} a ${dateLabel(r.parameters.valid_until)}`)}<p class="field-help">Os valores são arredondados para centavos por parcela e desconto. A contribuição previdenciária é arredondada após a soma das faixas.</p><ul class="warning-list">${calculationNotes(r).map(w=>`<li>${escape(w)}</li>`).join('')}</ul></details></div>`.replace(/^\+/gm,'');
@@ -156,12 +172,13 @@ $('#save').addEventListener('click',async()=>{if(saved.length>=3 && editingIndex
 function renderSaved(){
   renderEmploymentChoices();
   for(const id of ['#retro-before','#retro-after']){const select=$(id),old=select.value;select.replaceChildren(...saved.map((scenario,i)=>new Option(scenario.name,String(i))));if(old!=='' && saved[Number(old)] && (id!=='#retro-after' || old!==$('#retro-before').value))select.value=old;else if(id==='#retro-after' && saved.length>1)select.value=String(saved.length-1);}
-  $('#calculate-retro').disabled=saved.length<2;
+  updateSecondaryControls();updateActions();
   $('#saved-count').textContent=saved.length;
-  $('#saved-list').innerHTML=saved.length?saved.map((s,i)=>`<article class="panel saved-card"><span class="pill">SIMULAÇÃO SALARIAL</span><h3>${escape(s.name)}</h3><p>${escape(s.competence)} · Nível ${escape(s.level)}, grau ${escape(s.grade)}<br>ADI ${escape(s.adi)}% · AI ${escape(s.ai)}%</p><div class="actions"><button class="secondary load-scenario" data-index="${i}">Editar</button><button class="secondary duplicate-scenario" data-index="${i}">Duplicar</button><button class="text-button delete-scenario" data-index="${i}">Excluir</button></div></article>`).join(''):'<div class="empty panel">Nenhum cenário salvo. Monte sua simulação e clique em “Salvar cenário”.</div>';
+  $('#saved-list').innerHTML=saved.length?saved.map((s,i)=>`<article class="panel saved-card"><span class="pill">SIMULAÇÃO SALARIAL</span><h3>${escape(s.name)}</h3><p>${escape(s.competence)} · Nível ${escape(s.level)}, grau ${escape(s.grade)}<br>ADI ${escape(s.adi)}% · AI ${escape(s.ai)}%</p><div class="actions"><button class="secondary load-scenario" data-index="${i}">Editar</button><button class="secondary duplicate-scenario" data-index="${i}" ${saved.length>=3?'disabled':''}>Duplicar</button><button class="text-button delete-scenario" data-index="${i}">Excluir</button></div></article>`).join(''):'<div class="empty panel">Nenhum cenário salvo. Monte sua simulação e clique em “Salvar cenário”.</div>';
   $$('.delete-scenario').forEach(b=>b.addEventListener('click',()=>{saved.splice(Number(b.dataset.index),1);editingIndex=null;$('#save').textContent='＋ Salvar cenário';persist();$('#comparison-result').replaceChildren();}));
   $$('.duplicate-scenario').forEach(b=>b.addEventListener('click',()=>{if(saved.length>=3)return toast('O comparador admite até três cenários.');saved.push({...structuredClone(saved[Number(b.dataset.index)]),name:(saved[Number(b.dataset.index)].name+' · cópia').slice(0,80)});persist();}));
   $$('.load-scenario').forEach(b=>b.addEventListener('click',()=>{editingIndex=Number(b.dataset.index);$('#save').textContent='Salvar alterações';loadScenario(saved[editingIndex]);}));
+  updateActions();
 }
 async function loadScenario(s){
   clearTimeout(timer);
@@ -169,8 +186,9 @@ async function loadScenario(s){
   field('complementary_percent').value=Number(s.complementary_rate || 0)*100;
   $('#beneficiaries').replaceChildren();(s.beneficiaries || []).forEach(beneficiaryRow);
   $('#rubrics').replaceChildren();(s.rubrics || []).forEach(rubricRow);
+  updateEvaluationFields(true);
   showTab('calculator');await loadParameters();
-  if(params){field('level').value=s.level;updateGrades('#level','#grade');field('grade').value=s.grade;field('commission').value=s.commission || '';field('function').value=s.function || '';field('remuneration_option').value=s.remuneration_option || 'none';field('commission_pension').checked=Boolean(s.commission_pension);field('function_pension').checked=Boolean(s.function_pension);updateCommissionChoices();await calculate();}
+  if(params){field('level').value=s.level;updateGrades('#level','#grade');field('grade').value=s.grade;field('commission').value=s.commission || '';field('function').value=s.function || '';field('remuneration_option').value=s.remuneration_option || 'none';field('commission_pension').checked=Boolean(s.commission_pension);field('function_pension').checked=Boolean(s.function_pension);updateControls();await calculate();}
 }
 function comparisonMarkup(r) {
   const metrics=[['Bruto mensal',x=>currency(x.monthly.gross)],['Diferença bruta vs. primeiro',x=>currency(x.difference.gross)],['RPPS',x=>currency(x.monthly.pension?.amount)],['IPSEMG',x=>currency(x.monthly.health?.amount)],['IRRF',x=>currency(x.monthly.income_tax?.amount)],['Líquido mensal',x=>currency(x.monthly.net)],['Líquido anual estimado',x=>currency(x.annual?.net)],['Diferença mensal vs. primeiro',x=>currency(x.difference.monthly)],['Variação mensal',x=>x.difference.monthly_percent==null?'—':number(x.difference.monthly_percent)+'%'],['Diferença anual vs. primeiro',x=>currency(x.difference.annual)],['Variação anual',x=>x.difference.annual_percent==null?'—':number(x.difference.annual_percent)+'%']];
@@ -180,9 +198,8 @@ $('#run-compare').addEventListener('click',async()=>{try{$('#comparison-result')
 $('#compare-options').addEventListener('click',async()=>{try{const result=await api('/api/commission-options',scenario());showTab('compare');$('#comparison-result').innerHTML=comparisonMarkup(result);}catch(error){toast(error.message);}});
 $('#import-scenario').addEventListener('click',()=>$('#import-file').click());
 $('#import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>1024*1024)throw new Error('Arquivo excede 1 MB.');let data;try{data=JSON.parse(await file.text());}catch{throw new Error('Não foi possível ler este arquivo. Escolha uma simulação guardada pelo Horizonte.');}const s=data.scenario || data;if(!['real','official'].includes(s.mode))throw new Error('Este arquivo não utiliza a tabela da carreira. Crie uma nova simulação.');if(saved.length>=3)throw new Error('Exclua um cenário antes de importar.');const valid=await api('/api/calculate',s);saved.push(valid.scenario);persist();toast('Cenário validado e importado.');}catch(error){toast(error.message);}event.target.value='';});
-$('#reset').addEventListener('click',()=>{clearTimeout(timer);editingIndex=null;$('#save').textContent='＋ Salvar cenário';form.reset();field('commission').value='';field('function').value='';field('mode').value='real';$('#beneficiaries').replaceChildren();$('#rubrics').replaceChildren();loadParameters();});
+$('#reset').addEventListener('click',()=>{clearTimeout(timer);editingIndex=null;$('#save').textContent='＋ Salvar cenário';form.reset();field('commission').value='';field('function').value='';field('mode').value='real';$('#beneficiaries').replaceChildren();$('#rubrics').replaceChildren();updateEvaluationFields(true);loadParameters();});
 $('#project-career').addEventListener('click',async()=>{try{const r=await api('/api/career',{scenario:scenario(),future_level:$('#future-level').value,future_grade:$('#future-grade').value,years:Number($('#future-years').value)});const max=Math.max(1,...r.series.map(x=>Math.abs(Number(x.accumulated_difference))));$('#career-result').innerHTML=`<div class="panel"><h2>Sua perspectiva de evolução</h2>${metric('Diferença bruta mensal',currency(r.gross_monthly_difference))}${metric('Diferença bruta anual',currency(r.gross_annual_difference))}${metric('Diferença líquida mensal',currency(r.monthly_difference))}${metric('Diferença anual estática',currency(r.annual_difference))}${r.series.every(x=>x.accumulated_difference!=null)?`<svg class="chart" viewBox="0 0 720 220" role="img" aria-label="Diferença líquida acumulada por ano">${r.series.map((x,i)=>{const w=650/r.series.length,h=Math.abs(Number(x.accumulated_difference))/max*135;return `<rect class="chart-bar ${i===r.series.length-1?'accent':''}" x="${40+i*w}" y="${170-h}" width="${w*.65}" height="${h}" rx="4"/><text x="${40+i*w}" y="195">${x.year}a</text>`;}).join('')}</svg>`:''}<div class="table-scroll"><table><thead><tr><th>ANO</th><th>DIFERENÇA ACUMULADA · ${r.monthly_difference===null?'BRUTA':'LÍQUIDA'}</th></tr></thead><tbody>${r.series.map(x=>`<tr><td>${x.year}</td><td>${currency(x.accumulated_difference ?? x.accumulated_gross_difference)}</td></tr>`).join('')}</tbody></table></div><p class="field-help">${escape(r.assumptions)} Barras mostram a magnitude; a tabela preserva o sinal das diferenças.</p></div>`;}catch(error){$('#career-result').innerHTML=`<div class="error" role="alert">${escape(error.message)}</div>`;}});
-$('#act-form').addEventListener('submit',async event=>{event.preventDefault();try{const f=event.target,r={scenario:scenario()};for(const key of ['requirement_date','protocol_date','publication_date','financial_date','level_start','blocked_until'])r[key]=f.elements.namedItem(key).value || null;for(const key of ['probation_complete','satisfactory','in_effective_exercise'])r[key]=f.elements.namedItem(key).checked;for(const key of ['progression_balance','promotion_balance','validated_event_points'])r[key]=f.elements.namedItem(key).value;r.prior_progressions_this_year=Number(f.elements.namedItem('prior_progressions_this_year').value);const result=await api('/api/career/act',r);$('#act-result').innerHTML=`<div class="callout"><strong>${escape({promotion:'Promoção',progression:'Progressão',none:'Sem movimentação elegível'}[result.act])}</strong> · Nível ${escape(result.target.level)}, grau ${escape(result.target.grade)}${metric('Saldo progressão',number(result.progression_balance))}${metric('Saldo promoção',number(result.promotion_balance))}${metric('Pontos consumidos',number(result.points_used))}${metric('Interstício completa em',result.interstice_completed_on)}<p>${escape(result.warning)}</p><p class="field-help">${escape(result.source)}</p></div>`;}catch(error){$('#act-result').innerHTML=`<div class="error" role="alert">${escape(error.message)}</div>`;}});
 $('#calculate-retro').addEventListener('click',async()=>{
   try{
     const before=saved[Number($('#retro-before').value)],after=saved[Number($('#retro-after').value)];
@@ -197,7 +214,7 @@ $('#calculate-retro').addEventListener('click',async()=>{
       month++;if(month>12){month=1;year++;}
     }
     const r=await api('/api/retroactive',{entries});
-    $('#retro-result').innerHTML=`<div class="callout">${r.entries.map(e=>metric(e.competence,currency(e.net_difference ?? e.gross_difference))).join('')}${metric('Total das diferenças brutas',currency(r.total_gross_difference))}${metric('Total das diferenças líquidas',currency(r.total_net_difference))}<p>Diferenças estimadas por competência, sem juros ou correção monetária. O imposto sobre o pagamento acumulado pode ser diferente; consulte a simulação de RRA.</p></div>`;
+    $('#retro-result').innerHTML=`<div class="callout">${r.entries.map(e=>metric(e.competence,currency(e.net_difference ?? e.gross_difference))).join('')}${metric('Total das diferenças brutas',currency(r.total_gross_difference))}${metric('Total das diferenças líquidas',currency(r.total_net_difference))}<p>Diferenças estimadas por competência, sem juros ou correção monetária. O imposto sobre o pagamento acumulado pode ser diferente, conforme a forma e a data do recebimento.</p></div>`;
   }catch(error){$('#retro-result').innerHTML=`<div class="error" role="alert">${escape(error.message)}</div>`;}
 });
 
@@ -241,19 +258,13 @@ async function loadSources(){
   }catch(error){target.innerHTML=`<div class="error">${escape(error.message)}</div>`;}
 }
 
-let lastRra=null,lastEmployment=null;
+let lastEmployment=null;
 function renderEmploymentChoices() {
   $('#employment-result').replaceChildren();lastEmployment=null;
   $('#employment-choices').innerHTML=saved.length<1?'<p>Salve pelo menos um cenário EPPGG de referência.</p>':saved.map((s,i)=>`<div class="mini-panel employment-choice" data-index="${i}"><label class="check"><input type="checkbox" class="include-employment" checked> ${escape(s.name)} · ${escape(s.competence)}</label><label>Fonte pagadora<input class="payer" value="Estado de Minas Gerais" maxlength="100" required></label></div>`).join('');
 }
 function specialWarnings(r){
-  const notes=r.request.payment_competence?[
-    'O cálculo exclusivo abrange rendimentos de anos anteriores. O número de meses deve incluir os meses de 13º abrangidos pelo pagamento.',
-    'A tabela é multiplicada pelo número de meses, sem desconto simplificado, dedução por dependente ou redução mensal de R$5 mil.',
-    'Contribuições, pensão e despesas judiciais dedutíveis devem corresponder ao demonstrativo de pagamento e às hipóteses legais.',
-    'Valores isentos são informados separadamente. O líquido após despesas judiciais considera os honorários informados, ainda que pagos fora do crédito.',
-    'Pagamentos parcelados devem usar a quantidade de meses atribuída à parcela. A opção pelo ajuste anual não está incluída nesta estimativa.'
-  ]:[
+  const notes=[
     'A acumulação dos vínculos deve ser legalmente permitida. Uma comissão integra o vínculo efetivo e não corresponde a outro emprego.',
     'A contribuição previdenciária é apurada por cargo. A assistência IPSEMG incide uma vez sobre a maior remuneração estadual.',
     'O IR é calculado por fonte pagadora. Use o mesmo nome para a mesma fonte e informe cada desconto apenas onde ele é efetivamente cobrado.',
@@ -278,16 +289,99 @@ $('#consolidate-employments').addEventListener('click',async()=>{
     $('#export-employments').addEventListener('click',()=>download(new Blob([JSON.stringify(lastEmployment,null,2)],{type:'application/json'}),'eppgg-vinculos.json'));
   }catch(e){lastEmployment=null;target.innerHTML=`<div class="error" role="alert">${escape(e.message)}</div>`;}
 });
-$('#rra-form').addEventListener('submit',async event=>{
-  event.preventDefault();const target=$('#rra-result');
-  try {
-    const payload=Object.fromEntries(new FormData(event.target));
-    lastRra=await api('/api/rra',payload);
-    const r=lastRra;
-    target.innerHTML=`<h3>Pagamento exclusivo de RRA</h3>${metric('Bruto do pagamento',currency(r.gross))}${metric('Base tributável após deduções',currency(r.base))}${metric('Número de meses',number(r.months))}${metric('Alíquota / parcela multiplicada',number(Number(r.rate)*100)+'% / '+currency(r.scaled_bracket_deduction))}${metric('IRRF exclusivo do RRA',currency(r.income_tax))}${metric('Líquido antes das despesas judiciais',currency(r.net_payment_before_legal_expenses))}${metric('Líquido após despesas judiciais',currency(r.net_after_legal_expenses))}${specialWarnings(r)}${memoryButton('export-rra')}`;
-    $('#export-rra').addEventListener('click',()=>download(new Blob([JSON.stringify(lastRra,null,2)],{type:'application/json'}),'eppgg-rra.json'));
-  }catch(e){lastRra=null;target.innerHTML=`<div class="error" role="alert">${escape(e.message)}</div>`;}
-});
+function updateEvaluationFields(reset=false){
+  const mode=field('gdpi_evaluation').value;
+  if(reset){
+    manualGrades={adi:field('adi').value || '95',ai:mode==='normal'?field('ai').value:''};
+  }else if(previousEvaluation!=='statutory_70'){
+    manualGrades.adi=field('adi').value;
+    if(previousEvaluation==='normal')manualGrades.ai=field('ai').value;
+  }
+  const automatic=mode==='statutory_70',eligible=field('gdpi_eligible').checked;
+  field('adi').value=automatic?'70':manualGrades.adi;
+  field('ai').value=automatic?'70':mode==='normal'?manualGrades.ai:'';
+  field('adi').disabled=!eligible || automatic;
+  field('ai').disabled=!eligible || mode!=='normal';
+  field('adi').required=eligible && !automatic;
+  field('ai').required=eligible && mode==='normal';
+  field('gdpi_evaluation').disabled=!eligible;
+  field('ai').placeholder=mode==='no_institutional'?'Sem nota':'Informe a nota';
+  $('#ai-label').textContent=mode==='normal' && eligible?'Institucional · AI (%)':'Institucional · inativo';
+  $('#evaluation-hint').textContent=!eligible?'A GDPI não é considerada neste cenário.':automatic?'Nesta hipótese legal, as notas utilizadas são de 70%.':mode==='no_institutional'?'Somente a avaliação individual ADI/AED é considerada.':'Informe as duas notas: 60% individual + 40% institucional.';
+  previousEvaluation=mode;
+}
+function updateBeneficiaryControls(div){
+  const enrolled=field('health_enrolled').checked,relationship=$('.relationship',div).value;
+  $$('input,select,button',div).forEach(input=>input.disabled=!enrolled);
+  const special=$('.special-condition',div),approved=$('.exemption-approved',div),eligibility=$('.eligibility-confirmed',div);
+  special.disabled=!enrolled || !['child','sibling'].includes(relationship);
+  if(!['child','sibling'].includes(relationship))special.checked=false;
+  approved.disabled=!enrolled || relationship!=='child' || !special.checked;
+  if(relationship!=='child' || !special.checked)approved.checked=false;
+  eligibility.disabled=!enrolled || !['parent','sibling'].includes(relationship);
+  if(!['parent','sibling'].includes(relationship))eligibility.checked=false;
+}
+function updateRubricControls(div){
+  const deduction=$('.rubric-nature',div).value==='deduction';
+  $$('[data-flag]',div).forEach(input=>{
+    const incidence=input.dataset.flag!=='proportional';
+    input.disabled=deduction && incidence || !field('project_annual').checked && ['vacation','thirteenth'].includes(input.dataset.flag);
+    if(deduction && incidence)input.checked=false;
+  });
+}
+function updateSecondaryControls(){
+  const available=saved.length>0,reported=available && $('#include-reported').checked;
+  $('#include-reported').disabled=!available;
+  for(const input of [$('#reported-payer'),...$$('[data-reported]'),$('#reported-ipsemg-base')]){
+    input.disabled=!reported;
+    input.required=reported && input.id!=='reported-ipsemg-base';
+  }
+  const rows=$$('.employment-choice').filter(row=>$('.include-employment',row).checked);
+  const enough=rows.length+(reported?1:0)>=2 && rows.length>0;
+  $('#lawful-accumulation').disabled=!enough;
+  const validReported=!reported || [$('#reported-payer'),...$$('[data-reported]'),$('#reported-ipsemg-base')].every(input=>input.checkValidity() && (input.type==='number' || input.value.trim()));
+  $('#consolidate-employments').disabled=!enough || !$('#lawful-accumulation').checked || !validReported || rows.some(row=>!$('.payer',row).value.trim());
+  for(const id of ['#retro-before','#retro-after','#retro-start','#retro-end'])$(id).disabled=saved.length<2;
+  const start=$('#retro-start').value,end=$('#retro-end').value;
+  $('#calculate-retro').disabled=saved.length<2 || $('#retro-before').value===$('#retro-after').value || !start || !end || start>end;
+}
+function updateActions(){
+  for(const id of ['#level','#grade','#future-level','#future-grade','#future-years'])$(id).disabled=!params;
+  const usable=Boolean(params) && form.checkValidity();
+  $('#save').disabled=!usable || !lastResult || calculationBusy || saved.length>=3 && editingIndex===null;
+  $('#calculate').disabled=!usable || calculationBusy;
+  $('#compare-options').disabled=!usable || !lastResult || calculationBusy || !field('commission').value;
+  $$('#result .export').forEach(button=>button.disabled=!lastResult || calculationBusy);
+  $('#project-career').disabled=!usable || !lastResult || calculationBusy || !$('#future-level').value || !$('#future-grade').value || !$('#future-years').value || !$('#future-years').checkValidity();
+  $('#run-compare').disabled=saved.length<2 || saved.some(s=>s.competence!==saved[0].competence);
+  $('#import-scenario').disabled=saved.length>=3;
+}
+function updateControls(){
+  updateEvaluationFields();
+  updateCommissionChoices();
+  if(!params){field('commission_pension').disabled=true;field('function_pension').disabled=true;$('#compare-options').disabled=true;}
+  const capped=field('capped_pension').checked;
+  field('complementary_percent').disabled=!capped;
+  field('complementary_deductible').disabled=!capped || Number(field('complementary_percent').value)<=0;
+  if(field('complementary_deductible').disabled)field('complementary_deductible').checked=false;
+  const enrolled=field('health_enrolled').checked;
+  field('age').disabled=!enrolled;field('copay').disabled=!enrolled;
+  field('special_health').disabled=true;field('special_health').checked=false;
+  $('#add-beneficiary').disabled=!enrolled || $$('.beneficiary').length>=30;
+  $$('.beneficiary').forEach(updateBeneficiaryControls);
+  $$('.rubric').forEach(updateRubricControls);
+  $('#add-rubric').disabled=$$('.rubric').length>=50;
+  field('alimony_deductible').disabled=Number(field('alimony').value)<=0;
+  if(field('alimony_deductible').disabled)field('alimony_deductible').checked=false;
+  updateSecondaryControls();updateActions();
+}
+$('#compare').addEventListener('input',updateSecondaryControls);
+$('#compare').addEventListener('change',updateSecondaryControls);
+for(const id of ['#future-grade','#future-years','#retro-before','#retro-after','#retro-start','#retro-end']){
+  $(id).addEventListener('input',()=>{updateSecondaryControls();updateActions();});
+  $(id).addEventListener('change',()=>{updateSecondaryControls();updateActions();});
+}
+
 renderSaved();loadParameters();
 
 function updateCommissionChoices() {
@@ -306,6 +400,7 @@ function updateCommissionChoices() {
   for(const option of field('remuneration_option').options){
     option.disabled=option.value!=='none' && (!cargo || !cargo['allow_'+option.value]);
   }
+  field('remuneration_option').disabled=!cargo;
   field('function_pension').disabled=!compatible || !fn.optional_pension;
   if(field('function_pension').disabled)field('function_pension').checked=false;
   field('commission_pension').disabled=!cargo || !cargo.optional_pension;
