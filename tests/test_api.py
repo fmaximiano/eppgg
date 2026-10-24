@@ -174,3 +174,13 @@ def test_public_sources_catalog_covers_career_and_payroll(client):
         parsed=urlparse(item['url'])
         assert parsed.scheme=='https' and (parsed.hostname.endswith('.gov.br') or parsed.hostname.endswith('.jus.br'))
         assert len(item['description'])>30
+
+
+def test_hypotheses_page_and_assets(client):
+    page=client.get('/hypotheses')
+    assert page.status_code==200
+    assert '<td>J</td><td>R$ 16.378,63</td><td>3410</td><td>1705</td>' in page.text
+    assert '/static/hypotheses.js' in page.text and '/static/hypotheses.css' in page.text
+    assert '/static/hypotheses.js' in client.get('/').text
+    for asset in ('hypotheses.js','hypotheses.css','app.js','style.css'):
+        assert client.get('/static/'+asset).status_code==200
