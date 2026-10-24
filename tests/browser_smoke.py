@@ -62,6 +62,31 @@ def check_conditional_fields(page):
     page.locator('#rubrics .remove').click()
 
 
+def select_month(page,selector,value):
+    year,month=value.split('-')
+    picker=page.locator(selector+' + .month-picker')
+    picker.locator('.month-picker-year').select_option(year)
+    picker.locator('.month-picker-month').select_option(month)
+    assert page.locator(selector).input_value()==value
+
+
+def check_hypotheses(page):
+    page.locator('[data-tab=hypotheses]').click()
+    assert page.evaluate('location.hash')=='#hypotheses'
+    expect(page.locator('#hypotheses iframe')).to_have_count(0)
+    expect(page.locator('#hyp-base-summary')).to_contain_text('Nível')
+    for kind in ['level_vi','incorporation','increase']:
+        expect(page.locator(f'.hyp-card[data-kind={kind}] .big-inline')).to_contain_text('R$')
+    card=page.locator('.hyp-card[data-kind=level_vi]')
+    card.locator('[data-param=level]').select_option('VI')
+    expect(card.locator('.hyp-net .small-title')).to_contain_text('VI-')
+    card.locator('summary').filter(has_text='Tabela hipotética').click()
+    expect(page.locator('#hyp-level-vi tr')).to_have_count(10)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nas hipóteses'
+    page.locator('#hypotheses [data-goto=calculator]').click()
+    expect(page.locator('#calculator')).to_be_visible()
+
+
 def main():
     with sync_playwright() as p:
         browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
@@ -71,8 +96,16 @@ def main():
             errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(os.getenv('APP_URL','http://127.0.0.1:8000'),wait_until='networkidle')
-            expect(page.locator('header .tabs .tab')).to_have_count(4)
+            expect(page.locator('header .tabs .tab')).to_have_count(5)
             expect(page.locator('header #save')).to_be_visible()
+            expect(page.locator('header .brand-icon')).to_be_visible()
+            expect(page.locator('.form-step')).to_have_count(4)
+            expect(page.locator('[data-hint=health]')).to_have_text('Sem adesão')
+            expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')
+            page.locator('[data-tab=compare]').click()
+            expect(page.locator('.empty-state')).to_contain_text('Nenhum cenário salvo')
+            page.locator('.empty-state [data-goto=calculator]').click()
+            expect(page.locator('#calculator')).to_be_visible()
             for tab in page.locator('header .tab').all():
                 box=tab.bounding_box()
                 assert box and box['x']>=0 and box['x']+box['width']<=width, 'Aba fora da largura visível'
@@ -210,8 +243,8 @@ def main():
             page.locator('summary').filter(has_text='Diferenças de competências anteriores').click()
             page.locator('#retro-before').select_option('0')
             page.locator('#retro-after').select_option('1')
-            page.locator('#retro-start').fill('2026-01')
-            page.locator('#retro-end').fill('2026-02')
+            select_month(page,'#retro-start','2026-01')
+            select_month(page,'#retro-end','2026-02')
             page.locator('#calculate-retro').click()
             expect(page.locator('#retro-result')).to_contain_text('Total das diferenças líquidas')
             expect(page.locator('#retro-result')).to_contain_text('2026-01')
@@ -233,14 +266,15 @@ def main():
             for term in ['JSON','CSV','SHA-256','PostgreSQL','Neon','repositório','Acervo recebido','eppgg-folha','Decreto_']:
                 assert term not in text,term
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nas fontes'
+            check_hypotheses(page)
             page.locator('[data-tab=calculator]').click()
             with page.expect_download() as downloaded:
                 page.locator('[data-format=json]').click()
             assert downloaded.value.suggested_filename.endswith('.json')
-            page.locator('[name=competence]').fill('2027-01')
+            select_month(page,'[name=competence]','2027-01')
             expect(page.locator('#calculation-error')).to_contain_text('Não há valores disponíveis')
             expect(page.locator('.stat-value')).to_have_count(0)
-            page.locator('[name=competence]').fill('2026-10')
+            select_month(page,'[name=competence]','2026-10')
             expect(page.locator('.stat-value')).to_have_count(3)
             reset_for_normal(page)
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')

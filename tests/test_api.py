@@ -174,3 +174,16 @@ def test_public_sources_catalog_covers_career_and_payroll(client):
         parsed=urlparse(item['url'])
         assert parsed.scheme=='https' and (parsed.hostname.endswith('.gov.br') or parsed.hostname.endswith('.jus.br'))
         assert len(item['description'])>30
+
+
+def test_hypotheses_tab_level_vi_table_and_assets(client):
+    old_page=client.get('/hypotheses',follow_redirects=False)
+    assert old_page.status_code==307 and old_page.headers['location']=='/#hypotheses'
+    home=client.get('/').text
+    assert 'data-tab="hypotheses"' in home and 'id="hypotheses"' in home
+    assert '<iframe' not in home and '/static/hypotheses.js' in home
+    table=client.get('/api/hypotheses/level-vi').json()
+    assert len(table)==10
+    assert table[-1]=={'grade':'J','salary':'16378.63','points':3410,'variable_points':1705}
+    for asset in ('hypotheses.js','app.js','style.css'):
+        assert client.get('/static/'+asset).status_code==200
