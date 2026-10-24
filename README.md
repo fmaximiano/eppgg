@@ -52,6 +52,13 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 - `data/career-2026.json`: carga real de 2026, 50 posições e 97 cargos/funções; cópias das fontes em `data/sources/`.
 - `data/historical-reference.json`: 50 posições transcritas do Anexo IV da Lei 18.974/2010 e do Anexo V da Lei 13.085/1998. **Referência histórica isolada, nunca usada automaticamente como tabela de 2026.**
 
+## Front-end
+
+- `app/templates/index.html` e `app/static/{app.js,style.css}`: calculadora, comparação, carreira e fontes.
+- `app/templates/hypotheses.html` e `app/static/hypotheses.{js,css}`: cenários hipotéticos.
+- `style.css` é dividido em seções numeradas (tokens, base, componentes, uma seção por aba, responsivo e impressão). Use os tokens do `:root`: cores, escala de espaçamento (`--space-*`) e raios (`--radius-*`), sem valores soltos.
+- Formatação com [Prettier](https://prettier.io) (`.prettierrc.json`): `npx prettier --write app/static app/templates`.
+
 ## Testes
 
 ```bash
