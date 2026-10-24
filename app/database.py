@@ -74,7 +74,7 @@ def initialize(engine, sessions):
         store_parameters(session, p)
         career=CareerData.model_validate_json((Path(__file__).parent.parent / 'data/career-2026.json').read_text())
         store_career_data(session,career)
-        for filename in ('payroll-2026.json','payroll-2026-v2.json','payroll-2026-v3.json','payroll-2026-v4.json','payroll-2026-v5.json'):
+        for filename in ('payroll-2026.json','payroll-2026-v2.json','payroll-2026-v3.json','payroll-2026-v4.json','payroll-2026-v5.json','payroll-2026-v6.json'):
             seed_payroll(session,Path(__file__).parent.parent/'data'/filename)
 
 

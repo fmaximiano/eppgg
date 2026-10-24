@@ -954,7 +954,15 @@ function calculationNotes(r) {
       'A inclusão de familiares e as isenções do IPSEMG dependem do reconhecimento dos requisitos pelo Instituto.',
     );
   const ade = r.monthly.earnings.find((e) => e.name === 'ADE')?.calculation;
-  if (ade?.factor != null)
+  const adiOrigin =
+    ade?.individual_origin === 'ade'
+      ? 'A ADI é a informada para o ADE'
+      : 'Sem ADI própria do ADE, foi usada a ADI da GDPI';
+  if (ade?.factor != null && ade.institutional == null)
+    notes.push(
+      `O ADE é a faixa máxima × ADI. Sem avaliação institucional, a ADI é considerada integralmente (Decreto nº 46.756/2015). ${adiOrigin}; abaixo de 70, não há ADE no exercício. Por ano de ingresso, a quantidade de avaliações é o ano da competência menos o de ingresso.`,
+    );
+  else if (ade?.factor != null)
     notes.push(
       `O ADE segue o índice da Seplag: faixa máxima × (0,3 × AI + 0,7 × ADI). A AI é ${number(ade.institutional)}, nota atribuída a órgão sem Acordo de Resultados. ${ade.individual_origin === 'ade' ? 'A ADI é a informada para o ADE' : 'Sem ADI própria do ADE, foi usada a ADI da GDPI'}; abaixo de 70, não há ADE no exercício. Por ano de ingresso, a quantidade de avaliações é o ano da competência menos o de ingresso.`,
     );
@@ -971,7 +979,7 @@ function calculationNotes(r) {
 function earningReference(e) {
   if (e.calculation) {
     const c = e.calculation;
-    return `${e.name === 'Quinquênio' ? 'CE/MG · ADCT, art. 112' : 'Lei nº 14.693/2003 · Decreto nº 44.503/2007'} · ${currency(c.base)} × ${number(Number(c.rate) * 100)}% × ${number(c.fraction)}${c.base_origin === 'recognized_base' ? ' · base reconhecida informada' : ''}${c.factor != null ? ` · faixa ${number(Number(c.ceiling) * 100)}% × (0,3 × AI ${number(c.institutional)} + 0,7 × ADI ${number(c.individual)})` : ''}${c.evaluations != null ? ' · ' + number(c.evaluations) + ' avaliações satisfatórias' : ''}${c.entry_year != null ? ' · ingresso em ' + c.entry_year : ''}`;
+    return `${e.name === 'Quinquênio' ? 'CE/MG · ADCT, art. 112' : 'Lei nº 14.693/2003 · Decreto nº 44.503/2007'} · ${currency(c.base)} × ${number(Number(c.rate) * 100)}% × ${number(c.fraction)}${c.base_origin === 'recognized_base' ? ' · base reconhecida informada' : ''}${c.factor == null ? '' : c.institutional == null ? ` · faixa ${number(Number(c.ceiling) * 100)}% × ADI ${number(c.individual)}%` : ` · faixa ${number(Number(c.ceiling) * 100)}% × (0,3 × AI ${number(c.institutional)} + 0,7 × ADI ${number(c.individual)})`}${c.evaluations != null ? ' · ' + number(c.evaluations) + ' avaliações satisfatórias' : ''}${c.entry_year != null ? ' · ingresso em ' + c.entry_year : ''}`;
   }
   if (e.name === 'Vencimento básico') return 'Lei nº 25.804/2026 · tabela de vencimentos SEPLAG';
   if (e.name === 'GDPI') return 'Lei nº 13.085/1998 · Decreto nº 46.030/2012';

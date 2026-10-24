@@ -235,7 +235,8 @@ def create_app(database_url=None):
                     if c.get('entry_year') is not None:
                         source += f" Ano de ingresso: {c['entry_year']}."
                 if c.get('factor') is not None:
-                    source += (f" Faixa máxima: {c['ceiling']*100}%; ADI: {c['individual']}; AI: {c['institutional']};"
+                    institutional = 'não se aplica' if c['institutional'] is None else c['institutional']
+                    source += (f" Faixa máxima: {c['ceiling']*100}%; ADI: {c['individual']}; AI: {institutional};"
                                f" índice: {c['ceiling']*100}% × {c['factor']}.")
             writer.writerow([s.competence, safe(row['name']),
                              format(row['amount'], '.2f'),

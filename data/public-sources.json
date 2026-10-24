@@ -110,7 +110,7 @@
         },
         {
           "title": "Lei nº 14.693/2003",
-          "description": "Institui o Adicional de Desempenho (ADE), vinculado às avaliações, e disciplina a opção pelo ADE para servidores com adicionais por tempo de serviço.",
+          "description": "Institui o Adicional de Desempenho (ADE). O art. 2º-A define os elementos do cálculo (resultado satisfatório na ADI ou AED, número de resultados satisfatórios e vencimento básico), a apuração anual em 1º de outubro e o Anexo I com as faixas máximas.",
           "url": "https://www.almg.gov.br/legislacao-mineira/texto/LEI/14693/2003/?cons=1"
         },
         {
@@ -130,7 +130,7 @@
         },
         {
           "title": "Decreto nº 44.503/2007",
-          "description": "Regulamenta a concessão e o pagamento do ADE. A atualização anual considera a avaliação pertinente, distinta da avaliação usada em outras gratificações.",
+          "description": "Regulamenta o ADE. O Anexo II traz a fórmula ADE = P × VB × [(0,3 × AI) + (0,7 × ADI)], em que P é a faixa máxima pelo número de avaliações satisfatórias. O art. 4º fixa a nota mínima de 70 e a atualização em 1º de outubro com a última ADI concluída.",
           "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/44503/2007/?cons=1"
         },
         {
@@ -140,12 +140,12 @@
         },
         {
           "title": "Decreto nº 46.032/2012",
-          "description": "Altera regras do regulamento do Adicional de Desempenho. Não se confunde com o Decreto nº 46.030/2012, relativo à carreira EPPGG e à GDPI.",
+          "description": "Dá a redação do art. 4º e acrescenta o Anexo II do Decreto nº 44.503/2007 (fórmula com 30% de avaliação institucional e 70% de ADI). Não se confunde com o Decreto nº 46.030/2012, relativo à carreira EPPGG e à GDPI.",
           "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46032/2012/?cons=1"
         },
         {
           "title": "Decreto nº 46.756/2015",
-          "description": "Altera o Decreto nº 44.503/2007 e integra a regulamentação do ADE indicada na orientação oficial da Seplag.",
+          "description": "Dá nova redação ao § 8º do art. 4º do Decreto nº 44.503/2007: sem Avaliação de Desempenho Institucional, considera-se integralmente o resultado da ADI. Com o fim do Acordo de Resultados, o ADE passa a ser P × VB × ADI, regra usada pelo simulador.",
           "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/46756/2015/?cons=1"
         },
         {

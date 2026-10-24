@@ -20,7 +20,7 @@ Para usar Neon, configure `DATABASE_URL` no processo com a connection string do 
 ## O que já funciona
 
 - Núcleo mensal: matriz explícita de nível/grau, GDPI por avaliações, quota legal explícita da pontuação (50% no conjunto real de 2026), limiar individual de 70%, ausência de AI, hipótese legal de notas de 70% e proporcionalidade.
-- Adicionais pessoais: quinquênios reconhecidos e ADE por ano de ingresso ou quantidade de ADI/AED satisfatórias, pelo índice faixa × (0,3 × AI + 0,7 × ADI) com ADI própria do ADE, com bases específicas e reflexos no líquido, férias e 13º. [Regras e limites](docs/adicionais-pessoais.md).
+- Adicionais pessoais: quinquênios reconhecidos e ADE por ano de ingresso ou quantidade de ADI/AED satisfatórias, pelo índice faixa × ADI (sem avaliação institucional, Decreto 46.756/2015) com ADI própria do ADE, com bases específicas e reflexos no líquido, férias e 13º. [Regras e limites](docs/adicionais-pessoais.md).
 - Comissões: alternativas A/B habilitadas por cargo, retenção de vencimento/GDPI e contribuição facultativa independente. Não presume que DAD, DAI e funções tenham o mesmo enquadramento.
 - RPPS por faixas progressivas, regime com teto do RGPS e simulação de contribuição complementar sobre o excedente.
 - IPSEMG: adesão, titular, cônjuge, filhos, pisos, tetos, adicional etário e teto conjunto com filhos menores. Dependentes do IR separados dos beneficiários de saúde.
@@ -48,7 +48,7 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 - [Importar e versionar tabelas](docs/parametros.md).
 - [Implantar no Railway com Neon](docs/deploy.md).
 - `docs/legislacao/`: os 11 PDFs recebidos, preservados; checksums em `data/legal-sources.json`.
-- `data/payroll-2026-v5.json`: folha vigente. O ADE segue o índice da Seplag, faixa × (0,3 × AI + 0,7 × ADI), com ADI própria do ADE (atualizado em outubro). As versões v1 a v4 permanecem como histórico imutável, substituídas explicitamente pela v5. Cenários anteriores com percentual informado continuam reproduzíveis.
+- `data/payroll-2026-v6.json`: folha vigente. O ADE é faixa × ADI, com ADI própria do ADE (atualizado em outubro): sem avaliação institucional, a ADI vale integralmente (Decreto 46.756/2015). As versões v1 a v5 permanecem como histórico imutável, substituídas explicitamente pela v6. Cenários anteriores com percentual informado continuam reproduzíveis.
 - `data/career-2026.json`: carga real de 2026, 50 posições e 97 cargos/funções; cópias das fontes em `data/sources/`.
 - `data/historical-reference.json`: 50 posições transcritas do Anexo IV da Lei 18.974/2010 e do Anexo V da Lei 13.085/1998. **Referência histórica isolada, nunca usada automaticamente como tabela de 2026.**
 
