@@ -176,11 +176,14 @@ def test_public_sources_catalog_covers_career_and_payroll(client):
         assert len(item['description'])>30
 
 
-def test_hypotheses_page_and_assets(client):
-    page=client.get('/hypotheses')
-    assert page.status_code==200
-    assert '<td>J</td><td>R$ 16.378,63</td><td>3410</td><td>1705</td>' in page.text
-    assert '/static/hypotheses.js' in page.text and '/static/hypotheses.css' in page.text
-    assert '/static/hypotheses.js' in client.get('/').text
-    for asset in ('hypotheses.js','hypotheses.css','app.js','style.css'):
+def test_hypotheses_tab_level_vi_table_and_assets(client):
+    old_page=client.get('/hypotheses',follow_redirects=False)
+    assert old_page.status_code==307 and old_page.headers['location']=='/#hypotheses'
+    home=client.get('/').text
+    assert 'data-tab="hypotheses"' in home and 'id="hypotheses"' in home
+    assert '<iframe' not in home and '/static/hypotheses.js' in home
+    table=client.get('/api/hypotheses/level-vi').json()
+    assert len(table)==10
+    assert table[-1]=={'grade':'J','salary':'16378.63','points':3410,'variable_points':1705}
+    for asset in ('hypotheses.js','app.js','style.css'):
         assert client.get('/static/'+asset).status_code==200

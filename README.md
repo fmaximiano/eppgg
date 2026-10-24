@@ -54,8 +54,8 @@ As notas de GDPI devem corresponder ao período legal de avaliação. O app não
 
 ## Front-end
 
-- `app/templates/index.html` e `app/static/{app.js,style.css}`: calculadora, comparação, carreira e fontes.
-- `app/templates/hypotheses.html` e `app/static/hypotheses.{js,css}`: cenários hipotéticos.
+- `app/templates/index.html` e `app/static/{app.js,style.css}`: todas as abas. Cada aba tem endereço próprio (`/#compare`, `/#career`, `/#hypotheses`, `/#sources`).
+- `app/static/hypotheses.js`: aba de cenários hipotéticos, que usa o cenário preenchido na Calculadora.
 - `style.css` é dividido em seções numeradas (tokens, base, componentes, uma seção por aba, responsivo e impressão). Use os tokens do `:root`: cores, escala de espaçamento (`--space-*`) e raios (`--radius-*`), sem valores soltos.
 - Formatação com [Prettier](https://prettier.io) (`.prettierrc.json`): `npx prettier --write app/static app/templates`.
 
@@ -84,7 +84,7 @@ python tests/browser_personal_additions.py
 
 A interface inicia no modo real; a API mantém `mode: demo` como padrão para compatibilidade com os cenários e integrações anteriores. Envie `mode: real` para calcular o líquido com os parâmetros reais vigentes.
 
-API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo em `/api/rra`, `/api/multiple-employments`, `/api/calculate`, `/api/compare`, `/api/commission-options`, `/api/career`, `/api/career/act`, `/api/retroactive` e `/api/export/{json|csv}`. Não existe endpoint público para modificar parâmetros. Cenários são enviados para cálculo, mas não gravados no banco pelo servidor; o navegador guarda as entradas em armazenamento local.
+API: contrato em `/openapi.json`, saúde em `/health`; operações de cálculo em `/api/rra`, `/api/multiple-employments`, `/api/calculate`, `/api/compare`, `/api/commission-options`, `/api/career`, `/api/career/act`, `/api/retroactive`, `/api/hypotheses`, `/api/hypotheses/level-vi` e `/api/export/{json|csv}`. Não existe endpoint público para modificar parâmetros. Cenários são enviados para cálculo, mas não gravados no banco pelo servidor; o navegador guarda as entradas em armazenamento local.
 
 A opção A usa vencimento comissionado + GDPI elegível, substituindo o VB do efetivo. RPPS conserva a referência do cargo efetivo; contribuição facultativa considera somente o excedente da comissão ao VB substituído. [Regras de comissão, RRA e vínculos](docs/folhas-especificas.md).
 

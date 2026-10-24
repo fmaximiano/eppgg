@@ -4,15 +4,13 @@ import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from functools import lru_cache
-from pathlib import Path
 from time import monotonic
 from typing import Literal
 from urllib.request import Request as URLRequest, urlopen
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .calculator import CalculationError, calculate, money
@@ -21,7 +19,6 @@ from .schemas import Parameters, Position, Scenario
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 D = Decimal
 
 BCB_URL = (
@@ -407,23 +404,20 @@ def run_hypothesis(body: HypothesisRequest, request: Request):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.get("/hypotheses", response_class=HTMLResponse)
-def hypotheses_page(request: Request):
-    level_vi = [
-        (grade, _brl(salary), points, int(points) // 2)
+@router.get("/api/hypotheses/level-vi")
+def level_vi_table():
+    return [
+        {
+            "grade": grade,
+            "salary": salary,
+            "points": int(points),
+            "variable_points": int(points) // 2,
+        }
         for grade, salary, points in LEVEL_VI
     ]
-    return templates.TemplateResponse(
-        request=request,
-        name="hypotheses.html",
-        context={"level_vi": level_vi},
-    )
 
 
-def _brl(value):
-    return (
-        f"{D(value):,.2f}"
-        .replace(",", "_")
-        .replace(".", ",")
-        .replace("_", ".")
-    )
+@router.get("/hypotheses")
+def hypotheses_page():
+    # A antiga página avulsa agora é uma aba da aplicação principal.
+    return RedirectResponse("/#hypotheses")

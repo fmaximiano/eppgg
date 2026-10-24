@@ -30,11 +30,22 @@
         <nav class="tabs" aria-label="Áreas da calculadora">
           <button class="tab active" data-tab="calculator" aria-current="page">Calculadora</button>
           <button class="tab" data-tab="compare">
-            Comparar cenários
-            <span id="saved-count">0</span>
+            <span class="tab-long">Comparar cenários</span>
+            <span class="tab-short" aria-hidden="true">Comparar</span>
+            <span id="saved-count" class="tab-count">0</span>
           </button>
-          <button class="tab" data-tab="career">Evolução de carreira</button>
-          <button class="tab" data-tab="sources">Legislação e fontes</button>
+          <button class="tab" data-tab="career">
+            <span class="tab-long">Evolução de carreira</span>
+            <span class="tab-short" aria-hidden="true">Carreira</span>
+          </button>
+          <button class="tab" data-tab="hypotheses">
+            <span class="tab-long">Cenários hipotéticos</span>
+            <span class="tab-short" aria-hidden="true">Hipóteses</span>
+          </button>
+          <button class="tab" data-tab="sources">
+            <span class="tab-long">Legislação e fontes</span>
+            <span class="tab-short" aria-hidden="true">Fontes</span>
+          </button>
         </nav>
         <button id="save" class="primary" disabled>＋ Salvar cenário</button>
       </div>
@@ -633,6 +644,108 @@
               <p>Escolha a posição desejada e projete a diferença para visualizar a comparação.</p>
             </div>
           </div>
+        </div>
+      </section>
+      <section id="hypotheses" class="view" aria-label="Cenários hipotéticos">
+        <div class="section-heading">
+          <div>
+            <h2>E se a carreira mudasse?</h2>
+            <p>Simule mudanças possíveis na remuneração a partir do cenário da Calculadora.</p>
+          </div>
+        </div>
+        <div class="panel hyp-base">
+          <div>
+            <span class="small-title">Cenário de referência</span>
+            <strong id="hyp-base-summary">Carregando o cenário da Calculadora…</strong>
+            <p id="hyp-status" class="field-help" role="status"></p>
+          </div>
+          <button type="button" class="secondary" data-goto="calculator">
+            Editar na Calculadora
+          </button>
+        </div>
+        <p class="callout hyp-notice">
+          As hipóteses não representam mudanças legais vigentes. A incorporação considera a GDPI
+          máxima de cada posição.
+        </p>
+        <div class="hyp-grid">
+          <article class="panel hyp-card" data-kind="level_vi">
+            <h3>1. Criação do nível VI</h3>
+            <p>Inclui o novo nível e utiliza o VI-J como referência da GDPI de toda a carreira.</p>
+            <div class="hyp-position"></div>
+            <label class="check">
+              <input type="checkbox" data-param="combine_gdpi" />
+              Também incorporar toda a GDPI
+            </label>
+            <details>
+              <summary>Tabela hipotética do nível VI</summary>
+              <div class="table-scroll">
+                <table class="hyp-table">
+                  <thead>
+                    <tr>
+                      <th>Grau</th>
+                      <th>VB</th>
+                      <th>Pontos</th>
+                      <th>Variáveis · 50%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hyp-level-vi"></tbody>
+                </table>
+              </div>
+            </details>
+            <div class="hyp-result" aria-live="polite"></div>
+          </article>
+          <article class="panel hyp-card" data-kind="incorporation">
+            <h3>2. Incorporação total da GDPI</h3>
+            <p>
+              A GDPI máxima passa a integrar o vencimento básico. Não permanece parcela variável.
+            </p>
+            <div class="hyp-position"></div>
+            <div class="hyp-result" aria-live="polite"></div>
+          </article>
+          <article class="panel hyp-card" data-kind="increase">
+            <h3>3. Aumento do vencimento básico</h3>
+            <p>Aplica o percentual à tabela de vencimentos e atualiza a referência da GDPI.</p>
+            <div class="hyp-position"></div>
+            <label>
+              Aumento (%)
+              <input
+                data-param="increase_percent"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.01"
+                value="10"
+                required
+              />
+            </label>
+            <div class="hyp-result" aria-live="polite"></div>
+          </article>
+          <article class="panel hyp-card" data-kind="inflation">
+            <h3>4. Reposição inflacionária</h3>
+            <p>
+              Atualiza o vencimento básico e a referência da GDPI pelo IPCA dos últimos meses
+              publicados.
+            </p>
+            <div class="hyp-position"></div>
+            <label>
+              Período
+              <select data-param="months">
+                <option value="1">1 mês</option>
+                <option value="2">2 meses</option>
+                <option value="3">3 meses</option>
+                <option value="4">4 meses</option>
+                <option value="5">5 meses</option>
+                <option value="6">6 meses</option>
+                <option value="7">7 meses</option>
+                <option value="8">8 meses</option>
+                <option value="9">9 meses</option>
+                <option value="10">10 meses</option>
+                <option value="11">11 meses</option>
+                <option value="12" selected>12 meses</option>
+              </select>
+            </label>
+            <div class="hyp-result" aria-live="polite"></div>
+          </article>
         </div>
       </section>
       <section id="sources" class="view" aria-label="Legislação e fontes">

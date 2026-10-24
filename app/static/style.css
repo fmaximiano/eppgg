@@ -1,9 +1,9 @@
 /* ==========================================================================
    Horizonte · folha de estilos
-   1. Tokens          5. Calculadora        9. Responsivo (media queries)
-   2. Base            6. Comparar cenários  10. Responsivo (container queries)
-   3. Componentes     7. Evolução           11. Movimento reduzido e impressão
-   4. Cabeçalho       8. Legislação e fontes
+   1. Tokens          5. Calculadora            9. Cenários hipotéticos
+   2. Base            6. Comparar cenários     10. Responsivo (media queries)
+   3. Componentes     7. Evolução              11. Responsivo (container queries)
+   4. Cabeçalho       8. Legislação e fontes   12. Movimento reduzido e impressão
    ========================================================================== */
 
 /* 1. Tokens ---------------------------------------------------------------- */
@@ -485,7 +485,7 @@ th:last-child {
   margin-inline: auto;
   padding: var(--space-4) 4.5%;
   display: grid;
-  grid-template-columns: var(--sidebar) minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-6);
 }
@@ -522,12 +522,11 @@ th:last-child {
 .topbar .tabs {
   grid-column: 2;
   grid-row: 1;
-  justify-self: start;
+  justify-self: center;
   display: flex;
   min-width: 0;
   margin: 0;
-  gap: var(--space-4);
-  overflow: visible;
+  gap: var(--space-5);
   white-space: nowrap;
 }
 .topbar .tab {
@@ -553,7 +552,10 @@ th:last-child {
   background: var(--teal);
   border-radius: 3px;
 }
-.tab span {
+.tab-short {
+  display: none;
+}
+.tab-count {
   background: var(--chip-bg);
   border-radius: var(--radius-xs);
   padding: var(--space-half) var(--space-2);
@@ -1067,7 +1069,95 @@ footer strong {
   text-underline-offset: 3px;
 }
 
-/* 9. Responsivo (media queries) -------------------------------------------- */
+/* 9. Cenários hipotéticos ------------------------------------------------- */
+.hyp-base {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.hyp-base strong {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 14px;
+}
+.hyp-base p {
+  margin: var(--space-1) 0 0;
+}
+.hyp-base button {
+  flex: none;
+}
+.hyp-notice {
+  margin: 0 0 var(--space-5);
+}
+.hyp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-5);
+}
+.hyp-card {
+  min-width: 0;
+}
+.hyp-card h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.hyp-card > p {
+  font-size: 12px;
+  margin: var(--space-2) 0 var(--space-4);
+}
+.hyp-card details {
+  font-size: 12px;
+}
+.hyp-table td,
+.hyp-table th {
+  text-align: right;
+  padding-inline: var(--space-2);
+}
+.hyp-table td:first-child,
+.hyp-table th:first-child {
+  text-align: left;
+}
+.hyp-result:not(:empty) {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.hyp-result .error {
+  margin: 0;
+}
+.hyp-net {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.hyp-net .big-inline {
+  margin: 0;
+}
+.hyp-difference {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.hyp-difference.up {
+  color: var(--teal);
+}
+.hyp-difference.down {
+  color: var(--deduction);
+}
+.hyp-assumptions {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: var(--space-4);
+  line-height: 1.7;
+}
+.hyp-download {
+  margin-top: var(--space-4);
+}
+
+/* 10. Responsivo (media queries) -------------------------------------------- */
 @media (min-width: 1300px) {
   .stat-value {
     font-size: 29px;
@@ -1077,7 +1167,8 @@ footer strong {
   }
 }
 
-@media (max-width: 1340px) {
+/* Abaixo de 1200px as abas descem para uma segunda linha. */
+@media (max-width: 1200px) {
   .topbar-inner {
     grid-template-columns: 1fr auto;
     gap: var(--space-3);
@@ -1144,19 +1235,31 @@ footer strong {
   .brand {
     font-size: 24px;
   }
+  /* Rótulos curtos numa só linha; rola na horizontal se ainda faltar espaço. */
   .topbar .tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 var(--space-4);
-    white-space: normal;
+    justify-content: space-between;
+    gap: var(--space-3);
+    overflow-x: auto;
+    scrollbar-width: none;
   }
   .topbar .tab {
-    width: 100%;
+    flex: none;
     min-height: 44px;
     padding: var(--space-3) 0;
     font-size: 12px;
-    text-align: left;
-    white-space: normal;
+  }
+  .tab.active:after {
+    bottom: 0;
+  }
+  .tab-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .tab-short {
+    display: inline;
   }
   .topbar #save {
     font-size: 11px;
@@ -1194,8 +1297,13 @@ footer strong {
     font-size: 17px;
   }
   .subgrid,
-  .sources-grid {
+  .sources-grid,
+  .hyp-grid {
     grid-template-columns: 1fr;
+  }
+  .hyp-base {
+    align-items: stretch;
+    flex-direction: column;
   }
   .section-heading,
   .export-bar {
@@ -1231,11 +1339,12 @@ footer strong {
   }
 }
 
-/* 10. Responsivo (container queries) --------------------------------------- */
+/* 11. Responsivo (container queries) --------------------------------------- */
 /* Depois das media queries: prevalecem quando ambas se aplicam. */
 @container scenario-panel (max-width: 360px) {
   .scenario-basics {
     flex-direction: column;
+    align-items: stretch;
     gap: 0;
   }
   .position-evaluation {
@@ -1294,7 +1403,7 @@ footer strong {
   }
 }
 
-/* 11. Movimento reduzido e impressão --------------------------------------- */
+/* 12. Movimento reduzido e impressão --------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

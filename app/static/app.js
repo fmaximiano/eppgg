@@ -106,10 +106,17 @@ function showTab(id) {
     if (t.dataset.tab === id) t.setAttribute('aria-current', 'page');
     else t.removeAttribute('aria-current');
   });
+  history.replaceState(null, '', id === 'calculator' ? location.pathname : '#' + id);
+  document.dispatchEvent(new CustomEvent('tab:shown', { detail: id }));
   if (id === 'sources') return loadSources();
   if (id === 'compare') renderSaved();
 }
 $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+$$('[data-goto]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.goto)));
+// Avisa outras áreas (como os cenários hipotéticos) que o cenário da Calculadora mudou.
+function announceScenario() {
+  document.dispatchEvent(new CustomEvent('scenario:updated', { detail: lastResult }));
+}
 
 function options(select, values, old) {
   select.replaceChildren(...values.map((v) => new Option(v, v)));
@@ -182,6 +189,7 @@ async function loadParameters() {
     $('#future-grade').replaceChildren();
     showCalculationError(error);
     updateControls();
+    announceScenario();
   }
 }
 function beneficiaryRow(value = { relationship: 'child', age: 10, special_condition: false }) {
@@ -335,6 +343,7 @@ function schedule() {
   if (!form.checkValidity()) {
     $('#result').innerHTML =
       '<div class="empty panel">Preencha os campos indicados para atualizar a simulação.</div>';
+    announceScenario();
     return;
   }
   timer = setTimeout(() => {
@@ -401,6 +410,7 @@ async function calculate() {
     if (request === generation) {
       calculationBusy = false;
       updateActions();
+      announceScenario();
     }
   }
 }
@@ -1088,6 +1098,10 @@ for (const id of [
 
 renderSaved();
 loadParameters();
+{
+  const initialTab = location.hash.slice(1);
+  if ($(`.tab[data-tab="${CSS.escape(initialTab)}"]`)) showTab(initialTab);
+}
 
 function updateCommissionChoices() {
   if (!params) return;

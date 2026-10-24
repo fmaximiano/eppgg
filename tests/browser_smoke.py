@@ -62,6 +62,23 @@ def check_conditional_fields(page):
     page.locator('#rubrics .remove').click()
 
 
+def check_hypotheses(page):
+    page.locator('[data-tab=hypotheses]').click()
+    assert page.evaluate('location.hash')=='#hypotheses'
+    expect(page.locator('#hypotheses iframe')).to_have_count(0)
+    expect(page.locator('#hyp-base-summary')).to_contain_text('Nível')
+    for kind in ['level_vi','incorporation','increase']:
+        expect(page.locator(f'.hyp-card[data-kind={kind}] .big-inline')).to_contain_text('R$')
+    card=page.locator('.hyp-card[data-kind=level_vi]')
+    card.locator('[data-param=level]').select_option('VI')
+    expect(card.locator('.hyp-net .small-title')).to_contain_text('VI-')
+    card.locator('summary').filter(has_text='Tabela hipotética').click()
+    expect(page.locator('#hyp-level-vi tr')).to_have_count(10)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nas hipóteses'
+    page.locator('[data-goto=calculator]').click()
+    expect(page.locator('#calculator')).to_be_visible()
+
+
 def main():
     with sync_playwright() as p:
         browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
@@ -71,7 +88,7 @@ def main():
             errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(os.getenv('APP_URL','http://127.0.0.1:8000'),wait_until='networkidle')
-            expect(page.locator('header .tabs .tab')).to_have_count(4)
+            expect(page.locator('header .tabs .tab')).to_have_count(5)
             expect(page.locator('header #save')).to_be_visible()
             for tab in page.locator('header .tab').all():
                 box=tab.bounding_box()
@@ -233,6 +250,7 @@ def main():
             for term in ['JSON','CSV','SHA-256','PostgreSQL','Neon','repositório','Acervo recebido','eppgg-folha','Decreto_']:
                 assert term not in text,term
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Overflow nas fontes'
+            check_hypotheses(page)
             page.locator('[data-tab=calculator]').click()
             with page.expect_download() as downloaded:
                 page.locator('[data-format=json]').click()
