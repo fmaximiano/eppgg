@@ -98,7 +98,7 @@ class AdeCeiling(StrictModel):
 class PersonalAdditionsRules(StrictModel):
     quinquennium_rate: Decimal = Field(gt=0, le=1)
     ade_max_rate: Decimal = Field(gt=0, le=Decimal('.70'))
-    ade_method: Literal['granted_percentage', 'satisfactory_evaluations', 'performance_index']
+    ade_method: Literal['granted_percentage', 'satisfactory_evaluations', 'performance_index', 'individual_index']
     ade_reference_ceilings: list[AdeCeiling] = Field(min_length=1)
     # performance_index: índice = faixa × (peso AI × AI + peso ADI × ADI), notas em %.
     ade_individual_weight: Decimal | None = Field(default=None, gt=0, lt=1)
@@ -112,15 +112,18 @@ class PersonalAdditionsRules(StrictModel):
         rates = [c.rate for c in self.ade_reference_ceilings]
         if counts != sorted(set(counts)) or rates != sorted(set(rates)) or rates[-1] > self.ade_max_rate:
             raise ValueError('Faixas de referência do ADE devem ser crescentes e respeitar o máximo.')
-        index_fields = (self.ade_individual_weight, self.ade_institutional_weight,
-                        self.ade_institutional_score, self.ade_min_individual)
+        institutional_fields = (self.ade_individual_weight, self.ade_institutional_weight, self.ade_institutional_score)
         if self.ade_method == 'performance_index':
-            if None in index_fields:
+            if None in (*institutional_fields, self.ade_min_individual):
                 raise ValueError('O índice do ADE exige pesos, nota institucional e nota mínima individual.')
             if self.ade_individual_weight + self.ade_institutional_weight != 1:
                 raise ValueError('Os pesos das avaliações do ADE devem somar 100%.')
-        elif any(v is not None for v in index_fields):
-            raise ValueError('Pesos e notas do ADE só se aplicam ao método por índice de desempenho.')
+        elif self.ade_method == 'individual_index':
+            # Sem avaliação institucional, vale integralmente a ADI (Decreto 46.756/2015).
+            if self.ade_min_individual is None or any(v is not None for v in institutional_fields):
+                raise ValueError('O índice individual do ADE exige só a nota mínima, sem pesos nem nota institucional.')
+        elif any(v is not None for v in (*institutional_fields, self.ade_min_individual)):
+            raise ValueError('Pesos e notas do ADE só se aplicam aos métodos por índice de desempenho.')
         return self
 
 

@@ -30,24 +30,24 @@ def main():
             page.locator('[name=ade_entry_year]').fill('2021')
             page.locator('summary').filter(has_text='IPSEMG e familiares').click()
             page.locator('[name=health_enrolled]').check()
-            # ADE pelo índice: 3773,24 × 10% × (0,3×70 + 0,7×95) = 330,16.
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.412,66')
+            # ADE = faixa × ADI: 3773,24 × 10% × 0,95 = 358,46.
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.429,20')
             expect(page.locator('#result')).to_contain_text('Quinquênio')
             expect(page.locator('#result')).to_contain_text('754,65')
-            expect(page.locator('#result')).to_contain_text('330,16')
-            # ADI própria do ADE, com vírgula: 3773,24 × 10% × (0,21 + 0,7×0,805) = 291,86.
+            expect(page.locator('#result')).to_contain_text('358,46')
+            # ADI própria do ADE, com vírgula: 3773,24 × 10% × 0,805 = 303,75.
             page.locator('[name=ade_adi]').press_sequentially('80,5')
-            expect(page.locator('#result')).to_contain_text('291,86')
+            expect(page.locator('#result')).to_contain_text('303,75')
             expect(page.locator('[name=ade_adi]')).to_have_value('80,5')
             page.locator('[name=ade_adi]').fill('')
-            expect(page.locator('#result')).to_contain_text('330,16')
+            expect(page.locator('#result')).to_contain_text('358,46')
             page.locator('#personal-additions summary').filter(has_text='Bases específicas').click()
             page.locator('[name=quinquennium_base]').fill('5000')
             expect(page.locator('#result')).to_contain_text('1.000,00')
             page.locator('[name=personal_additions_regime]').select_option('ade')
             expect(page.locator('[name=quinquennia]')).to_be_disabled()
             expect(page.locator('[name=quinquennium_base]')).to_be_disabled()
-            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.747,41')
+            expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.775,71')
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
             page.locator('[data-tab=compare]').click()
             page.locator('.load-scenario').click()
@@ -61,8 +61,8 @@ def main():
             page.locator('[name=ade_calculation]').select_option('evaluations')
             expect(page.locator('[name=ade_entry_year]')).to_be_disabled()
             page.locator('[name=ade_evaluations]').fill('10')
-            # 3773,24 × 20% × 0,875 = 660,32.
-            expect(page.locator('#result')).to_contain_text('660,32')
+            # 3773,24 × 20% × 0,95 = 716,92.
+            expect(page.locator('#result')).to_contain_text('716,92')
             expect(page.locator('#result')).to_contain_text('10 avaliações satisfatórias')
             page.locator('[data-tab=sources]').click()
             expect(page.locator('#source-search')).to_be_visible()

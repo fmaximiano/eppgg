@@ -13,6 +13,11 @@ ROOT = Path(__file__).parents[1]
 
 @pytest.fixture
 def payroll():
+    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v6.json').read_text())
+
+
+@pytest.fixture
+def payroll_v5():
     return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v5.json').read_text())
 
 
@@ -138,10 +143,10 @@ def test_entry_year_and_direct_evaluations_agree_and_export(client):
     by_count = {**base,'ade_calculation':'evaluations','ade_evaluations':5}
     year = client.post('/api/calculate',json=by_year).json()
     count = client.post('/api/calculate',json=by_count).json()
-    # ADE: 3773.24 × 10% × (0,3×70 + 0,7×95)/100 = 330.16; bruto 7549.22-377.32+330.16=7502.06.
-    # RPPS 771.0023+(7502.06-6251.37)×15%=958.61; IPSEMG 3,2%=240.07;
-    # IR (7502.06-958.61)×27,5%-908.73=890.72; líquido 5412.66.
-    assert year['monthly']['net'] == count['monthly']['net'] == '5412.66'
+    # ADE: 3773.24 × 10% × 0,95 = 358.46; bruto 7549.22-377.32+358.46=7530.36.
+    # RPPS 771.0023+(7530.36-6251.37)×15%=962.85; IPSEMG 3,2%=240.97;
+    # IR (7530.36-962.85)×27,5%-908.73=897.34; líquido 5429.20.
+    assert year['monthly']['net'] == count['monthly']['net'] == '5429.20'
     assert additions(year)['ADE']['calculation']['entry_year'] == 2021
     assert additions(year)['ADE']['calculation']['evaluations'] == 5
     saved = client.post('/api/export/json',json=by_year).json()
@@ -167,8 +172,8 @@ def test_automatic_ade_rejects_ambiguous_or_invalid_inputs(client,extra):
 
 
 @pytest.mark.parametrize('count,percent', [(0,'0'),(2,'0'),(3,'6'),(5,'10'),(10,'20'),(34,'60'),(35,'70'),(80,'70')])
-def test_v5_band_is_the_ceiling_of_the_performance_index(payroll, count, percent):
-    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count, ade_adi='100'), payroll)
+def test_v5_band_is_the_ceiling_of_the_performance_index(payroll_v5, count, percent):
+    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count, ade_adi='100'), payroll_v5)
     c = additions(r)['ADE']['calculation']
     assert c['ceiling'] == D(percent) / 100
     # ADI 100 e AI 70: fator 0,3×0,70 + 0,7×1,00 = 0,91.
@@ -177,8 +182,8 @@ def test_v5_band_is_the_ceiling_of_the_performance_index(payroll, count, percent
 
 
 @pytest.mark.parametrize('ade_adi,amount', [
-    (None, '330.16'),     # sem ADI própria: ADI da GDPI (95) → 3773.24×10%×0,875
-    ('80', '290.54'),     # 3773.24×10%×(0,21+0,56)=290.539…
+    (None, '358.46'),     # sem ADI própria: ADI da GDPI (95) → 3773.24×10%×0,95=358.458
+    ('80', '301.86'),     # 3773.24×10%×0,80=301.859…
     ('70', '264.13'),     # 3773.24×10%×0,70=264.1268
     ('69.99', '0.00'),    # abaixo de 70: sem ADE no exercício
 ])
@@ -198,4 +203,28 @@ def test_ade_adi_requires_automatic_ade(client):
     assert client.post('/api/calculate', json={**base, 'ade_percent': '10'}).status_code == 422
     assert client.post('/api/calculate', json={**base, 'ade_calculation': 'evaluations', 'ade_evaluations': 5, 'ade_adi': '100.01'}).status_code == 422
     csv = client.post('/api/export/csv', json={**base, 'ade_calculation': 'evaluations', 'ade_evaluations': 5}).text
-    assert ';ADE;290.54;' in csv and 'ADI: 80' in csv and 'AI: 70' in csv
+    assert ';ADE;301.86;' in csv and 'ADI: 80' in csv and 'AI: não se aplica' in csv
+
+
+def test_ade_without_institutional_evaluation_uses_the_full_adi(payroll):
+    # Caso conferido com contracheque: IV-J (VB 11.165,80), ingresso em 2009, ADI 94,28.
+    # 2026-2009 = 17 avaliações → faixa 30%; 11.165,80 × 30% × 0,9428 = 3.158,13.
+    s = Scenario(mode='real', level='IV', grade='J', personal_additions_regime='ade',
+                 ade_calculation='entry_year', ade_entry_year=2009, ade_adi='94.28')
+    row = additions(calculate(s, payroll))['ADE']
+    assert row['amount'] == D('3158.13')
+    c = row['calculation']
+    assert (c['evaluations'], c['ceiling'], c['institutional'], c['factor']) == (17, D('0.30'), None, D('0.9428'))
+    assert 'Decreto 46.756/2015' in c['assumption']
+
+
+@pytest.mark.parametrize('count,percent', [(2,'0'),(3,'6'),(15,'30'),(35,'70')])
+def test_v6_band_times_adi(payroll, count, percent):
+    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count, ade_adi='100'), payroll)
+    c = additions(r)['ADE']['calculation']
+    assert c['factor'] == 1 and c['rate'] == D(percent) / 100
+
+
+def test_v5_keeps_institutional_score_of_70(payroll_v5):
+    s = Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=5)
+    assert additions(calculate(s, payroll_v5))['ADE']['amount'] == D('330.16')
