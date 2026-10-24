@@ -234,6 +234,9 @@ def create_app(database_url=None):
                     source += f" Avaliações satisfatórias: {c['evaluations']}."
                     if c.get('entry_year') is not None:
                         source += f" Ano de ingresso: {c['entry_year']}."
+                if c.get('factor') is not None:
+                    source += (f" Faixa máxima: {c['ceiling']*100}%; ADI: {c['individual']}; AI: {c['institutional']};"
+                               f" índice: {c['ceiling']*100}% × {c['factor']}.")
             writer.writerow([s.competence, safe(row['name']),
                              format(row['amount'], '.2f'),
                              ('Sim' if row['tax'] else 'Não') if result['monthly']['net'] is not None else 'Não apurado',

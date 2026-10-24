@@ -99,6 +99,20 @@ def main():
             expect(page.locator('header .tabs .tab')).to_have_count(5)
             expect(page.locator('header #save')).to_be_visible()
             expect(page.locator('header .brand-icon')).to_be_visible()
+            # Notas com vírgula: o campo não pode apagar a vírgula durante a digitação.
+            page.locator('[name=adi]').fill('')
+            page.locator('[name=adi]').press_sequentially('95,5')
+            expect(page.locator('[name=adi]')).to_have_value('95,5')
+            expect(page.locator('#result')).to_contain_text('2.715,09')
+            page.locator('[name=adi]').fill('95')
+            expect(page.locator('#result')).to_contain_text('2.700,87')
+            # Tema: alterna, guarda a escolha e volta.
+            theme=page.evaluate('document.documentElement.dataset.theme')
+            page.locator('#theme-toggle').click()
+            assert page.evaluate('document.documentElement.dataset.theme')!=theme
+            assert page.evaluate("localStorage.getItem('eppgg.theme')")!=theme
+            page.locator('#theme-toggle').click()
+            assert page.evaluate('document.documentElement.dataset.theme')==theme
             expect(page.locator('.form-step')).to_have_count(4)
             expect(page.locator('[data-hint=health]')).to_have_text('Sem adesão')
             expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')

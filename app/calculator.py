@@ -168,13 +168,25 @@ def personal_additions(s, p, salary):
     rules = getattr(p, 'personal_additions_rules', {})
     if not rules:
         raise CalculationError('Não há regras de quinquênio e ADE cadastradas nesta versão de parâmetros.')
-    evaluations = None
+    evaluations = performance = None
     ade_rate = s.ade_percent / 100
     if automatic_ade:
-        if rules.ade_method != 'satisfactory_evaluations':
+        if rules.ade_method not in ('satisfactory_evaluations', 'performance_index'):
             raise CalculationError('Cálculo do ADE por avaliações não disponível nesta versão de parâmetros.')
         evaluations = int(s.competence[:4]) - s.ade_entry_year if s.ade_calculation == 'entry_year' else s.ade_evaluations
         ade_rate = max((c.rate for c in rules.ade_reference_ceilings if evaluations >= c.evaluations), default=ZERO)
+        if rules.ade_method == 'performance_index':
+            # Índice ADE = P × [(0,3 × AI) + (0,7 × ADI)]; ADI abaixo do mínimo não gera ADE no exercício.
+            individual = s.adi if s.ade_adi is None else s.ade_adi
+            performance = {
+                'ceiling': ade_rate, 'individual': individual,
+                'individual_origin': 'gdpi' if s.ade_adi is None else 'ade',
+                'institutional': rules.ade_institutional_score,
+                'factor': (rules.ade_institutional_weight * rules.ade_institutional_score
+                           + rules.ade_individual_weight * individual) / 100,
+                'eligible': individual >= rules.ade_min_individual,
+            }
+            ade_rate = ade_rate * performance['factor'] if performance['eligible'] else ZERO
     if ade_rate > rules.ade_max_rate:
         raise CalculationError('Percentual do ADE superior ao máximo cadastrado para a competência.')
     rows = []
@@ -192,7 +204,14 @@ def personal_additions(s, p, salary):
             'regime': s.personal_additions_regime,
             'method': 'recognized_quinquennia' if name == 'Quinquênio' else s.ade_calculation,
         }
-        if name == 'ADE' and automatic_ade:
+        if name == 'ADE' and automatic_ade and performance:
+            item['calculation'].update(evaluations=evaluations, entry_year=s.ade_entry_year, **performance,
+                assumption=(f'Índice ADE = faixa × ({rules.ade_institutional_weight} × AI + {rules.ade_individual_weight} × ADI). '
+                            f'AI {rules.ade_institutional_score}: órgão sem Acordo de Resultados. ADI da última avaliação concluída até 1º de outubro'
+                            f'{"" if s.ade_adi is not None else " (não informada: usada a ADI da GDPI)"}; '
+                            f'abaixo de {rules.ade_min_individual} não há ADE no exercício. '
+                            'Quantidade de avaliações satisfatórias por número informado ou pelo ano da competência menos o de ingresso.'))
+        elif name == 'ADE' and automatic_ade:
             item['calculation'].update(evaluations=evaluations, entry_year=s.ade_entry_year,
                 assumption='Avaliações anuais satisfatórias e aproveitamento integral da faixa. Ano de ingresso: diferença entre o ano da competência e o ingresso.')
         rows.append(item)

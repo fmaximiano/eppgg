@@ -13,6 +13,11 @@ ROOT = Path(__file__).parents[1]
 
 @pytest.fixture
 def payroll():
+    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v5.json').read_text())
+
+
+@pytest.fixture
+def payroll_v4():
     return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v4.json').read_text())
 
 
@@ -118,8 +123,8 @@ def test_new_version_is_idempotent_and_keeps_prior_history(client, payroll):
 
 
 @pytest.mark.parametrize('count,percent', [(0,'0'),(2,'0'),(3,'6'),(4,'6'),(5,'10'),(9,'10'),(10,'20'),(14,'20'),(15,'30'),(20,'40'),(25,'50'),(30,'60'),(34,'60'),(35,'70'),(80,'70')])
-def test_satisfactory_evaluation_band_boundaries(payroll, count, percent):
-    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count), payroll)
+def test_v4_band_boundaries_with_integral_band_are_preserved(payroll_v4, count, percent):
+    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count), payroll_v4)
     row = additions(r)['ADE']
     assert row['calculation']['rate'] == D(percent)/100
     assert row['calculation']['evaluations'] == count
@@ -133,7 +138,10 @@ def test_entry_year_and_direct_evaluations_agree_and_export(client):
     by_count = {**base,'ade_calculation':'evaluations','ade_evaluations':5}
     year = client.post('/api/calculate',json=by_year).json()
     count = client.post('/api/calculate',json=by_count).json()
-    assert year['monthly']['net'] == count['monthly']['net'] == '5440.22'
+    # ADE: 3773.24 × 10% × (0,3×70 + 0,7×95)/100 = 330.16; bruto 7549.22-377.32+330.16=7502.06.
+    # RPPS 771.0023+(7502.06-6251.37)×15%=958.61; IPSEMG 3,2%=240.07;
+    # IR (7502.06-958.61)×27,5%-908.73=890.72; líquido 5412.66.
+    assert year['monthly']['net'] == count['monthly']['net'] == '5412.66'
     assert additions(year)['ADE']['calculation']['entry_year'] == 2021
     assert additions(year)['ADE']['calculation']['evaluations'] == 5
     saved = client.post('/api/export/json',json=by_year).json()
@@ -156,3 +164,38 @@ def test_entry_year_and_direct_evaluations_agree_and_export(client):
 ])
 def test_automatic_ade_rejects_ambiguous_or_invalid_inputs(client,extra):
     assert client.post('/api/calculate',json={'mode':'real','personal_additions_regime':'ade',**extra}).status_code == 422
+
+
+@pytest.mark.parametrize('count,percent', [(0,'0'),(2,'0'),(3,'6'),(5,'10'),(10,'20'),(34,'60'),(35,'70'),(80,'70')])
+def test_v5_band_is_the_ceiling_of_the_performance_index(payroll, count, percent):
+    r = calculate(Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=count, ade_adi='100'), payroll)
+    c = additions(r)['ADE']['calculation']
+    assert c['ceiling'] == D(percent) / 100
+    # ADI 100 e AI 70: fator 0,3×0,70 + 0,7×1,00 = 0,91.
+    assert c['factor'] == D('0.91')
+    assert c['rate'] == D(percent) / 100 * D('0.91')
+
+
+@pytest.mark.parametrize('ade_adi,amount', [
+    (None, '330.16'),     # sem ADI própria: ADI da GDPI (95) → 3773.24×10%×0,875
+    ('80', '290.54'),     # 3773.24×10%×(0,21+0,56)=290.539…
+    ('70', '264.13'),     # 3773.24×10%×0,70=264.1268
+    ('69.99', '0.00'),    # abaixo de 70: sem ADE no exercício
+])
+def test_ade_uses_its_own_adi_independent_of_gdpi(payroll, ade_adi, amount):
+    s = Scenario(mode='real', personal_additions_regime='ade', ade_calculation='evaluations', ade_evaluations=5, ade_adi=ade_adi)
+    r = calculate(s, payroll)
+    row = additions(r)['ADE']
+    assert row['amount'] == D(amount)
+    assert row['calculation']['individual_origin'] == ('gdpi' if ade_adi is None else 'ade')
+    # A GDPI continua usando a ADI própria dela, qualquer que seja a ADI do ADE.
+    gdpi = lambda result: next(e for e in result['monthly']['earnings'] if e['name'] == 'GDPI')['amount']
+    assert gdpi(r) == gdpi(calculate(Scenario(mode='real'), payroll))
+
+
+def test_ade_adi_requires_automatic_ade(client):
+    base = {'mode': 'real', 'personal_additions_regime': 'ade', 'ade_adi': '80'}
+    assert client.post('/api/calculate', json={**base, 'ade_percent': '10'}).status_code == 422
+    assert client.post('/api/calculate', json={**base, 'ade_calculation': 'evaluations', 'ade_evaluations': 5, 'ade_adi': '100.01'}).status_code == 422
+    csv = client.post('/api/export/csv', json={**base, 'ade_calculation': 'evaluations', 'ade_evaluations': 5}).text
+    assert ';ADE;290.54;' in csv and 'ADI: 80' in csv and 'AI: 70' in csv

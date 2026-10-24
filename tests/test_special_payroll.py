@@ -33,7 +33,7 @@ def test_a_keeps_eligible_gdpi_replaces_salary_and_has_no_double_pension(client)
 
 def test_a_is_available_for_each_real_commission_and_reusable_exports(client):
     p=client.get('/api/parameters?mode=real').json()
-    assert p['version']=='eppgg-folha-real-2026-v4'
+    assert p['version']=='eppgg-folha-real-2026-v5'
     for commission in p['commissions']:
         assert commission['allow_a'] and commission['a_keep_gdpi']
         response=client.post('/api/calculate',json={'mode':'real','commission':commission['code'],'remuneration_option':'a'})
@@ -57,7 +57,7 @@ def test_rra_uses_scaled_table_without_monthly_reduction_or_simplified(client):
     assert result['base']=='60000.00'
     assert result['income_tax']=='5595.24'
     assert result['net_after_legal_expenses']=='54404.76'
-    assert result['parameters']['version']=='eppgg-folha-real-2026-v4'
+    assert result['parameters']['version']=='eppgg-folha-real-2026-v5'
     assert result['request']==rra(exempt_income='0',official_pension='0',alimony='0',legal_expenses='0',other_deductions='0',mode='real')
     assert client.post('/api/rra',json=result['request']).json()==result
 
@@ -160,7 +160,7 @@ def test_successor_keeps_v1_bytes_and_history_immutable(client):
     assert v2.supersedes==[v1.version]
     with client.app.state.sessions() as s:
         assert s.get(ParameterSet,v1.version).payload['commissions'][0]['allow_a'] is False
-        assert resolve_parameters(s,'2026-10','official').version=='eppgg-folha-real-2026-v4'
+        assert resolve_parameters(s,'2026-10','official').version=='eppgg-folha-real-2026-v5'
         store_parameters(s,v1);store_parameters(s,v2)
         changed=v1.model_copy(update={'source':'changed'})
         with pytest.raises(ValueError,match='diferente'):store_parameters(s,changed)
@@ -181,7 +181,7 @@ def test_upgrade_from_existing_v1_preserves_payload_and_is_idempotent(tmp_path):
     initialize(engine,sessions);initialize(engine,sessions)
     with sessions() as s:
         assert s.get(ParameterSet,v1.version).payload==original
-        assert resolve_parameters(s,'2026-10','real').version=='eppgg-folha-real-2026-v4'
+        assert resolve_parameters(s,'2026-10','real').version=='eppgg-folha-real-2026-v5'
     engine.dispose()
 
 

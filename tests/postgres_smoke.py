@@ -26,7 +26,7 @@ def main():
             assert result.json()['monthly']['net']=='5889.55'
             actual=client.post('/api/calculate',json={'mode':'real','health_enrolled':True})
             assert actual.status_code==200 and actual.json()['monthly']['net']=='4903.07'
-            assert actual.json()['parameters']['version']=='eppgg-folha-real-2026-v4'
+            assert actual.json()['parameters']['version']=='eppgg-folha-real-2026-v5'
             a=client.post('/api/calculate',json={'mode':'real','commission':'DAD-6','remuneration_option':'a'})
             assert a.status_code==200 and a.json()['monthly']['gross']=='6648.98'
             p=Parameters.model_validate_json((Path(__file__).parents[1]/'data/demo.json').read_text())

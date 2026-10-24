@@ -14,6 +14,21 @@ const currency = (n) =>
 const number = (n) =>
   new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(Number(n));
 const field = (name) => form.elements.namedItem(name);
+// Notas em campos de texto: aceitam vírgula ou ponto (ex.: 95,5) e são enviadas com ponto.
+const decimal = (value) => String(value).trim().replace(',', '.');
+function validateDecimals() {
+  for (const input of $$('[data-decimal]')) {
+    const value = decimal(input.value);
+    const valid =
+      value === '' ||
+      (/^\d{1,3}(\.\d{1,2})?$/.test(value) && Number(value) <= Number(input.dataset.decimal));
+    input.setCustomValidity(
+      valid
+        ? ''
+        : `Informe um número entre 0 e ${input.dataset.decimal}, com até duas casas decimais.`,
+    );
+  }
+}
 let params = null,
   lastResult = null,
   generation = 0,
@@ -94,6 +109,18 @@ function monthPicker(input) {
   sync();
 }
 $$('input[type=month]').forEach(monthPicker);
+
+function updateThemeButton() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  $('#theme-toggle').setAttribute('aria-label', dark ? 'Usar tema claro' : 'Usar tema escuro');
+  $('#theme-toggle').title = dark ? 'Usar tema claro' : 'Usar tema escuro';
+}
+$('#theme-toggle').addEventListener('click', () => {
+  window.toggleTheme();
+  updateThemeButton();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeButton);
+updateThemeButton();
 
 function toast(message) {
   $('#toast').textContent = message;
@@ -408,11 +435,11 @@ function scenario() {
   ])
     s[name] = field(name).checked;
   const automatic = s.gdpi_evaluation === 'statutory_70';
-  s.adi = automatic ? '70' : s.gdpi_eligible ? field('adi').value || '0' : '0';
+  s.adi = automatic ? '70' : s.gdpi_eligible ? decimal(field('adi').value) || '0' : '0';
   s.ai = automatic
     ? '70'
     : s.gdpi_eligible && s.gdpi_evaluation === 'normal'
-      ? field('ai').value || '0'
+      ? decimal(field('ai').value) || '0'
       : '0';
   if (!s.health_enrolled) {
     s.copay = '0';
@@ -438,6 +465,8 @@ function scenario() {
     s[name] = field(name).disabled || field(name).value === '' ? null : Number(field(name).value);
   for (const name of ['quinquennium_base', 'ade_base'])
     s[name] = field(name).disabled || !field(name).value ? null : field(name).value;
+  s.ade_adi =
+    field('ade_adi').disabled || !field('ade_adi').value ? null : decimal(field('ade_adi').value);
   s.complementary_rate = s.capped_pension
     ? String(Number(field('complementary_percent').value) / 100)
     : '0';
@@ -716,6 +745,7 @@ async function loadScenario(s) {
     ade_calculation: 'entry_year',
     ade_entry_year: '',
     ade_evaluations: '',
+    ade_adi: '',
     quinquennium_base: '',
     ade_base: '',
   }))
@@ -923,7 +953,12 @@ function calculationNotes(r) {
     notes.push(
       'A inclusão de familiares e as isenções do IPSEMG dependem do reconhecimento dos requisitos pelo Instituto.',
     );
-  if (['entry_year', 'evaluations'].includes(r.scenario.ade_calculation))
+  const ade = r.monthly.earnings.find((e) => e.name === 'ADE')?.calculation;
+  if (ade?.factor != null)
+    notes.push(
+      `O ADE segue o índice da Seplag: faixa máxima × (0,3 × AI + 0,7 × ADI). A AI é ${number(ade.institutional)}, nota atribuída a órgão sem Acordo de Resultados. ${ade.individual_origin === 'ade' ? 'A ADI é a informada para o ADE' : 'Sem ADI própria do ADE, foi usada a ADI da GDPI'}; abaixo de 70, não há ADE no exercício. Por ano de ingresso, a quantidade de avaliações é o ano da competência menos o de ingresso.`,
+    );
+  else if (['entry_year', 'evaluations'].includes(r.scenario.ade_calculation))
     notes.push(
       'O ADE é estimado com avaliações satisfatórias e aproveitamento integral da faixa. Por ano de ingresso, a quantidade corresponde ao ano da competência menos o ano de ingresso.',
     );
@@ -936,7 +971,7 @@ function calculationNotes(r) {
 function earningReference(e) {
   if (e.calculation) {
     const c = e.calculation;
-    return `${e.name === 'Quinquênio' ? 'CE/MG · ADCT, art. 112' : 'Lei nº 14.693/2003 · Decreto nº 44.503/2007'} · ${currency(c.base)} × ${number(Number(c.rate) * 100)}% × ${number(c.fraction)}${c.base_origin === 'recognized_base' ? ' · base reconhecida informada' : ''}${c.evaluations != null ? ' · ' + number(c.evaluations) + ' avaliações satisfatórias' : ''}${c.entry_year != null ? ' · ingresso em ' + c.entry_year : ''}`;
+    return `${e.name === 'Quinquênio' ? 'CE/MG · ADCT, art. 112' : 'Lei nº 14.693/2003 · Decreto nº 44.503/2007'} · ${currency(c.base)} × ${number(Number(c.rate) * 100)}% × ${number(c.fraction)}${c.base_origin === 'recognized_base' ? ' · base reconhecida informada' : ''}${c.factor != null ? ` · faixa ${number(Number(c.ceiling) * 100)}% × (0,3 × AI ${number(c.institutional)} + 0,7 × ADI ${number(c.individual)})` : ''}${c.evaluations != null ? ' · ' + number(c.evaluations) + ' avaliações satisfatórias' : ''}${c.entry_year != null ? ' · ingresso em ' + c.entry_year : ''}`;
   }
   if (e.name === 'Vencimento básico') return 'Lei nº 25.804/2026 · tabela de vencimentos SEPLAG';
   if (e.name === 'GDPI') return 'Lei nº 13.085/1998 · Decreto nº 46.030/2012';
@@ -1052,19 +1087,24 @@ $('#consolidate-employments').addEventListener('click', async () => {
 });
 function updateEvaluationFields(reset = false) {
   const mode = field('gdpi_evaluation').value;
+  // Só troca os valores quando o enquadramento muda: reescrever a cada tecla apagava
+  // a vírgula ou o ponto ainda sem casas decimais (ex.: "95,").
+  const changed = reset || mode !== previousEvaluation;
   if (reset) {
     manualGrades = {
       adi: field('adi').value || '95',
       ai: mode === 'normal' ? field('ai').value : '',
     };
-  } else if (previousEvaluation !== 'statutory_70') {
+  } else if (changed && previousEvaluation !== 'statutory_70') {
     manualGrades.adi = field('adi').value;
     if (previousEvaluation === 'normal') manualGrades.ai = field('ai').value;
   }
   const automatic = mode === 'statutory_70',
     eligible = field('gdpi_eligible').checked;
-  field('adi').value = automatic ? '70' : manualGrades.adi;
-  field('ai').value = automatic ? '70' : mode === 'normal' ? manualGrades.ai : '';
+  if (changed) {
+    field('adi').value = automatic ? '70' : manualGrades.adi;
+    field('ai').value = automatic ? '70' : mode === 'normal' ? manualGrades.ai : '';
+  }
   field('adi').disabled = !eligible || automatic;
   field('ai').disabled = !eligible || mode !== 'normal';
   field('adi').required = eligible && !automatic;
@@ -1182,6 +1222,7 @@ function updateControls() {
   $('#add-rubric').disabled = $$('.rubric').length >= 50;
   field('alimony_deductible').disabled = Number(field('alimony').value) <= 0;
   if (field('alimony_deductible').disabled) field('alimony_deductible').checked = false;
+  validateDecimals();
   updateSecondaryControls();
   updateActions();
 }
@@ -1197,6 +1238,7 @@ function updatePersonalAdditions() {
   )
     field('ade_calculation').value = 'entry_year';
   const method = field('ade_calculation').value;
+  field('ade_adi').disabled = !ade || method === 'granted_percentage';
   field('ade_entry_year').disabled = !ade || method !== 'entry_year';
   field('ade_evaluations').disabled = !ade || method !== 'evaluations';
   field('ade_entry_year').required = ade && method === 'entry_year';
