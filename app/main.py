@@ -18,6 +18,7 @@ from .database import create_db, initialize, database_health, resolve_parameters
 from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters, CareerData
 from .schemas import RRARequest, MultipleEmploymentsRequest
 from .special_payroll import calculate_rra, consolidate_employments
+from .hypotheses import router as hypotheses_router
 
 ROOT = Path(__file__).parent
 
@@ -254,6 +255,8 @@ def create_app(database_url=None):
         return Response('\ufeff' + output.getvalue(), media_type='text/csv; charset=utf-8',
                         headers={'Content-Disposition': 'attachment; filename="demonstrativo-eppgg.csv"'})
 
+    app.include_router(hypotheses_router)
+    
     return app
 
 
