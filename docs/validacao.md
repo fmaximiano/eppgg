@@ -39,3 +39,11 @@ O caso I-A, ADI95/AI90, sem dependentes fiscais, comissão ou extras, tem bruto 
 - Chromium em 1440 e 390 pixels: validação do cabeçalho, avaliação normal e automática, recuperação de notas manuais, elegibilidade GDPI, campos de previdência complementar, pensão, incidências de consignações, IPSEMG e isenção de beneficiário, cargos/funções, salvar, comparar, consolidar, evolução, retroativos e downloads.
 - Salvar, exportar e projetar usam uma simulação válida e atualizada. Campos de outra fonte salarial e ações dependentes de cenários permanecem inativos sem os pré-requisitos.
 - Suíte do motor e APIs: **134 testes aprovados**. Nenhuma fórmula ou tabela legal foi alterada.
+
+## Alinhamento entre cabeçalho e abas
+
+- Cabeçalho e conteúdo usam o mesmo limite de largura e os mesmos recuos. Em telas grandes, as abas começam na mesma coluna dos resultados; em telas menores, a navegação se reorganiza sem ultrapassar a largura disponível.
+- Nome e competência têm larguras iguais; a legenda de vigência é centralizada. Elegibilidade e enquadramento da avaliação compartilham a linha quando há espaço.
+- Evolução de carreira: controles e resultado em colunas alinhadas, painel inicial de orientação e retroativos organizados junto aos controles. Comparação: cartões proporcionais à quantidade de cenários, botões alinhados e fontes salariais em colunas.
+- Conferência visual e geométrica nas quatro abas em 320, 390, 1024, 1440 e 1920 pixels; sem rolagem horizontal da página. Recuperação de simulação validada em 390 e 1366 pixels, com o seletor de arquivo acessível pelo botão próprio.
+- Chromium funcional em 1440 e 390 pixels e suíte de **134 testes aprovados**. Nenhuma fórmula ou parâmetro legal alterado.
