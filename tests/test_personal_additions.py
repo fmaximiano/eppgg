@@ -13,7 +13,7 @@ ROOT = Path(__file__).parents[1]
 
 @pytest.fixture
 def payroll():
-    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v6.json').read_text())
+    return Parameters.model_validate_json((ROOT / 'data/payroll-2026-v7.json').read_text())
 
 
 @pytest.fixture

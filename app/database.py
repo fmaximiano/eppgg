@@ -72,9 +72,9 @@ def initialize(engine, sessions):
     with sessions() as session:
         p = Parameters.model_validate_json((Path(__file__).parent.parent / 'data/demo.json').read_text())
         store_parameters(session, p)
-        career=CareerData.model_validate_json((Path(__file__).parent.parent / 'data/career-2026.json').read_text())
-        store_career_data(session,career)
-        for filename in ('payroll-2026.json','payroll-2026-v2.json','payroll-2026-v3.json','payroll-2026-v4.json','payroll-2026-v5.json','payroll-2026-v6.json'):
+        for filename in ('career-2026.json','career-2026-v2.json'):
+            store_career_data(session,CareerData.model_validate_json((Path(__file__).parent.parent/'data'/filename).read_text()))
+        for filename in ('payroll-2026.json','payroll-2026-v2.json','payroll-2026-v3.json','payroll-2026-v4.json','payroll-2026-v5.json','payroll-2026-v6.json','payroll-2026-v7.json'):
             seed_payroll(session,Path(__file__).parent.parent/'data'/filename)
 
 
@@ -99,10 +99,19 @@ def store_career_data(session, p):
         return
     for row in session.scalars(select(CareerDataSet)):
         other=CareerData.model_validate(row.payload)
+        if other.version in p.supersedes and p.valid_from<=other.valid_from and p.valid_until>=other.valid_until:
+            continue
         if p.valid_from <= other.valid_until and other.valid_from <= p.valid_until:
             raise ValueError('Tabelas remuneratórias reais com vigências sobrepostas.')
     session.add(CareerDataSet(version=p.version,payload=payload))
     session.commit()
+
+
+def current_career(session, day):
+    valid=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
+    valid=[p for p in valid if p.valid_from <= day <= p.valid_until]
+    replaced={v for p in valid for v in p.supersedes}
+    return [p for p in valid if p.version not in replaced]
 
 
 def resolve_parameters(session, competence, mode):
@@ -118,8 +127,7 @@ def resolve_parameters(session, competence, mode):
             raise CalculationError('Mais de uma versão de folha vigente; resolva a sobreposição dos parâmetros.')
         if payroll:
             return payroll[0]
-        valid=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
-        valid=[p for p in valid if p.valid_from <= day <= p.valid_until]
+        valid=current_career(session,day)
         if len(valid)!=1:
             raise CalculationError('Nenhuma tabela remuneratória real única cadastrada para a competência.')
         return valid[0]
