@@ -227,6 +227,7 @@ class CareerData(StrictModel):
     career_rules: dict
     pending: list[str] = Field(min_length=1)
     evidence: list[dict] = Field(min_length=1)
+    supersedes: list[str] = []
 
     @model_validator(mode='after')
     def complete_matrix(self):

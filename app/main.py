@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from .calculator import CalculationError, calculate, money
 from .career import project, simulate_act
-from .database import create_db, initialize, database_health, resolve_parameters, ParameterSet, CareerDataSet
+from .database import create_db, initialize, database_health, resolve_parameters, current_career, ParameterSet, CareerDataSet
 from .schemas import Scenario, CompareRequest, RetroRequest, CareerRequest, CareerActRequest, Parameters, CareerData
 from .schemas import RRARequest, MultipleEmploymentsRequest
 from .special_payroll import calculate_rra, consolidate_employments
@@ -114,8 +114,7 @@ def create_app(database_url=None):
         from datetime import date
         day=date.fromisoformat(s.competence+'-01')
         with sessions() as session:
-            catalogs=[CareerData.model_validate(row.payload) for row in session.scalars(select(CareerDataSet))]
-            catalogs=[p for p in catalogs if p.valid_from<=day<=p.valid_until]
+            catalogs=current_career(session,day)
             if len(catalogs)!=1:
                 raise CalculationError('Nenhum catálogo remuneratório real único para a competência.')
             result=catalogs[0].model_dump()
