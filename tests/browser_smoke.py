@@ -19,7 +19,7 @@ def reset_for_normal(page):
 
 
 def check_conditional_fields(page):
-    for selector in ['[name=age]','[name=copay]','#add-beneficiary','[name=complementary_percent]','[name=complementary_deductible]','[name=alimony_deductible]']:
+    for selector in ['#add-beneficiary','[name=complementary_percent]','[name=complementary_deductible]']:
         expect(page.locator(selector)).to_be_disabled()
     page.locator('summary').filter(has_text='Previdência e contribuição').click()
     page.locator('[name=capped_pension]').check()
@@ -33,11 +33,10 @@ def check_conditional_fields(page):
     expect(page.locator('[name=complementary_percent]')).to_be_disabled()
     page.locator('summary').filter(has_text='Imposto de renda e descontos').click()
     page.locator('[name=alimony]').fill('100')
-    expect(page.locator('[name=alimony_deductible]')).to_be_enabled()
-    page.locator('[name=alimony_deductible]').check()
+    assert page.evaluate('scenario().alimony_deductible') is True
+    expect(page.locator('[name=alimony_deductible]')).to_have_count(0)
     page.locator('[name=alimony]').fill('0')
-    expect(page.locator('[name=alimony_deductible]')).not_to_be_checked()
-    expect(page.locator('[name=alimony_deductible]')).to_be_disabled()
+    assert page.evaluate('scenario().alimony_deductible') is False
     page.locator('[name=gdpi_evaluation]').select_option('statutory_70')
     expect(page.locator('[name=adi]')).to_be_disabled()
     expect(page.locator('[name=adi]')).to_have_value('70')
@@ -114,7 +113,7 @@ def main():
             page.locator('#theme-toggle').click()
             assert page.evaluate('document.documentElement.dataset.theme')==theme
             expect(page.locator('.form-step')).to_have_count(4)
-            expect(page.locator('[data-hint=health]')).to_have_text('Sem adesão')
+            expect(page.locator('[data-hint=health]')).to_have_text('0 beneficiários')
             expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')
             page.locator('[data-tab=compare]').click()
             expect(page.locator('.empty-state')).to_contain_text('Nenhum cenário salvo')
@@ -129,25 +128,20 @@ def main():
             expect(page.locator('[name=ai]')).to_be_disabled()
             expect(page.locator('[name=ai]')).to_have_value('')
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.474,11')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.135,88')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.928,71')
             for selector in ['#compare-options','[name=function_pension]','[name=commission_pension]','[name=remuneration_option]','#run-compare','#consolidate-employments']:
                 expect(page.locator(selector)).to_be_disabled()
             check_conditional_fields(page)
             normal_evaluation(page)
             # A interface abre com dados reais de remuneração, com descontos e líquido.
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
-            page.locator('summary').filter(has_text='IPSEMG e familiares').click()
-            page.locator('[name=health_enrolled]').check()
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
-            page.locator('#add-beneficiary').click()
+            page.locator('summary').filter(has_text='IPSEMG').first.click()
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
+            page.locator('.relationship').select_option('child')
+            page.locator('.beneficiary-age').fill('10')
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.839,83')
-            expect(page.locator('.eligibility-confirmed')).to_be_disabled()
-            expect(page.locator('.exemption-approved')).to_be_disabled()
             page.locator('.special-condition').check()
-            expect(page.locator('.exemption-approved')).to_be_enabled()
-            expect(page.locator('#calculation-error')).to_contain_text('aprovada')
-            page.locator('.exemption-approved').check()
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
             reset_for_normal(page)
             page.locator('#dad').select_option('DAD-6')
@@ -228,11 +222,11 @@ def main():
             page.locator('[data-tab=calculator]').click()
             reset_for_normal(page)
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
             page.locator('[name=adi]').fill('69')
             expect(page.locator('.big-inline').first).to_contain_text('0,00')
             page.locator('[name=adi]').fill('95')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
             page.locator('#save').click()
             expect(page.locator('#saved-count')).to_have_text('1')
             page.locator('[name=name]').fill('Comissão B')

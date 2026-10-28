@@ -227,3 +227,17 @@ def test_numeric_limits_return_validation_errors_instead_of_decimal_overflow(cli
     request=employments()
     request['employments'][1]={'payer':'Empresa','reported':{'name':'CLT','gross':'1000','taxable_income':'1000','official_pension':'1e999999'}}
     assert client.post('/api/multiple-employments',json=request).status_code==422
+
+
+def test_annual_multiple_employments_charges_copay_once():
+    from app.schemas import MultipleEmploymentsRequest
+    from app.special_payroll import consolidate_employments
+    p = Parameters.model_validate_json((ROOT / 'data/payroll-2026-v7.json').read_text())
+    request = employments()
+    baseline = consolidate_employments(MultipleEmploymentsRequest.model_validate(request), p)
+    request['employments'][0]['scenario']['copay'] = '15'
+    request['employments'][1]['scenario']['copay'] = '25'
+    charged = consolidate_employments(MultipleEmploymentsRequest.model_validate(request), p)
+    assert baseline['monthly']['net'] - charged['monthly']['net'] == D('40')
+    assert baseline['annual']['net'] - charged['annual']['net'] == D('40')
+    assert all(e['copay'] == 0 for e in charged['annual']['vacation']['employments'])

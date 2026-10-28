@@ -45,10 +45,12 @@ Lei 25.143/2025, arts.4º e 6º, e Decreto 48.981/2025, arts.4º–5º. As cópi
 - Desde 59 anos (última faixa ANS), adicional de 1% com limite próprio de R$527,00, sem consumir o teto da contribuição básica, conforme §3º. A memória separa a contribuição regular e o adicional.
 - Filho menor de 21 anos: R$63,24, dentro do teto básico conjunto com o titular. De 21 a 38 anos: R$94,86.
 - Até dois salários mínimos (R$3.242): 3,2%, sem piso nem adicional etário; menores de 21 isentos e filhos de 21 a 38 limitados a R$94,86.
-- Filho com condição especial só é tratado como isento se a aprovação do IPSEMG for confirmada. O diagnóstico isolado bloqueia a simulação. Pais/irmãos exigem confirmação de elegibilidade/dependência econômica e não podem ser acumulados com cônjuge/filhos; irmãos também não podem ser acumulados com pais. Não há concessão automática de direitos.
-- A base inclui 13º e remuneração de férias usufruídas. Verbas indenizatórias dependem das incidências de cada rubrica. Coparticipação é informada separadamente e não se repete no 13º.
+- No formulário, marcar condição especial de filho pressupõe isenção já aprovada pelo IPSEMG; selecionar pais/irmãos pressupõe elegibilidade e dependência econômica comprovadas. Na API, essas confirmações continuam explícitas. Pais/irmãos não podem ser acumulados com cônjuge/filhos; irmãos também não podem ser acumulados com pais. Não há concessão automática de direitos.
+- A base inclui 13º e remuneração de férias usufruídas. Verbas indenizatórias dependem das incidências de cada rubrica. Coparticipação é informada apenas para o mês selecionado, descontada uma única vez na projeção anual e não repetida nas folhas projetadas de férias e 13º.
 
 ## IRRF e projeções
+
+O formulário recebe apenas pensão alimentícia dedutível por folha e assume seu enquadramento legal, sem confirmação adicional. Cenários da API mantêm o indicador explícito de dedutibilidade para preservar a reprodução de cálculos anteriores.
 
 A tabela e os exemplos da Receita Federal de 2026 estão preservados com URL e SHA-256. Dedução por dependente R$189,59; simplificado mensal R$607,20; seleciona-se a dedução mais vantajosa. IPSEMG não é contribuição previdenciária dedutível na retenção mensal.
 

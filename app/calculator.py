@@ -318,9 +318,9 @@ def payroll(rows, s, p, kind='monthly', reference_pension=ZERO):
     alimony = s.alimony
     legal = pension + (complement if s.complementary_deductible else ZERO) + (alimony if s.alimony_deductible else ZERO)
     tax = income_tax(bases['tax'], legal, s.tax_dependents, p,exclusive=kind=='thirteenth')
-    # Consignações e coparticipação são informadas como mensais; não duplicar no 13º.
+    # Consignações mensais não se repetem no 13º; coparticipação vale apenas para o mês selecionado.
     other = s.other_deductions + sum((money(r.amount * (s.fraction if r.proportional else 1)) for r in s.rubrics if r.nature == 'deduction'), ZERO) if kind != 'thirteenth' else ZERO
-    copay = s.copay if kind != 'thirteenth' else ZERO
+    copay = s.copay if kind == 'monthly' else ZERO
     deductions = money(pension + complement + ipsemg + tax['amount'] + alimony + other + copay)
     return {'kind': kind, 'earnings': rows, 'gross': gross, 'deductions': deductions,
             'net': money(gross - deductions), 'bases': bases,
@@ -352,10 +352,10 @@ def calculate(s: Scenario, p: Parameters | CareerData):
         thirteenth = payroll(rows, s, p, 'thirteenth', reference_pension)
         vacation = payroll(rows, s, p, 'vacation', reference_pension)
         annual = {'thirteenth': thirteenth, 'vacation': vacation,
-                  'vacation_increment_net': money(vacation['net'] - monthly['net']),
+                  'vacation_increment_net': money(vacation['net'] - monthly['net'] - monthly['health']['copay']),
                   'gross': money(11 * monthly['gross'] + vacation['gross'] + thirteenth['gross']),
-                  'net': money(11 * monthly['net'] + vacation['net'] + thirteenth['net']),
-                  'assumptions': 'Projeção estática: 11 folhas normais + 1 folha de férias com terço + 13º integral; mesmas regras e remuneração, sem reajustes. Não é o total efetivo do ano civil.'}
+                  'net': money(11 * monthly['net'] + vacation['net'] + thirteenth['net'] + 10 * monthly['health']['copay']),
+                  'assumptions': 'Projeção estática: 11 folhas normais + 1 folha de férias com terço + 13º integral; mesmas regras e remuneração, sem reajustes. Coparticipação informada apenas no mês selecionado, descontada uma vez no total anual. Não é o total efetivo do ano civil.'}
         warnings.append('Férias/13º: incidências seguem o cadastro; projeção estática exige 12/12 avos. Benefícios não recorrentes devem ser ajustados em cenários separados.')
     return {'scenario': s.model_dump(mode='json'), 'parameters': {
         'version': p.version, 'status': p.status, 'valid_from': p.valid_from, 'valid_until': p.valid_until,

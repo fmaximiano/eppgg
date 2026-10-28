@@ -172,3 +172,14 @@ def test_invalid_inputs_rejected(kwargs):
 def test_missing_historical_or_official_data_blocks(parameters):
     for s in (Scenario(mode='official'),Scenario(competence='2016-10')):
         with pytest.raises(CalculationError):calculate(s,parameters)
+
+
+def test_copay_is_charged_once_in_annual_projection(parameters):
+    baseline = calculate(Scenario(health_enrolled=True), parameters)
+    charged = calculate(Scenario(health_enrolled=True, copay='123.45'), parameters)
+    assert baseline['monthly']['net'] - charged['monthly']['net'] == D('123.45')
+    assert baseline['annual']['net'] - charged['annual']['net'] == D('123.45')
+    for kind in ['vacation', 'thirteenth']:
+        assert charged['annual'][kind]['health']['copay'] == 0
+        assert charged['annual'][kind]['net'] == baseline['annual'][kind]['net']
+    assert charged['annual']['vacation_increment_net'] == baseline['annual']['vacation_increment_net']

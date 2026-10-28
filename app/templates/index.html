@@ -391,48 +391,23 @@
               </details>
               <details>
                 <summary>
-                  IPSEMG e familiares
+                  IPSEMG
                   <span class="summary-hint" data-hint="health"></span>
                 </summary>
-                <label class="check">
-                  <input name="health_enrolled" type="checkbox" />
-                  Aderiu ao IPSEMG Saúde
-                </label>
-                <label>
-                  Idade do titular
-                  <input name="age" disabled type="number" min="0" max="120" value="35" required />
-                </label>
+                <div class="ipsemg-fields">
+                  <label>Idade
+                    <input name="age" type="number" min="0" max="120" value="35" required />
+                  </label>
+                  <label>Coparticipação (R$)
+                    <input name="copay" type="number" min="0" step="0.01" value="0" required
+                      aria-describedby="copay-help" />
+                  </label>
+                </div>
+                <p id="copay-help" class="field-help">Valor apenas do mês selecionado; considerado uma vez no ano.</p>
                 <div id="beneficiaries"></div>
-                <button id="add-beneficiary" disabled type="button" class="secondary full">
+                <button id="add-beneficiary" type="button" class="secondary full">
                   ＋ Adicionar beneficiário
                 </button>
-                <label>
-                  Coparticipação mensal (R$)
-                  <input
-                    name="copay"
-                    disabled
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value="0"
-                    required
-                  />
-                </label>
-                <label class="check">
-                  <input
-                    name="special_health"
-                    type="checkbox"
-                    disabled
-                    title="Condição do titular fora das hipóteses abrangidas pela estimativa"
-                  />
-                  Condição especial do titular
-                </label>
-                <p class="field-help">
-                  Sem nomes ou CPF. A isenção de filho exige aprovação do IPSEMG. Pais/irmãos exigem
-                  elegibilidade e dependência econômica comprovadas; não podem ser acumulados com
-                  cônjuge/filhos, e pais não podem ser acumulados com irmãos (Lei nº 25.143/2025,
-                  art. 4º, §§ 2º e 3º).
-                </p>
               </details>
               <details>
                 <summary>
@@ -444,13 +419,10 @@
                   <input name="tax_dependents" type="number" min="0" max="30" value="0" required />
                 </label>
                 <label>
-                  Pensão alimentícia por folha (R$)
+                  Pensão alimentícia dedutível por folha (R$)
                   <input name="alimony" type="number" min="0" step="0.01" value="0" required />
                 </label>
-                <label class="check">
-                  <input name="alimony_deductible" type="checkbox" />
-                  Pensão enquadrada nas hipóteses legais de dedução
-                </label>
+                <p class="field-help">Informe a pensão prevista em decisão judicial, acordo homologado ou escritura pública admitida pela legislação.</p>
                 <label>
                   Outros descontos mensais (R$)
                   <input
