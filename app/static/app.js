@@ -229,7 +229,7 @@ function updateFormHints() {
         ? 'inclui comissão'
         : '',
     ],
-    health: plural($$('.beneficiary').filter((div) => $('.relationship', div).value).length, 'beneficiário', 'beneficiários'),
+    health: field('age').value === '' ? 'Sem contribuição' : plural($$('.beneficiary').filter((div) => $('.relationship', div).value).length, 'beneficiário', 'beneficiários'),
     tax: [
       value('tax_dependents')
         ? plural(value('tax_dependents'), 'dependente', 'dependentes')
@@ -446,7 +446,8 @@ function scenario() {
       ? decimal(field('ai').value) || '0'
       : '0';
   s.alimony_deductible = Number(s.alimony) > 0;
-  s.health_enrolled = true;
+  s.health_enrolled = field('age').value !== '';
+  if (!s.health_enrolled) s.copay = '0';
   s.special_health = false;
   if (!s.capped_pension) {
     s.complementary_deductible = false;
@@ -473,7 +474,7 @@ function scenario() {
   s.complementary_rate = s.capped_pension
     ? String(Number(field('complementary_percent').value) / 100)
     : '0';
-  s.beneficiaries = $$('.beneficiary').filter((div) => $('.relationship', div).value).map((div) => ({
+  s.beneficiaries = (s.health_enrolled ? $$('.beneficiary') : []).filter((div) => $('.relationship', div).value).map((div) => ({
     relationship: $('.relationship', div).value,
     age: Number($('.beneficiary-age', div).value),
     special_condition: $('.special-condition', div).checked,
@@ -761,6 +762,7 @@ async function loadScenario(s) {
     if (input.type === 'checkbox') input.checked = Boolean(value);
     else input.value = value;
   }
+  if (!s.health_enrolled) field('age').value = '';
   field('complementary_percent').value = Number(s.complementary_rate || 0) * 100;
   $('#beneficiaries').replaceChildren();
   if (s.beneficiaries?.length) s.beneficiaries.forEach(beneficiaryRow);
@@ -1139,9 +1141,12 @@ function updateBeneficiaryControls(div) {
   });
   const special = $('.special-condition', div),
     age = $('.beneficiary-age', div);
-  age.disabled = !relationship;
-  age.required = Boolean(relationship);
-  special.disabled = !['child', 'sibling'].includes(relationship);
+  const enrolled = field('age').value !== '';
+  age.closest('label').hidden = !relationship;
+  age.disabled = !relationship || !enrolled;
+  age.required = Boolean(relationship) && enrolled;
+  special.closest('label').hidden = relationship !== 'child';
+  special.disabled = relationship !== 'child' || !enrolled;
   if (special.disabled) special.checked = false;
 }
 function updateRubricControls(div) {
@@ -1226,6 +1231,7 @@ function updateControls() {
   field('complementary_deductible').disabled =
     !capped || Number(field('complementary_percent').value) <= 0;
   if (field('complementary_deductible').disabled) field('complementary_deductible').checked = false;
+  field('copay').disabled = field('age').value === '';
   $('#add-beneficiary').hidden = $$('.beneficiary').length >= 30 || !compatibleBeneficiaryRelationships().length;
   $('#add-beneficiary').disabled = $$('.beneficiary').some((div) => !$('.relationship', div).value);
   $$('.beneficiary').forEach(updateBeneficiaryControls);

@@ -12,6 +12,12 @@ def check_relationships(page):
         return row.locator('.relationship option').evaluate_all(
             '(options) => options.filter(o => o.value && !o.hidden && !o.disabled).map(o => o.value)')
 
+    expect(page.locator('[name=age]')).to_have_value('')
+    assert page.evaluate('scenario().health_enrolled') is False
+    expect(page.locator('[name=copay]')).to_be_disabled()
+    expect(rows.first.locator('.special-condition')).to_be_hidden()
+    expect(rows.first.locator('.beneficiary-age')).to_be_hidden()
+    page.locator('[name=age]').fill('35')
     expect(rows).to_have_count(1)
     expect(rows.first.locator('.relationship')).to_have_value('')
     expect(rows.first.locator('.beneficiary-age')).to_be_disabled()
@@ -19,6 +25,11 @@ def check_relationships(page):
     for relationship, allowed in [('parent', ['parent']), ('sibling', ['sibling']),
                                   ('spouse', ['child']), ('child', ['spouse'])]:
         rows.first.locator('.relationship').select_option(relationship)
+        expect(rows.first.locator('.beneficiary-age')).to_be_visible()
+        if relationship == 'child':
+            expect(rows.first.locator('.special-condition')).to_be_visible()
+        else:
+            expect(rows.first.locator('.special-condition')).to_be_hidden()
         expect(add).to_be_enabled()
         add.click()
         assert choices(rows.nth(1)) == allowed
@@ -49,6 +60,11 @@ def check_relationships(page):
     expect(page.locator('[name=alimony_deductible]')).to_have_count(0)
     expect(page.locator('[name=age]')).to_be_enabled()
     expect(page.locator('[name=copay]')).to_be_enabled()
+    page.locator('[name=age]').fill('')
+    request = page.evaluate('scenario()')
+    assert request['health_enrolled'] is False
+    assert request['beneficiaries'] == []
+    assert request['copay'] == '0'
     for selector in ['[name=health_enrolled]', '[name=special_health]',
                      '.exemption-approved', '.eligibility-confirmed']:
         expect(page.locator(selector)).to_have_count(0)

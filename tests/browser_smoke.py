@@ -113,7 +113,7 @@ def main():
             page.locator('#theme-toggle').click()
             assert page.evaluate('document.documentElement.dataset.theme')==theme
             expect(page.locator('.form-step')).to_have_count(4)
-            expect(page.locator('[data-hint=health]')).to_have_text('0 beneficiários')
+            expect(page.locator('[data-hint=health]')).to_have_text('Sem contribuição')
             expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')
             page.locator('[data-tab=compare]').click()
             expect(page.locator('.empty-state')).to_contain_text('Nenhum cenário salvo')
@@ -128,15 +128,16 @@ def main():
             expect(page.locator('[name=ai]')).to_be_disabled()
             expect(page.locator('[name=ai]')).to_have_value('')
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.474,11')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.928,71')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.135,88')
             for selector in ['#compare-options','[name=function_pension]','[name=commission_pension]','[name=remuneration_option]','#run-compare','#consolidate-employments']:
                 expect(page.locator(selector)).to_be_disabled()
             check_conditional_fields(page)
             normal_evaluation(page)
             # A interface abre com dados reais de remuneração, com descontos e líquido.
             expect(page.locator('.stat').first.locator('.stat-value')).to_contain_text('6.417,25')
-            expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
+            expect(page.locator('.stat.net .stat-value')).to_contain_text('5.108,42')
             page.locator('summary').filter(has_text='IPSEMG').first.click()
+            page.locator('[name=age]').fill('35')
             expect(page.locator('.stat.net .stat-value')).to_contain_text('4.903,07')
             page.locator('.relationship').select_option('child')
             page.locator('.beneficiary-age').fill('10')
