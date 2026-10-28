@@ -91,7 +91,7 @@ def consolidate_employments(request,p):
         vacation,thirteenth=sheet('vacation'),sheet('thirteenth')
         annual={'vacation':vacation,'thirteenth':thirteenth,
                 'gross':money(11*monthly['gross']+vacation['gross']+thirteenth['gross']),
-                'net':money(11*monthly['net']+vacation['net']+thirteenth['net'])}
+                'net':money(11*monthly['net']+vacation['net']+thirteenth['net']+10*sum((e['copay'] for e in monthly['employments']),D(0)))}
     return {'request':request.model_dump(mode='json'),'parameters':{'version':p.version,'status':p.status,'sources':p.sources},
             'monthly':monthly,'annual':annual,'evidence':p.evidence,
             'warnings':(['SIMULAÇÃO DEMONSTRATIVA — parâmetros fictícios, sem validade para folha.'] if p.status=='demo' else [])+['Cenários EPPGG calculam RPPS estadual. Outras fontes salariais usam bruto, rendimento tributável e contribuições efetivas informadas do contracheque; não se calcula sua previdência por uma tabela EPPGG.',

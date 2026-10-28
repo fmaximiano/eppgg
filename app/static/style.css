@@ -1679,3 +1679,43 @@ footer strong {
     color: black;
   }
 }
+
+/* IPSEMG: campos compactos e beneficiários guiados. */
+.ipsemg-fields,
+.beneficiary-fields {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ipsemg-fields label,
+.beneficiary-fields > label:last-child {
+  flex: 0 1 auto;
+}
+.ipsemg-fields input[name="age"],
+.beneficiary-age {
+  width: 9ch;
+}
+.ipsemg-fields input[name="copay"] {
+  width: 13ch;
+}
+.beneficiary-relationship {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.beneficiary-relationship select {
+  flex: 1;
+  min-width: 0;
+}
+.beneficiary-fields {
+  justify-content: space-between;
+}
+.beneficiary-fields .check {
+  margin: 0;
+}
+.beneficiary-fields > label:last-child {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

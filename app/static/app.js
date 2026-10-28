@@ -229,12 +229,7 @@ function updateFormHints() {
         ? 'inclui comissão'
         : '',
     ],
-    health: field('health_enrolled').checked
-      ? [
-          'Aderiu',
-          plural($$('#beneficiaries .beneficiary').length, 'beneficiário', 'beneficiários'),
-        ]
-      : 'Sem adesão',
+    health: plural($$('.beneficiary').filter((div) => $('.relationship', div).value).length, 'beneficiário', 'beneficiários'),
     tax: [
       value('tax_dependents')
         ? plural(value('tax_dependents'), 'dependente', 'dependentes')
@@ -347,24 +342,19 @@ async function loadParameters() {
 // Lei 25.143/2025, art. 4º, §§ 2º–3º: pais e irmãos são grupos exclusivos.
 function compatibleBeneficiaryRelationships(except = null) {
   const others = $$('.beneficiary').filter((div) => div !== except);
-  return ['child', 'spouse', 'parent', 'sibling'].filter((relationship) =>
-    others.every((div) => {
-      const existing = $('.relationship', div).value;
-      return ['child', 'spouse'].includes(relationship)
-        ? ['child', 'spouse'].includes(existing)
-        : existing === relationship;
-    }),
-  );
+  const relationships = others.map((div) => $('.relationship', div).value).filter(Boolean);
+  return ['child', 'spouse', 'parent', 'sibling'].filter((relationship) => {
+    if (relationship === 'parent')
+      return relationships.every((r) => r === 'parent') && relationships.length < 2;
+    if (relationship === 'sibling') return relationships.every((r) => r === 'sibling');
+    return relationships.every((r) => ['child', 'spouse'].includes(r) && r !== relationship);
+  });
 }
 function beneficiaryRow(value) {
-  if (!value) {
-    const relationship = compatibleBeneficiaryRelationships()[0];
-    if (!relationship) return;
-    value = { relationship, age: 10, special_condition: false };
-  }
+  if (!value) value = { relationship: '', age: '', special_condition: false };
   const div = document.createElement('div');
   div.className = 'mini-panel beneficiary';
-  div.innerHTML = `<div class="field-row"><label>Parentesco<select class="relationship"><option value="child">Filho(a)</option><option value="spouse">Cônjuge</option><option value="parent">Pai/mãe</option><option value="sibling">Irmão(ã)</option></select></label><label>Idade<input class="beneficiary-age" type="number" min="0" max="120" value="${escape(value.age)}" required></label></div><label class="check"><input type="checkbox" class="special-condition" ${value.special_condition ? 'checked' : ''}> Condição especial</label><label class="check"><input type="checkbox" class="exemption-approved" ${value.exemption_approved ? 'checked' : ''}> Isenção de filho aprovada pelo IPSEMG</label><label class="check"><input type="checkbox" class="eligibility-confirmed" ${value.eligibility_confirmed ? 'checked' : ''}> Elegibilidade e dependência econômica confirmadas (pais/irmãos)</label><button type="button" class="text-button remove">Remover beneficiário</button>`;
+  div.innerHTML = `<label class="beneficiary-relationship">Beneficiário<select class="relationship"><option value="">Nenhum</option><option value="child">Filho(a)</option><option value="spouse">Cônjuge</option><option value="parent">Pai/mãe</option><option value="sibling">Irmão(ã)</option></select></label><div class="beneficiary-fields"><label class="check"><input type="checkbox" class="special-condition" ${value.special_condition ? 'checked' : ''}> Condição especial</label><label>Idade<input class="beneficiary-age" type="number" min="0" max="120" value="${escape(value.age)}" required></label></div><button type="button" class="text-button remove">Remover beneficiário</button>`;
   $('.relationship', div).value = value.relationship;
   $('.remove', div).addEventListener('click', () => {
     div.remove();
@@ -374,7 +364,7 @@ function beneficiaryRow(value) {
   $$('.beneficiary').forEach(updateBeneficiaryControls);
 }
 $('#add-beneficiary').addEventListener('click', () => {
-  if ($$('.beneficiary').length >= 30) return toast('Limite de 30 beneficiários.');
+  if ($$('.beneficiary').length >= 30 || !compatibleBeneficiaryRelationships().length) return;
   beneficiaryRow();
   schedule();
 });
@@ -445,9 +435,6 @@ function scenario() {
     'function_pension',
     'capped_pension',
     'complementary_deductible',
-    'health_enrolled',
-    'special_health',
-    'alimony_deductible',
     'project_annual',
   ])
     s[name] = field(name).checked;
@@ -458,10 +445,9 @@ function scenario() {
     : s.gdpi_eligible && s.gdpi_evaluation === 'normal'
       ? decimal(field('ai').value) || '0'
       : '0';
-  if (!s.health_enrolled) {
-    s.copay = '0';
-    s.special_health = false;
-  }
+  s.alimony_deductible = Number(s.alimony) > 0;
+  s.health_enrolled = true;
+  s.special_health = false;
   if (!s.capped_pension) {
     s.complementary_deductible = false;
   }
@@ -487,12 +473,12 @@ function scenario() {
   s.complementary_rate = s.capped_pension
     ? String(Number(field('complementary_percent').value) / 100)
     : '0';
-  s.beneficiaries = (s.health_enrolled ? $$('.beneficiary') : []).map((div) => ({
+  s.beneficiaries = $$('.beneficiary').filter((div) => $('.relationship', div).value).map((div) => ({
     relationship: $('.relationship', div).value,
     age: Number($('.beneficiary-age', div).value),
     special_condition: $('.special-condition', div).checked,
-    exemption_approved: $('.exemption-approved', div).checked,
-    eligibility_confirmed: $('.eligibility-confirmed', div).checked,
+    exemption_approved: $('.relationship', div).value === 'child' && $('.special-condition', div).checked,
+    eligibility_confirmed: ['parent', 'sibling'].includes($('.relationship', div).value),
   }));
   s.rubrics = $$('.rubric').map((div) => ({
     name: $('.rubric-name-input', div).value,
@@ -638,7 +624,7 @@ function renderResult(r) {
   $('#result').innerHTML =
     `<div class="summary-grid"><div class="stat"><span class="stat-label"><i class="dot"></i> Remuneração bruta</span><span class="stat-value">${currency(m.gross)}</span><span class="stat-sub">Proventos da competência</span></div><div class="stat"><span class="stat-label"><i class="dot gold"></i> Descontos totais</span><span class="stat-value">${currency(m.deductions)}</span><span class="stat-sub">Contribuições e deduções</span></div><div class="stat net"><span class="stat-label">Seu líquido mensal</span><span class="stat-value">${currency(m.net)}</span><span class="stat-sub">Estimativa ${r.parameters.status === 'demo' ? 'demonstrativa' : 'da competência'}</span></div></div>
 +  <div class="panel"><div class="result-title"><div><h2>Seu demonstrativo</h2><p>${escape(r.scenario.name)} · ${escape(r.scenario.competence)} · Nível ${escape(r.scenario.level)}, grau ${escape(r.scenario.grade)}</p></div><span class="pill ${r.parameters.status === 'verified' ? 'verified' : ''}">ESTIMATIVA</span></div><div class="table-scroll"><table><thead><tr><th>RUBRICA / FUNDAMENTO</th><th>VALOR MENSAL</th></tr></thead><tbody>${rows}${deductions}<tr class="total-row"><td>Líquido estimado</td><td class="amount">${currency(m.net)}</td></tr></tbody></table></div><div class="export-bar"><span>Guarde seu demonstrativo e os dados da simulação.</span><div class="actions"><button class="secondary export" data-format="csv">↓ Baixar planilha</button><button class="secondary export" data-format="json">↓ Guardar simulação</button></div></div></div>
-+  <div class="subgrid"><div class="panel"><div class="small-title">DESEMPENHO & PRODUTIVIDADE</div><h2>Sua GDPI em detalhe</h2><div class="big-inline">${currency(g.actual)}</div>${metric('Fator de avaliação', number(Number(g.evaluation) * 100) + '%')}${metric('Teto com notas de 100%', currency(g.ceiling))}${metric('Pontos × fator × vencimento de referência', `${number(g.effective_points ?? g.points)} × ${g.factor} × ${currency(g.reference_salary)}`)}<p class="field-help">Pontos variáveis × fator legal × vencimento de referência × avaliação × proporção do mês.</p>${!g.eligible ? '<div class="callout">GDPI zerada: elegibilidade ou nota mínima individual não atendida.</div>' : ''}</div><div class="panel"><div class="small-title">OLHANDO PARA O ANO</div><h2>Além do salário mensal</h2>${annual ? `<div class="big-inline">${currency(annual.net)}</div><p class="field-help">Estimativa anual com remuneração constante</p>${metric('13º líquido (folha separada)', currency(annual.thirteenth.net))}${metric('Férias + terço · líquido da folha', currency(annual.vacation.net))}${metric('Diferença líquida da folha de férias', currency(annual.vacation_increment_net))}<p class="field-help">11 remunerações mensais, uma folha de férias com terço e o 13º integral, sem reajustes ou alterações de vínculo.</p>` : '<p>Projeção anual desativada neste cenário.</p>'}</div></div>
++  <div class="subgrid"><div class="panel"><div class="small-title">DESEMPENHO & PRODUTIVIDADE</div><h2>Sua GDPI em detalhe</h2><div class="big-inline">${currency(g.actual)}</div>${metric('Fator de avaliação', number(Number(g.evaluation) * 100) + '%')}${metric('Teto com notas de 100%', currency(g.ceiling))}${metric('Pontos × fator × vencimento de referência', `${number(g.effective_points ?? g.points)} × ${g.factor} × ${currency(g.reference_salary)}`)}<p class="field-help">Pontos variáveis × fator legal × vencimento de referência × avaliação × proporção do mês.</p>${!g.eligible ? '<div class="callout">GDPI zerada: elegibilidade ou nota mínima individual não atendida.</div>' : ''}</div><div class="panel"><div class="small-title">OLHANDO PARA O ANO</div><h2>Além do salário mensal</h2>${annual ? `<div class="big-inline">${currency(annual.net)}</div><p class="field-help">Estimativa anual com remuneração constante</p>${metric('13º líquido (folha separada)', currency(annual.thirteenth.net))}${metric('Férias + terço · líquido da folha', currency(annual.vacation.net))}${metric('Diferença líquida da folha de férias', currency(annual.vacation_increment_net))}<p class="field-help">11 remunerações mensais, uma folha de férias com terço e o 13º integral. Coparticipação descontada uma única vez no ano.</p>` : '<p>Projeção anual desativada neste cenário.</p>'}</div></div>
 +  <div class="panel breakdown"><h2>Por dentro dos descontos</h2><details><summary>Previdência · base ${currency(m.pension.base)}</summary>${metric('Remuneração contributiva antes do teto', currency(m.bases.pension))}${Number(m.pension.effective_reference_addition) ? metric('Base do efetivo mantida sem pagamento', currency(m.pension.effective_reference_addition)) : ''}${m.pension.bands.map((b) => metric(`${currency(b.from)} a ${b.until == null ? 'sem limite' : currency(b.until)} · ${number(Number(b.rate) * 100)}%`, `${currency(b.base)} × ${number(Number(b.rate) * 100)}%`)).join('')}${metric('Contribuição após soma das faixas', currency(m.pension.amount))}${r.pension_revaluation?.length ? `<p class="field-help">Limites recompostos anualmente conforme LC 64/2002, art.28, §5º; a atualização de cada ano aparece abaixo.</p>${r.pension_revaluation.map((y) => metric(String(y.year) + ' · reajuste ' + number(Number(y.index) * 100) + '%', y.upper_limits.map(currency).join(' / '))).join('')}` : ''}</details><details><summary>Imposto de renda · ${t.method === 'legal' ? 'deduções legais' : 'desconto simplificado'} mais vantajoso</summary>${metric('Rendimento tributável (referência da redução)', currency(t.income))}${metric('Deduções legais', currency(t.legal_deductions))}${metric('Simplificado disponível', currency(t.simplified_deduction))}${metric('Dedução escolhida', currency(t.deduction))}${metric('Base após deduções', currency(t.base))}${metric('Alíquota / parcela a deduzir', `${number(Number(t.rate) * 100)}% / ${currency(t.bracket_deduction)}`)}${metric('IR pela tabela', currency(t.before_reduction))}${metric('Redução legal', currency(t.reduction))}${t.waiver_applied ? metric('Dispensa de retenção até R$10', currency(t.waiver_amount)) : ''}${metric('IRRF', currency(t.amount))}<div class="callout">A redução considera o rendimento tributável antes das deduções. IPSEMG Saúde não reduz a base mensal do IR.</div></details><details><summary>IPSEMG · base ${currency(m.bases.health)}</summary>${m.health.beneficiaries.map((b) => metric(b.name, currency(b.amount))).join('')}${!m.health.beneficiaries.length ? '<p class="field-help">Sem desconto de assistência nesta folha.</p>' : ''}</details>${annual ? `<details><summary>Memória das folhas de férias e 13º</summary>${['vacation', 'thirteenth'].map((k) => `<h3>${k === 'vacation' ? 'Férias com terço' : '13º separado'}</h3>${metric('Bruto', currency(annual[k].gross))}${metric('RPPS', currency(annual[k].pension.amount))}${metric('IPSEMG', currency(annual[k].health.amount))}${metric('IRRF desta folha', currency(annual[k].income_tax.amount))}${metric('Demais descontos', currency(Number(annual[k].deductions) - Number(annual[k].pension.amount) - Number(annual[k].health.amount) - Number(annual[k].income_tax.amount)))}${metric('Líquido', currency(annual[k].net))}`).join('')}<p class="field-help">Confira os valores considerados em cada folha antes de planejar suas despesas.</p></details>` : ''}<details><summary>Condições da estimativa</summary>${metric('Vigência', `${dateLabel(r.parameters.valid_from)} a ${dateLabel(r.parameters.valid_until)}`)}<p class="field-help">Os valores são arredondados para centavos por parcela e desconto. A contribuição previdenciária é arredondada após a soma das faixas.</p><ul class="warning-list">${calculationNotes(
       r,
     )
@@ -777,7 +763,8 @@ async function loadScenario(s) {
   }
   field('complementary_percent').value = Number(s.complementary_rate || 0) * 100;
   $('#beneficiaries').replaceChildren();
-  (s.beneficiaries || []).forEach(beneficiaryRow);
+  if (s.beneficiaries?.length) s.beneficiaries.forEach(beneficiaryRow);
+  else beneficiaryRow();
   $('#rubrics').replaceChildren();
   (s.rubrics || []).forEach(rubricRow);
   updateEvaluationFields(true);
@@ -875,6 +862,7 @@ $('#reset').addEventListener('click', () => {
   field('function').value = '';
   field('mode').value = 'real';
   $('#beneficiaries').replaceChildren();
+  beneficiaryRow();
   $('#rubrics').replaceChildren();
   updateEvaluationFields(true);
   loadParameters();
@@ -1141,25 +1129,20 @@ function updateEvaluationFields(reset = false) {
   previousEvaluation = mode;
 }
 function updateBeneficiaryControls(div) {
-  const enrolled = field('health_enrolled').checked,
-    relationship = $('.relationship', div).value;
+  const relationship = $('.relationship', div).value;
   const allowed = compatibleBeneficiaryRelationships(div);
   $$('.relationship option', div).forEach((option) => {
-    const incompatible = !allowed.includes(option.value);
-    // Preserve imported selections so the server can report invalid combinations.
-    option.hidden = incompatible && option.value !== relationship;
-    option.disabled = incompatible;
+    const incompatible = option.value && !allowed.includes(option.value);
+    // Keep imported invalid selections visible for the server's validation.
+    option.hidden = Boolean(incompatible && option.value !== relationship);
+    option.disabled = Boolean(incompatible);
   });
-  $$('input,select,button', div).forEach((input) => (input.disabled = !enrolled));
   const special = $('.special-condition', div),
-    approved = $('.exemption-approved', div),
-    eligibility = $('.eligibility-confirmed', div);
-  special.disabled = !enrolled || !['child', 'sibling'].includes(relationship);
-  if (!['child', 'sibling'].includes(relationship)) special.checked = false;
-  approved.disabled = !enrolled || relationship !== 'child' || !special.checked;
-  if (relationship !== 'child' || !special.checked) approved.checked = false;
-  eligibility.disabled = !enrolled || !['parent', 'sibling'].includes(relationship);
-  if (!['parent', 'sibling'].includes(relationship)) eligibility.checked = false;
+    age = $('.beneficiary-age', div);
+  age.disabled = !relationship;
+  age.required = Boolean(relationship);
+  special.disabled = !['child', 'sibling'].includes(relationship);
+  if (special.disabled) special.checked = false;
 }
 function updateRubricControls(div) {
   const deduction = $('.rubric-nature', div).value === 'deduction';
@@ -1243,17 +1226,11 @@ function updateControls() {
   field('complementary_deductible').disabled =
     !capped || Number(field('complementary_percent').value) <= 0;
   if (field('complementary_deductible').disabled) field('complementary_deductible').checked = false;
-  const enrolled = field('health_enrolled').checked;
-  field('age').disabled = !enrolled;
-  field('copay').disabled = !enrolled;
-  field('special_health').disabled = true;
-  field('special_health').checked = false;
-  $('#add-beneficiary').disabled = !enrolled || $$('.beneficiary').length >= 30;
+  $('#add-beneficiary').hidden = $$('.beneficiary').length >= 30 || !compatibleBeneficiaryRelationships().length;
+  $('#add-beneficiary').disabled = $$('.beneficiary').some((div) => !$('.relationship', div).value);
   $$('.beneficiary').forEach(updateBeneficiaryControls);
   $$('.rubric').forEach(updateRubricControls);
   $('#add-rubric').disabled = $$('.rubric').length >= 50;
-  field('alimony_deductible').disabled = Number(field('alimony').value) <= 0;
-  if (field('alimony_deductible').disabled) field('alimony_deductible').checked = false;
   validateDecimals();
   updateSecondaryControls();
   updateActions();
@@ -1392,4 +1369,9 @@ async function loadRealCatalog() {
     })
     .join('')}`;
   $('#sources-content').append(panel);
+}
+
+if (!$$('.beneficiary').length) {
+  beneficiaryRow();
+  updateControls();
 }
