@@ -344,7 +344,24 @@ async function loadParameters() {
     announceScenario();
   }
 }
-function beneficiaryRow(value = { relationship: 'child', age: 10, special_condition: false }) {
+// Lei 25.143/2025, art. 4º, §§ 2º–3º: pais e irmãos são grupos exclusivos.
+function compatibleBeneficiaryRelationships(except = null) {
+  const others = $$('.beneficiary').filter((div) => div !== except);
+  return ['child', 'spouse', 'parent', 'sibling'].filter((relationship) =>
+    others.every((div) => {
+      const existing = $('.relationship', div).value;
+      return ['child', 'spouse'].includes(relationship)
+        ? ['child', 'spouse'].includes(existing)
+        : existing === relationship;
+    }),
+  );
+}
+function beneficiaryRow(value) {
+  if (!value) {
+    const relationship = compatibleBeneficiaryRelationships()[0];
+    if (!relationship) return;
+    value = { relationship, age: 10, special_condition: false };
+  }
   const div = document.createElement('div');
   div.className = 'mini-panel beneficiary';
   div.innerHTML = `<div class="field-row"><label>Parentesco<select class="relationship"><option value="child">Filho(a)</option><option value="spouse">Cônjuge</option><option value="parent">Pai/mãe</option><option value="sibling">Irmão(ã)</option></select></label><label>Idade<input class="beneficiary-age" type="number" min="0" max="120" value="${escape(value.age)}" required></label></div><label class="check"><input type="checkbox" class="special-condition" ${value.special_condition ? 'checked' : ''}> Condição especial</label><label class="check"><input type="checkbox" class="exemption-approved" ${value.exemption_approved ? 'checked' : ''}> Isenção de filho aprovada pelo IPSEMG</label><label class="check"><input type="checkbox" class="eligibility-confirmed" ${value.eligibility_confirmed ? 'checked' : ''}> Elegibilidade e dependência econômica confirmadas (pais/irmãos)</label><button type="button" class="text-button remove">Remover beneficiário</button>`;
@@ -354,7 +371,7 @@ function beneficiaryRow(value = { relationship: 'child', age: 10, special_condit
     schedule();
   });
   $('#beneficiaries').append(div);
-  updateBeneficiaryControls(div);
+  $$('.beneficiary').forEach(updateBeneficiaryControls);
 }
 $('#add-beneficiary').addEventListener('click', () => {
   if ($$('.beneficiary').length >= 30) return toast('Limite de 30 beneficiários.');
@@ -1126,6 +1143,13 @@ function updateEvaluationFields(reset = false) {
 function updateBeneficiaryControls(div) {
   const enrolled = field('health_enrolled').checked,
     relationship = $('.relationship', div).value;
+  const allowed = compatibleBeneficiaryRelationships(div);
+  $$('.relationship option', div).forEach((option) => {
+    const incompatible = !allowed.includes(option.value);
+    // Preserve imported selections so the server can report invalid combinations.
+    option.hidden = incompatible && option.value !== relationship;
+    option.disabled = incompatible;
+  });
   $$('input,select,button', div).forEach((input) => (input.disabled = !enrolled));
   const special = $('.special-condition', div),
     approved = $('.exemption-approved', div),
