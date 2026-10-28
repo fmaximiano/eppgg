@@ -39,6 +39,8 @@ Cargos/funções respeitam a opção contributiva informada. No regime com teto,
 
 ## IPSEMG
 
+No formulário, a idade do titular inicia vazia, sem contribuição de assistência à saúde. Preencher a idade inclui o IPSEMG na estimativa; apagá-la retira a contribuição, os beneficiários e a coparticipação do cálculo. Idade de dependente aparece para todos os parentescos selecionados; condição especial aparece apenas para filho(a).
+
 Lei 25.143/2025, arts.4º e 6º, e Decreto 48.981/2025, arts.4º–5º. As cópias legais estão preservadas. A regra de revisão monetária do art.6º, §4º, aplicada à revisão geral de 5,4% da Lei 25.804/2026, resulta em piso R$63,24, teto básico R$527,00 e filho de 21 a 38 anos R$94,86.
 
 - Titular, cônjuge, pais e irmãos elegíveis: 3,2%, observados piso e teto individuais.
