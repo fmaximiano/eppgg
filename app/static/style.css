@@ -712,6 +712,21 @@ footer strong {
   color: var(--ink);
 }
 
+.footer-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.footer-identity strong,
+.footer-identity .brand-sub {
+  white-space: nowrap;
+}
+.footer-identity .brand-sub {
+  display: inline;
+  margin: 0;
+}
+
 /* 5. Calculadora ----------------------------------------------------------- */
 .workspace {
   display: grid;
