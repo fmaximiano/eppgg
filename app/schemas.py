@@ -317,10 +317,21 @@ class Scenario(StrictModel):
     alimony_deductible: bool = False
     other_deductions: Decimal = Field(default=Decimal('0'), ge=0, le=1000000)
     rubrics: list[Rubric] = Field(default_factory=list, max_length=50)
+    cost_allowance_days: int | None = Field(default=None, ge=0, le=31)
+    cost_allowance_goals: Decimal | None = Field(default=None, ge=0, le=100)
+    cost_allowance_monthly: Decimal | None = Field(default=None, ge=0, le=1000000)
+    cost_allowance_daily: Decimal | None = Field(default=None, ge=0, le=1000000)
     project_annual: bool = True
 
     @model_validator(mode='after')
     def choices(self):
+        alternatives = [self.cost_allowance_goals, self.cost_allowance_monthly, self.cost_allowance_daily]
+        if sum(value is not None for value in alternatives) > 1:
+            raise ValueError('Informe somente metas, valor mensal ou valor por dia da ajuda de custo.')
+        if self.cost_allowance_monthly is not None and self.cost_allowance_days is not None:
+            raise ValueError('O valor mensal da ajuda de custo dispensa dias trabalhados.')
+        if (self.cost_allowance_goals is not None or self.cost_allowance_daily is not None) and self.cost_allowance_days is None:
+            raise ValueError('Informe os dias trabalhados para calcular a ajuda de custo.')
         automatic_ade = self.ade_calculation != 'granted_percentage'
         if automatic_ade:
             if self.personal_additions_regime not in ('ade', 'ade_option'):

@@ -467,6 +467,8 @@ function scenario() {
       : '0';
   for (const name of ['ade_entry_year', 'ade_evaluations'])
     s[name] = field(name).disabled || field(name).value === '' ? null : Number(field(name).value);
+  for (const name of ['cost_allowance_days', 'cost_allowance_goals', 'cost_allowance_monthly', 'cost_allowance_daily'])
+    s[name] = field(name).disabled || field(name).value === '' ? null : decimal(field(name).value);
   s.quinquennium_base = null;
   s.ade_base = null;
   s.ade_adi =
@@ -760,6 +762,10 @@ async function loadScenario(s) {
     ade_entry_year: '',
     ade_evaluations: '',
     ade_adi: '',
+    cost_allowance_days: '',
+    cost_allowance_goals: '',
+    cost_allowance_monthly: '',
+    cost_allowance_daily: '',
   }))
     field(key).value = value;
   if (!s.ade_calculation && Number(s.ade_percent))
@@ -1224,7 +1230,15 @@ function updateActions() {
     saved.length < 2 || saved.some((s) => s.competence !== saved[0].competence);
   $('#import-scenario').disabled = saved.length >= 3;
 }
+function updateCostAllowance() {
+  const alternatives = ['cost_allowance_goals', 'cost_allowance_monthly', 'cost_allowance_daily'];
+  const active = alternatives.find((name) => field(name).value !== '');
+  for (const name of alternatives) field(name).disabled = Boolean(active && name !== active);
+  field('cost_allowance_days').disabled = active === 'cost_allowance_monthly';
+  field('cost_allowance_days').required = Boolean(active && active !== 'cost_allowance_monthly');
+}
 function updateControls() {
+  updateCostAllowance();
   updateEvaluationFields();
   updateCommissionChoices();
   updatePersonalAdditions();

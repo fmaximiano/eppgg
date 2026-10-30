@@ -277,6 +277,16 @@ def earnings(s, p):
                             pension=s.function_pension,tax=function.tax,health=function.health,
                             vacation=function.vacation,thirteenth=function.thirteenth))
     rows.extend(personal_additions(s, p, pos.salary))
+    allowance = s.cost_allowance_monthly
+    if allowance is None and s.cost_allowance_days is not None:
+        daily = s.cost_allowance_daily
+        if daily is None:
+            daily = D('50') * (1 + (s.cost_allowance_goals or ZERO) / 100)
+        allowance = daily * s.cost_allowance_days
+    if allowance is not None:
+        rows.append(earning('Ajuda de custo', allowance, 'Dias, metas ou valor informados pelo usuário',
+                            tax=False, pension=False, health=False, vacation=False, thirteenth=False))
+
     for r in s.rubrics:
         if r.nature == 'earning':
             rows.append(earning(r.name, r.amount * (s.fraction if r.proportional else 1), r.source,
