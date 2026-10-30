@@ -527,9 +527,10 @@ th:last-child {
   gap: var(--space-3);
   align-items: center;
   color: var(--ink);
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 750;
-  letter-spacing: -1px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
   line-height: 1.1;
 }
 .brand-icon {
@@ -710,6 +711,21 @@ footer {
 footer strong {
   font-size: var(--text-sm);
   color: var(--ink);
+}
+
+.footer-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.footer-identity strong,
+.footer-identity .brand-sub {
+  white-space: nowrap;
+}
+.footer-identity .brand-sub {
+  display: inline;
+  margin: 0;
 }
 
 /* 5. Calculadora ----------------------------------------------------------- */
@@ -1385,7 +1401,7 @@ footer strong {
     gap: var(--space-3);
   }
   .brand {
-    font-size: 24px;
+    font-size: 18px;
   }
   /* Rótulos curtos numa só linha; rola na horizontal se ainda faltar espaço. */
   .topbar .tabs {
@@ -1492,7 +1508,7 @@ footer strong {
 @media (max-width: 420px) {
   .brand {
     gap: var(--space-2);
-    font-size: 21px;
+    font-size: var(--text-lg);
   }
   .brand-icon {
     width: 34px;
@@ -1769,8 +1785,8 @@ footer strong {
   .brand {
     grid-column: 1;
     grid-row: 1;
-    font-size: clamp(18px, 5.3vw, 24px);
-    letter-spacing: -0.5px;
+    font-size: clamp(16px, 4.2vw, 18px);
+    letter-spacing: 0.2px;
     white-space: nowrap;
   }
   .topbar-actions {
