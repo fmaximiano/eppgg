@@ -1730,3 +1730,45 @@ footer strong {
   align-items: center;
   gap: var(--space-2);
 }
+
+/* Controles compactos de descontos e proporcionalidade. */
+.complementary-settings,
+.fraction-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.complementary-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+}
+.complementary-settings > label:first-child {
+  width: max-content;
+  max-width: 100%;
+}
+.complementary-settings .check {
+  margin: 0;
+}
+.fraction-settings input {
+  width: 11ch;
+}
+.input-panel .fraction-settings .field-help {
+  flex: 1 1 16ch;
+  margin: 0;
+}
+.beneficiary-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+.beneficiary-main .beneficiary-relationship {
+  display: block;
+}
+.beneficiary-main .beneficiary-age-field {
+  min-width: 0;
+}
+.beneficiary-fields > label:last-child {
+  display: flex;
+}

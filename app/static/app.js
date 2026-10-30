@@ -235,7 +235,7 @@ function updateFormHints() {
       value('other_deductions') ? `outros ${currency(value('other_deductions'))}` : '',
     ],
     rubrics: [
-      value('fraction') === 1 ? 'Mês integral' : `${number(value('fraction') * 100)}% do mês`,
+      value('fraction') === 100 ? 'Mês integral' : `${number(value('fraction'))}% do mês`,
       $$('#rubrics .rubric').length
         ? plural($$('#rubrics .rubric').length, 'rubrica', 'rubricas')
         : '',
@@ -353,7 +353,7 @@ function beneficiaryRow(value) {
   if (!value) value = { relationship: '', age: '', special_condition: false };
   const div = document.createElement('div');
   div.className = 'mini-panel beneficiary';
-  div.innerHTML = `<label class="beneficiary-relationship">Beneficiário<select class="relationship"><option value="">Nenhum</option><option value="child">Filho(a)</option><option value="spouse">Cônjuge</option><option value="parent">Pai/mãe</option><option value="sibling">Irmão(ã)</option></select></label><div class="beneficiary-fields"><label class="check"><input type="checkbox" class="special-condition" ${value.special_condition ? 'checked' : ''}> Condição especial</label><label>Idade<input class="beneficiary-age" type="number" min="0" max="120" value="${escape(value.age)}" required></label></div><button type="button" class="text-button remove">Remover beneficiário</button>`;
+  div.innerHTML = `<div class="beneficiary-main"><label class="beneficiary-relationship">Beneficiário<select class="relationship"><option value="">Nenhum</option><option value="child">Filho(a)</option><option value="spouse">Cônjuge</option><option value="parent">Pai/mãe</option><option value="sibling">Irmão(ã)</option></select></label><label class="beneficiary-age-field">Idade<input class="beneficiary-age" type="number" min="0" max="120" value="${escape(value.age)}" required></label></div><div class="beneficiary-fields"><label class="check"><input type="checkbox" class="special-condition" ${value.special_condition ? 'checked' : ''}> Condição especial</label></div><button type="button" class="text-button remove">Remover beneficiário</button>`;
   $('.relationship', div).value = value.relationship;
   $('.remove', div).addEventListener('click', () => {
     div.remove();
@@ -397,7 +397,8 @@ function rubricRow(
     )
     .join(
       '',
-    )}</div><label>Fonte / fundamento<input class="rubric-source" value="${escape(value.source)}" maxlength="500" required></label><button type="button" class="text-button remove">Remover rubrica</button>`;
+    )}</div><button type="button" class="text-button remove">Remover rubrica</button>`;
+  div.dataset.source = value.source || 'Informado pelo usuário; incidências a conferir';
   $('.rubric-nature', div).value = value.nature;
   $('.remove', div).addEventListener('click', () => {
     div.remove();
@@ -456,6 +457,7 @@ function scenario() {
   s.tax_dependents = Number(field('tax_dependents').value);
   s.commission = field('commission').value || null;
   s.function = field('function').value || null;
+  s.fraction = String(Number(field('fraction').value) / 100);
   s.personal_additions_regime = 'auto';
   s.quinquennia = field('quinquennia').disabled ? 0 : Number(field('quinquennia').value);
   s.ade_calculation = field('ade_calculation').disabled
@@ -487,7 +489,7 @@ function scenario() {
     name: $('.rubric-name-input', div).value,
     amount: $('.rubric-amount', div).value,
     nature: $('.rubric-nature', div).value,
-    source: $('.rubric-source', div).value,
+    source: div.dataset.source,
     ...Object.fromEntries($$('[data-flag]', div).map((i) => [i.dataset.flag, i.checked])),
   }));
   return s;
@@ -773,7 +775,7 @@ async function loadScenario(s) {
     const input = field(key);
     if (!input || ['level', 'grade', 'commission', 'function'].includes(key)) continue;
     if (input.type === 'checkbox') input.checked = Boolean(value);
-    else input.value = value;
+    else input.value = key === 'fraction' ? Number(value) * 100 : value;
   }
   if (!s.health_enrolled) field('age').value = '';
   field('complementary_percent').value = Number(s.complementary_rate || 0) * 100;
@@ -1155,7 +1157,6 @@ function updateBeneficiaryControls(div) {
   const special = $('.special-condition', div),
     age = $('.beneficiary-age', div);
   const enrolled = field('age').value !== '';
-  age.closest('label').hidden = !relationship;
   age.disabled = !relationship || !enrolled;
   age.required = Boolean(relationship) && enrolled;
   special.closest('label').hidden = relationship !== 'child';

@@ -1,9 +1,10 @@
 """Com servidor local iniciado: python tests/browser_beneficiaries.py."""
+import os
 from playwright.sync_api import sync_playwright, expect
 
 
 def check_relationships(page):
-    page.goto('http://127.0.0.1:8000')
+    page.goto(os.getenv('APP_URL', 'http://127.0.0.1:8000'))
     page.locator('summary').filter(has_text='IPSEMG').first.click()
     add = page.locator('#add-beneficiary')
     rows = page.locator('.beneficiary')
@@ -16,7 +17,7 @@ def check_relationships(page):
     assert page.evaluate('scenario().health_enrolled') is False
     expect(page.locator('[name=copay]')).to_be_disabled()
     expect(rows.first.locator('.special-condition')).to_be_hidden()
-    expect(rows.first.locator('.beneficiary-age')).to_be_hidden()
+    expect(rows.first.locator('.beneficiary-age')).to_be_visible()
     page.locator('[name=age]').fill('35')
     expect(rows).to_have_count(1)
     expect(rows.first.locator('.relationship')).to_have_value('')
