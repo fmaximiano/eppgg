@@ -112,7 +112,7 @@ def main():
             assert page.evaluate("localStorage.getItem('eppgg.theme')")!=theme
             page.locator('#theme-toggle').click()
             assert page.evaluate('document.documentElement.dataset.theme')==theme
-            expect(page.locator('.form-step')).to_have_count(4)
+            expect(page.locator('.form-step')).to_have_count(5)
             expect(page.locator('[data-hint=health]')).to_have_text('Sem contribuição')
             expect(page.locator('[data-hint=rubrics]')).to_have_text('Mês integral')
             page.locator('[data-tab=compare]').click()

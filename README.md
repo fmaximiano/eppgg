@@ -25,6 +25,7 @@ Para usar Neon, configure `DATABASE_URL` no processo com a connection string do 
 - RPPS por faixas progressivas, regime com teto do RGPS e simulação de contribuição complementar sobre o excedente.
 - IPSEMG: adesão, titular, cônjuge, filhos, pisos, tetos, adicional etário e teto conjunto com filhos menores. Dependentes do IR separados dos beneficiários de saúde.
 - IRRF: deduções legais versus simplificado, dependentes, pensão elegível, complementar elegível e redução de 2026 pela renda tributável anterior às deduções. IPSEMG não deduzido como previdência.
+- Ajuda de custo: dias trabalhados × R$50 × (1 + metas/100), dias × valor diário ou total mensal, com alternativas exclusivas. Sem metas informadas, considera 0%. Dias limitados a 0–31, metas a 0–100%; a carga horária indicada é de pelo menos 6h diárias e 30h semanais. A verba entra sem incidência de IR/RPPS/IPSEMG e sem reflexos em férias/13º; a projeção estática repete o valor mensal nos 12 meses.
 - Rubricas configuráveis com fonte, natureza, proporcionalidade e incidências separadas em IR/RPPS/IPSEMG/férias/13º. Consignações após as bases.
 - Memória auditável em JSON e demonstrativo em CSV, sem fórmulas executáveis em células fornecidas pelo usuário.
 - Cenários locais: salvar, editar, duplicar, importar exportação JSON e comparar até três, com diferenças absolutas/percentuais e indicação do maior líquido mensal/anual.
