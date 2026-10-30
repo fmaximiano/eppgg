@@ -343,27 +343,16 @@
                   <input type="checkbox" name="capped_pension" />
                   RPPS limitado ao teto do RGPS
                 </label>
-                <label>
-                  Complementar sobre o excedente (%)
-                  <input
-                    name="complementary_percent"
-                    disabled
-                    type="number"
-                    min="0"
-                    max="30"
-                    step="0.01"
-                    value="0"
-                    required
-                  />
-                </label>
-                <label class="check">
-                  <input type="checkbox" name="complementary_deductible" disabled />
-                  Complementar dedutível neste enquadramento
-                </label>
-                <p class="field-help">
-                  A opção remuneratória e a contribuição facultativa são escolhas independentes. Não
-                  inclui contribuição patronal.
-                </p>
+                <div class="complementary-settings">
+                  <label>
+                    Complementar sobre o excedente (%)
+                    <input name="complementary_percent" disabled type="number" min="0" max="30" step="0.01" value="0" required />
+                  </label>
+                  <label class="check">
+                    <input type="checkbox" name="complementary_deductible" disabled />
+                    Dedutível neste enquadramento
+                  </label>
+                </div>
               </details>
               <details>
                 <summary>
@@ -414,22 +403,12 @@
                   Rubricas e proporcionalidade
                   <span class="summary-hint" data-hint="rubrics"></span>
                 </summary>
-                <label>
-                  Fração do mês / exercício
-                  <input
-                    name="fraction"
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.0001"
-                    value="1"
-                    required
-                  />
-                </label>
-                <p class="field-help">
-                  A fração incide no vencimento, GDPI, comissão e rubricas marcadas como
-                  proporcionais. Não ajusta pisos do IPSEMG nem avos de 13º.
-                </p>
+                <div class="fraction-settings">
+                  <label>% do mês/exercício
+                    <input name="fraction" type="number" min="0" max="100" step="0.01" value="100" required aria-describedby="fraction-help" />
+                  </label>
+                  <p class="field-help" id="fraction-help">sobre VB, GDPI, comissão e rubricas proporcionais.</p>
+                </div>
                 <div id="rubrics"></div>
                 <button id="add-rubric" type="button" class="secondary full">
                   ＋ Adicionar rubrica

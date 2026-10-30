@@ -156,6 +156,22 @@
       ]
     },
     {
+      "id": "cost-allowance",
+      "title": "Ajuda de custo para alimentação",
+      "items": [
+        {
+          "title": "Decreto nº 48.113, de 30/12/2020",
+          "description": "Regulamenta, no âmbito da administração direta, autárquica e fundacional do Poder Executivo, a concessão da ajuda de custo para despesas com alimentação, prevista no art. 189 da Lei nº 22.257, de 27 de julho de 2016, que estabelece a estrutura orgânica da administração pública do Poder Executivo e dá outras providências.",
+          "url": "https://www.almg.gov.br/legislacao-mineira/texto/DEC/48113/2020/atualizado"
+        },
+        {
+          "title": "Resolução COFIN nº 01, de 23 de outubro de 2026",
+          "description": "Estabelece parâmetros gerais para a ajuda de custo de que trata o Decreto nº 48.113, de 30 de dezembro de 2020. Publicação: Diário do Executivo de 28/10/2026, página 48.",
+          "url": "https://www.jornalminasgerais.mg.gov.br/edicao-do-dia?dados=%7B%22dataPublicacaoSelecionada%22:%222026-10-28T03:00:00.000Z%22,%22idCadernoEdicaoSelecionado%22:331271,%22paginaSelecionada%22:48,%22textoPesquisa%22:%22Resolu%25C3%25A7%25C3%25A3o%2520COFIN%22%7D"
+        }
+      ]
+    },
+    {
       "id": "commissions",
       "title": "Cargos comissionados e funções",
       "items": [
