@@ -471,6 +471,9 @@ function scenario() {
     s[name] = field(name).disabled || field(name).value === '' ? null : Number(field(name).value);
   for (const name of ['cost_allowance_days', 'cost_allowance_goals', 'cost_allowance_monthly', 'cost_allowance_daily'])
     s[name] = field(name).disabled || field(name).value === '' ? null : decimal(field(name).value);
+  // O percentual inicial não inclui ajuda de custo enquanto os dias não forem informados.
+  if (s.cost_allowance_days === null && s.cost_allowance_goals === '100')
+    s.cost_allowance_goals = null;
   s.quinquennium_base = null;
   s.ade_base = null;
   s.ade_adi =
@@ -1235,7 +1238,8 @@ function updateCostAllowance() {
   const active = alternatives.find((name) => field(name).value !== '');
   for (const name of alternatives) field(name).disabled = Boolean(active && name !== active);
   field('cost_allowance_days').disabled = active === 'cost_allowance_monthly';
-  field('cost_allowance_days').required = Boolean(active && active !== 'cost_allowance_monthly');
+  field('cost_allowance_days').required = active === 'cost_allowance_daily' ||
+    (active === 'cost_allowance_goals' && decimal(field(active).value) !== '100');
 }
 function updateControls() {
   updateCostAllowance();
