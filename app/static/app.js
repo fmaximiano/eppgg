@@ -217,12 +217,6 @@ function updateFormHints() {
   const value = (name) => Number(field(name).value || 0);
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const hints = {
-    bases:
-      field('personal_additions_regime').value === 'none'
-        ? 'Sem adicionais'
-        : field('quinquennium_base').value || field('ade_base').value
-          ? 'Base informada'
-          : 'VB do cargo efetivo',
     pension: [
       field('capped_pension').checked ? 'Teto do RGPS' : 'RPPS sem teto',
       value('complementary_percent')
@@ -473,8 +467,8 @@ function scenario() {
       : '0';
   for (const name of ['ade_entry_year', 'ade_evaluations'])
     s[name] = field(name).disabled || field(name).value === '' ? null : Number(field(name).value);
-  for (const name of ['quinquennium_base', 'ade_base'])
-    s[name] = field(name).disabled || !field(name).value ? null : field(name).value;
+  s.quinquennium_base = null;
+  s.ade_base = null;
   s.ade_adi =
     field('ade_adi').disabled || !field('ade_adi').value ? null : decimal(field('ade_adi').value);
   s.complementary_rate = s.capped_pension
@@ -542,12 +536,6 @@ form.addEventListener('change', (event) => {
     schedule();
   } else schedule();
 });
-// Reveal invalid fields even when their section is collapsed.
-$('#calculate').addEventListener('click', () => {
-  const invalid = [...form.elements].find((input) => input.willValidate && !input.validity.valid);
-  for (let node = invalid?.parentElement; node && node !== form; node = node.parentElement)
-    if (node.tagName === 'DETAILS') node.open = true;
-});
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   clearTimeout(timer);
@@ -565,7 +553,7 @@ function showCalculationError(error) {
   lastResult = null;
 }
 async function calculate() {
-  if (!params || !form.reportValidity()) return;
+  if (!params || !form.checkValidity()) return;
   clearTimeout(timer);
   calculationController?.abort();
   const controller = new AbortController();
@@ -583,7 +571,7 @@ async function calculate() {
   } catch (error) {
     if (request === generation)
       showCalculationError(controller.signal.aborted
-        ? new Error('O cálculo demorou demais. Tente calcular novamente.')
+        ? new Error('O cálculo demorou demais. Altere um campo para tentar novamente.')
         : error);
   } finally {
     clearTimeout(timeout);
@@ -772,8 +760,6 @@ async function loadScenario(s) {
     ade_entry_year: '',
     ade_evaluations: '',
     ade_adi: '',
-    quinquennium_base: '',
-    ade_base: '',
   }))
     field(key).value = value;
   if (!s.ade_calculation && Number(s.ade_percent))
@@ -1223,7 +1209,6 @@ function updateActions() {
   const usable = Boolean(params) && form.checkValidity();
   $('#save').disabled =
     !usable || !lastResult || calculationBusy || (saved.length >= 3 && editingIndex === null);
-  $('#calculate').disabled = !params || calculationBusy;
   $('#compare-options').disabled =
     !usable || !lastResult || calculationBusy || !field('commission').value;
   $$('#result .export').forEach((button) => (button.disabled = !lastResult || calculationBusy));
@@ -1283,19 +1268,6 @@ function updatePersonalAdditions() {
   field('ade_entry_year').max = field('competence').value.slice(0, 4);
   $('#ade-year-field').hidden = method !== 'entry_year';
   $('#ade-count-field').hidden = method !== 'evaluations';
-  field('quinquennium_base').disabled = !quinquennium || Number(field('quinquennia').value) <= 0;
-  const count =
-    method === 'entry_year'
-      ? Number(field('competence').value.slice(0, 4)) - Number(field('ade_entry_year').value)
-      : Number(field('ade_evaluations').value);
-  const hasAde =
-    method === 'granted_percentage'
-      ? Number(field('ade_percent').value) > 0
-      : count >= 3 &&
-        Boolean(
-          method === 'entry_year' ? field('ade_entry_year').value : field('ade_evaluations').value,
-        );
-  field('ade_base').disabled = !ade || !hasAde;
 }
 $('#compare').addEventListener('input', updateSecondaryControls);
 $('#compare').addEventListener('change', updateSecondaryControls);

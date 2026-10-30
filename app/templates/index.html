@@ -79,15 +79,20 @@
               <div class="field-row scenario-basics">
                 <label>
                   Nome do cenário
-                  <input name="name" value="Minha simulação" maxlength="80" required />
+                  <input name="name" value="Minha simulação" maxlength="80" required aria-describedby="scenario-name-help" />
+                  <span class="field-help" id="scenario-name-help">Identifique este cenário para salvar e comparar.</span>
                 </label>
                 <label>
                   Competência
-                  <input type="month" name="competence" value="2026-10" required />
+                  <input type="month" name="competence" value="2026-10" required aria-describedby="version-label" />
+                  <span class="field-help" id="version-label">Consultando valores da carreira…</span>
                 </label>
               </div>
+              <label class="check annual-check">
+                <input name="project_annual" type="checkbox" checked />
+                Incluir projeção de férias, 13º e total anual
+              </label>
               <input type="hidden" name="mode" value="real" />
-              <p class="field-help" id="version-label">Consultando valores da carreira…</p>
               <h3 class="form-step">
                 <span class="step">01</span>
                 Carreira e desempenho
@@ -311,44 +316,7 @@
                   />
                 </label>
                 <input name="ade_percent" type="hidden" value="0" />
-                <details>
-                  <summary>
-                    Bases específicas dos adicionais
-                    <span class="summary-hint" data-hint="bases"></span>
-                  </summary>
-                  <p class="field-help">
-                    Em branco, usa o vencimento básico do cargo efetivo. Se o seu ato de concessão
-                    estabelecer outra composição, informe a base mensal integral do respectivo
-                    adicional, antes da fração do mês. Confira especialmente o exercício de comissão
-                    e os direitos adquiridos.
-                  </p>
-                  <div class="field-row">
-                    <label>
-                      Base do quinquênio (R$)
-                      <input
-                        name="quinquennium_base"
-                        type="number"
-                        min="0.01"
-                        max="10000000"
-                        step="0.01"
-                        placeholder="VB do cargo efetivo"
-                        disabled
-                      />
-                    </label>
-                    <label>
-                      Base do ADE (R$)
-                      <input
-                        name="ade_base"
-                        type="number"
-                        min="0.01"
-                        max="10000000"
-                        step="0.01"
-                        placeholder="VB do cargo efetivo"
-                        disabled
-                      />
-                    </label>
-                  </div>
-                </details>
+
               </section>
               <h3 class="form-step">
                 <span class="step">04</span>
@@ -459,14 +427,7 @@
                   ＋ Adicionar rubrica
                 </button>
               </details>
-              <label class="check annual-check">
-                <input name="project_annual" type="checkbox" checked />
-                Incluir projeção de férias, 13º e total anual
-              </label>
-              <button type="submit" class="primary full" id="calculate">
-                Calcular remuneração
-                <span aria-hidden="true">→</span>
-              </button>
+
             </form>
           </aside>
           <div class="output-panel">
