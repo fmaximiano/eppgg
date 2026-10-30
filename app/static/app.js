@@ -857,7 +857,7 @@ $('#import-file').addEventListener('change', async (event) => {
       data = JSON.parse(await file.text());
     } catch {
       throw new Error(
-        'Não foi possível ler este arquivo. Escolha uma simulação guardada pelo Horizonte.',
+        'Não foi possível ler este arquivo. Escolha um cenário salvo pela calculadora.',
       );
     }
     const s = data.scenario || data;

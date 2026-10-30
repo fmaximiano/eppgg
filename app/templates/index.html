@@ -7,7 +7,7 @@
       name="description"
       content="Simulador de remuneração EPPGG de Minas Gerais com memória de cálculo e cenários comparáveis."
     />
-    <title>Horizonte · Calculadora EPPGG MG</title>
+    <title>Calculadora de Salário · EPPGG · Minas Gerais</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <link rel="stylesheet" href="/static/style.css" />
     <!-- Sem defer: aplica o tema antes da primeira pintura, evitando o piscar. -->
@@ -19,16 +19,25 @@
     <a class="skip" href="#main">Pular para o conteúdo</a>
     <header class="topbar">
       <div class="topbar-inner">
-        <a class="brand" href="/" aria-label="Horizonte, início">
-          <svg class="brand-icon" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-            <rect class="brand-icon-bg" width="40" height="40" rx="10" />
-            <path class="brand-icon-sun" d="M14 25a8 8 0 0 1 16 0Z" />
-            <path class="brand-icon-rays" d="M22 9v3M13.8 13l2 2M30.2 13l-2 2" />
-            <path class="brand-icon-horizon" d="M7 31h8v-6h18" />
+        <a class="brand" href="/" aria-label="Calculadora de Salário, início">
+          <svg class="brand-icon" viewBox="0 0 336 336" aria-hidden="true" focusable="false">
+            <g class="logo-bars" fill="currentColor">
+              <path d="M41 225 90 208V254H41Z" />
+              <path d="M110 200 158 177V319H110Z" />
+              <path d="M178 165 226 133V319H178Z" />
+              <path d="M246 119 295 82V319H246Z" />
+            </g>
+            <g class="logo-keys" fill="#91a6b4">
+              <rect x="41" y="271" width="18" height="18" rx="5" />
+              <rect x="72" y="271" width="18" height="18" rx="5" />
+              <rect x="41" y="301" width="18" height="18" rx="5" />
+              <rect x="72" y="301" width="18" height="18" rx="5" />
+            </g>
+            <path class="logo-triangle" d="M242 65 271 15 299 65Z" fill="#c92b32" />
           </svg>
           <span>
-            horizonte
-            <span class="brand-sub">EPPGG · MINAS GERAIS</span>
+            Calculadora de Salário
+            <span class="brand-sub">EPPGG . MINAS GERAIS</span>
           </span>
         </a>
         <nav class="tabs" aria-label="Áreas da calculadora">
@@ -573,7 +582,7 @@
                   <select id="future-grade"></select>
                 </label>
                 <label>
-                  Horizonte (anos)
+                  Período (anos)
                   <input id="future-years" type="number" required min="1" max="40" value="5" />
                 </label>
               </div>
@@ -746,8 +755,8 @@
       </section>
       <footer>
         <span>
-          <strong>horizonte</strong>
-          · EPPGG MG
+          <strong>Calculadora de Salário</strong>
+          <span class="brand-sub">EPPGG . MINAS GERAIS</span>
         </span>
         <span>Simulação informativa · Não substitui a folha oficial.</span>
         <span>Especialista em Políticas Públicas e Gestão Governamental</span>

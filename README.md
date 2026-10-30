@@ -1,4 +1,4 @@
-# Horizonte · Calculadora salarial EPPGG-MG
+# Calculadora de Salário · EPPGG · Minas Gerais
 
 Aplicação web em **Python 3.12 + FastAPI**, com interface em português e persistência de parâmetros em **PostgreSQL/Neon**. Implantação por Docker no **Railway**. Não exige cadastro para simular, exportar ou guardar até três cenários no navegador.
 

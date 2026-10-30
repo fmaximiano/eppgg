@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Horizonte · folha de estilos
+   Calculadora de Salário · folha de estilos
    1. Tokens          5. Calculadora            9. Cenários hipotéticos
    2. Base            6. Comparar cenários     10. Responsivo (media queries)
    3. Componentes     7. Evolução              11. Responsivo (container queries)
@@ -14,7 +14,8 @@
   --teal: #17685d;
   --teal-dark: #104d45;
   --on-teal: #fff; /* texto sobre fundo verde */
-  --brand-sun: #f2b84b; /* sol do logotipo */
+  --logo-bars: #1b2b42;
+  --logo-accent: #c92b32;
   --teal-muted: #c9e1d7; /* texto secundário sobre fundo verde */
   --focus-ring: #c8ddd5;
 
@@ -536,26 +537,11 @@ th:last-child {
   width: 43px;
   height: 43px;
 }
-.brand-icon-bg {
-  fill: var(--teal);
+.brand-icon {
+  color: var(--logo-bars);
 }
-/* Sol nascendo sobre um horizonte em degrau: o nome e a progressão na carreira. */
-.brand-icon-sun {
-  fill: var(--brand-sun);
-}
-.brand-icon-rays,
-.brand-icon-horizon {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.brand-icon-rays {
-  stroke: var(--brand-sun);
-  stroke-width: 2.6;
-}
-.brand-icon-horizon {
-  stroke: var(--on-teal);
-  stroke-width: 3;
+.brand-icon .logo-triangle {
+  fill: var(--logo-accent);
 }
 .brand-sub {
   display: block;
@@ -1513,7 +1499,8 @@ footer strong {
     height: 34px;
   }
   .brand-sub {
-    display: none;
+    font-size: 9px;
+    letter-spacing: 1.1px;
   }
   .topbar-actions {
     gap: var(--space-1);
@@ -1604,7 +1591,8 @@ footer strong {
     --teal: #4fb3a0;
     --teal-dark: #63c4b1;
     --on-teal: #0c1413;
-    --brand-sun: #f6c15a;
+    --logo-bars: #f0f1e9;
+    --logo-accent: #e44950;
     --teal-muted: #1d3f39;
     --focus-ring: #2b5a51;
 
@@ -1771,4 +1759,26 @@ footer strong {
 }
 .beneficiary-fields > label:last-child {
   display: flex;
+}
+
+/* As duas linhas do título permanecem visíveis nas telas menores. */
+@media (max-width: 760px) {
+  .topbar-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: clamp(18px, 5.3vw, 24px);
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+  .topbar-actions {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+  }
+  .topbar .tabs {
+    grid-row: 3;
+  }
 }

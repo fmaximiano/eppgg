@@ -94,7 +94,7 @@ def _published_ipca(hour_bucket):
             BCB_URL,
             headers={
                 "Accept": "application/json",
-                "User-Agent": "Mozilla/5.0 Horizonte-EPPGG/1.0",
+                "User-Agent": "Mozilla/5.0 Calculadora-EPPGG/1.0",
             },
         )
 
