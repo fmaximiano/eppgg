@@ -294,7 +294,7 @@ class Scenario(StrictModel):
     commission_pension: bool = False
     function: str | None = None
     function_pension: bool = False
-    personal_additions_regime: Literal['none', 'quinquennium', 'ade', 'ade_option'] = 'none'
+    personal_additions_regime: Literal['none', 'quinquennium', 'ade', 'ade_option', 'auto'] = 'none'
     quinquennia: int = Field(default=0, ge=0, le=20)
     quinquennium_base: Decimal | None = Field(default=None, gt=0, le=10000000)
     ade_percent: Decimal = Field(default=Decimal('0'), ge=0, le=70)
@@ -323,6 +323,32 @@ class Scenario(StrictModel):
     cost_allowance_daily: Decimal | None = Field(default=None, ge=0, le=1000000)
     project_annual: bool = True
 
+    def validate_automatic_additions(self):
+        if self.ade_calculation == 'entry_year':
+            if self.ade_evaluations is not None or self.ade_percent:
+                raise ValueError('Informe somente o ano de ingresso para esta forma de cálculo.')
+            if self.ade_entry_year is not None and self.ade_entry_year > int(self.competence[:4]):
+                raise ValueError('Ano de ingresso posterior à competência.')
+        elif self.ade_calculation == 'evaluations':
+            if self.ade_entry_year is not None or self.ade_percent:
+                raise ValueError('Informe somente ADI/AED satisfatórias para esta forma de cálculo.')
+        elif self.ade_entry_year is not None or self.ade_evaluations is not None:
+            raise ValueError('Selecione o cálculo por ano de ingresso ou avaliações.')
+        count = self.personal_additions_count()
+        if count is not None and self.quinquennia > count // 5:
+            raise ValueError(f'Quinquênios reconhecidos ({self.quinquennia}) superiores ao total de referência '
+                             f'({count // 5}) para {count} anos/avaliações informados. Confira a quantidade '
+                             'de quinquênios e o ano de ingresso ou as ADI/AED satisfatórias.')
+        if self.quinquennium_base is not None and not self.quinquennia:
+            raise ValueError('Base de quinquênio exige ao menos um quinquênio reconhecido.')
+
+    def personal_additions_count(self):
+        if self.ade_calculation == 'entry_year' and self.ade_entry_year is not None:
+            return int(self.competence[:4]) - self.ade_entry_year
+        if self.ade_calculation == 'evaluations':
+            return self.ade_evaluations
+        return None
+
     @model_validator(mode='after')
     def choices(self):
         alternatives = [self.cost_allowance_goals, self.cost_allowance_monthly, self.cost_allowance_daily]
@@ -332,31 +358,34 @@ class Scenario(StrictModel):
             raise ValueError('O valor mensal da ajuda de custo dispensa dias trabalhados.')
         if (self.cost_allowance_goals is not None or self.cost_allowance_daily is not None) and self.cost_allowance_days is None:
             raise ValueError('Informe os dias trabalhados para calcular a ajuda de custo.')
-        automatic_ade = self.ade_calculation != 'granted_percentage'
-        if automatic_ade:
-            if self.personal_additions_regime not in ('ade', 'ade_option'):
-                raise ValueError('Cálculo do ADE exige vínculo abrangido ou opção pelo adicional.')
-            if self.ade_percent:
-                raise ValueError('Não informe percentual junto ao cálculo por ingresso ou avaliações.')
-            if self.ade_calculation == 'entry_year':
-                if self.ade_entry_year is None or self.ade_evaluations is not None:
-                    raise ValueError('Informe somente o ano de ingresso para esta forma de cálculo.')
-                if self.ade_entry_year > int(self.competence[:4]):
-                    raise ValueError('Ano de ingresso posterior à competência.')
-            elif self.ade_evaluations is None or self.ade_entry_year is not None:
-                raise ValueError('Informe somente o número de avaliações satisfatórias.')
-        elif self.ade_entry_year is not None or self.ade_evaluations is not None:
-            raise ValueError('Selecione o cálculo por ano de ingresso ou avaliações.')
-        elif self.ade_adi is not None:
-            raise ValueError('A ADI do ADE só se aplica ao cálculo por ingresso ou avaliações.')
-        if (self.quinquennia or self.quinquennium_base is not None) and self.personal_additions_regime not in ('quinquennium', 'ade_option'):
-            raise ValueError('Quinquênios exigem direito preservado ou opção pelo ADE com quinquênios já adquiridos.')
-        if (self.ade_percent or self.ade_base is not None) and self.personal_additions_regime not in ('ade', 'ade_option'):
-            raise ValueError('ADE exige vínculo abrangido ou opção formal pelo adicional.')
-        if self.quinquennium_base is not None and not self.quinquennia:
-            raise ValueError('Base de quinquênio exige ao menos um quinquênio reconhecido.')
-        if self.ade_base is not None and not self.ade_percent and not automatic_ade:
-            raise ValueError('Base do ADE exige percentual vigente maior que zero.')
+        if self.personal_additions_regime == 'auto':
+            self.validate_automatic_additions()
+        else:
+            automatic_ade = self.ade_calculation != 'granted_percentage'
+            if automatic_ade:
+                if self.personal_additions_regime not in ('ade', 'ade_option'):
+                    raise ValueError('Cálculo do ADE exige vínculo abrangido ou opção pelo adicional.')
+                if self.ade_percent:
+                    raise ValueError('Não informe percentual junto ao cálculo por ingresso ou avaliações.')
+                if self.ade_calculation == 'entry_year':
+                    if self.ade_entry_year is None or self.ade_evaluations is not None:
+                        raise ValueError('Informe somente o ano de ingresso para esta forma de cálculo.')
+                    if self.ade_entry_year > int(self.competence[:4]):
+                        raise ValueError('Ano de ingresso posterior à competência.')
+                elif self.ade_evaluations is None or self.ade_entry_year is not None:
+                    raise ValueError('Informe somente o número de avaliações satisfatórias.')
+            elif self.ade_entry_year is not None or self.ade_evaluations is not None:
+                raise ValueError('Selecione o cálculo por ano de ingresso ou avaliações.')
+            elif self.ade_adi is not None:
+                raise ValueError('A ADI do ADE só se aplica ao cálculo por ingresso ou avaliações.')
+            if (self.quinquennia or self.quinquennium_base is not None) and self.personal_additions_regime not in ('quinquennium', 'ade_option'):
+                raise ValueError('Quinquênios exigem direito preservado ou opção pelo ADE com quinquênios já adquiridos.')
+            if (self.ade_percent or self.ade_base is not None) and self.personal_additions_regime not in ('ade', 'ade_option'):
+                raise ValueError('ADE exige vínculo abrangido ou opção formal pelo adicional.')
+            if self.quinquennium_base is not None and not self.quinquennia:
+                raise ValueError('Base de quinquênio exige ao menos um quinquênio reconhecido.')
+            if self.ade_base is not None and not self.ade_percent and not automatic_ade:
+                raise ValueError('Base do ADE exige percentual vigente maior que zero.')
         if self.remuneration_option != 'none' and not self.commission:
             raise ValueError('Selecione um cargo para a opção remuneratória.')
         if self.commission_pension and self.remuneration_option == 'none':
