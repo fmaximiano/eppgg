@@ -7,12 +7,13 @@ const escape = (value) =>
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 const currency = (n) =>
   n == null
     ? '—'
-    : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(n));
-const number = (n) =>
-  new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(Number(n));
+    : currencyFormatter.format(Number(n));
+const number = (n) => numberFormatter.format(Number(n));
 const field = (name) => form.elements.namedItem(name);
 // Notas em campos de texto: aceitam vírgula ou ponto (ex.: 95,5) e são enviadas com ponto.
 const decimal = (value) => String(value).trim().replace(',', '.');
@@ -35,6 +36,7 @@ let params = null,
   timer,
   toastTimer,
   editingIndex = null;
+let calculationController = null;
 let calculationBusy = false,
   previousEvaluation = 'no_institutional',
   manualGrades = { adi: '95', ai: '' };
@@ -128,12 +130,13 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 4200);
 }
-async function api(path, body) {
+async function api(path, body, signal) {
   const response = await fetch(
     path,
     body === undefined
-      ? {}
+      ? { signal }
       : {
+          signal,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -287,6 +290,8 @@ function updateGrades(levelId, gradeId) {
   );
 }
 async function loadParameters() {
+  clearTimeout(timer);
+  calculationController?.abort();
   const request = ++generation;
   params = null;
   lastResult = null;
@@ -445,6 +450,7 @@ function scenario() {
     : s.gdpi_eligible && s.gdpi_evaluation === 'normal'
       ? decimal(field('ai').value) || '0'
       : '0';
+  for (const name of ['copay', 'alimony', 'other_deductions']) s[name] ||= '0';
   s.alimony_deductible = Number(s.alimony) > 0;
   s.health_enrolled = field('age').value !== '';
   if (!s.health_enrolled) s.copay = '0';
@@ -491,6 +497,7 @@ function scenario() {
   return s;
 }
 function schedule() {
+  calculationController?.abort();
   if (params) {
     generation++;
     calculationBusy = false;
@@ -535,6 +542,12 @@ form.addEventListener('change', (event) => {
     schedule();
   } else schedule();
 });
+// Reveal invalid fields even when their section is collapsed.
+$('#calculate').addEventListener('click', () => {
+  const invalid = [...form.elements].find((input) => input.willValidate && !input.validity.valid);
+  for (let node = invalid?.parentElement; node && node !== form; node = node.parentElement)
+    if (node.tagName === 'DETAILS') node.open = true;
+});
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   clearTimeout(timer);
@@ -552,19 +565,28 @@ function showCalculationError(error) {
   lastResult = null;
 }
 async function calculate() {
-  if (!params || !form.checkValidity()) return;
+  if (!params || !form.reportValidity()) return;
+  clearTimeout(timer);
+  calculationController?.abort();
+  const controller = new AbortController();
+  calculationController = controller;
+  const timeout = setTimeout(() => controller.abort(), 15000);
   const request = ++generation;
   calculationBusy = true;
   updateActions();
   try {
-    const result = await api('/api/calculate', scenario());
+    const result = await api('/api/calculate', scenario(), controller.signal);
     if (request !== generation) return;
     lastResult = result;
     $('#calculation-error').classList.add('hidden');
     renderResult(result);
   } catch (error) {
-    if (request === generation) showCalculationError(error);
+    if (request === generation)
+      showCalculationError(controller.signal.aborted
+        ? new Error('O cálculo demorou demais. Tente calcular novamente.')
+        : error);
   } finally {
+    clearTimeout(timeout);
     if (request === generation) {
       calculationBusy = false;
       updateActions();
@@ -1201,7 +1223,7 @@ function updateActions() {
   const usable = Boolean(params) && form.checkValidity();
   $('#save').disabled =
     !usable || !lastResult || calculationBusy || (saved.length >= 3 && editingIndex === null);
-  $('#calculate').disabled = !usable || calculationBusy;
+  $('#calculate').disabled = !params || calculationBusy;
   $('#compare-options').disabled =
     !usable || !lastResult || calculationBusy || !field('commission').value;
   $$('#result .export').forEach((button) => (button.disabled = !lastResult || calculationBusy));
