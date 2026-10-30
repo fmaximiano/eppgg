@@ -36,8 +36,14 @@ def main():
         expect(page.locator('#calculation-error')).to_be_hidden()
         # Hold a request indefinitely, then advance the browser clock past the deadline.
         page.clock.install()
-        pending = []
-        page.route('**/api/calculate', lambda route: pending.append(route))
+        hold_calculations = '''() => {
+            window.originalFetch ||= window.fetch;
+            window.fetch = (url, options) => url === '/api/calculate'
+                ? new Promise((resolve, reject) => options.signal.addEventListener('abort',
+                    () => reject(new DOMException('Aborted', 'AbortError'))))
+                : window.originalFetch(url, options);
+        }'''
+        page.evaluate(hold_calculations)
         page.locator('[name=adi]').fill('82')
         page.clock.run_for(500)
         expect(page.locator('#calculate')).to_be_disabled()
@@ -45,15 +51,16 @@ def main():
         expect(page.locator('#calculation-error')).to_contain_text('demorou demais')
         expect(page.locator('#calculate')).to_be_enabled()
         page.unroute_all(behavior='ignoreErrors')
-        pending.clear()
+        page.evaluate('window.fetch = window.originalFetch')
         page.locator('#calculate').click()
         expect(page.locator('#save')).to_be_enabled()
         # Editing during an in-flight request cancels it and computes the latest input.
-        page.route('**/api/calculate', lambda route: pending.append(route))
+        page.evaluate(hold_calculations)
         page.locator('[name=adi]').fill('83')
         page.clock.run_for(500)
         expect(page.locator('#calculate')).to_be_disabled()
         page.unroute_all(behavior='ignoreErrors')
+        page.evaluate('window.fetch = window.originalFetch')
         page.locator('[name=adi]').fill('84')
         page.clock.run_for(500)
         expect(page.locator('#save')).to_be_enabled()
