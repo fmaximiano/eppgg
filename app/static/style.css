@@ -787,8 +787,19 @@ footer strong {
   padding-bottom: var(--space-4);
   margin-bottom: var(--space-4);
 }
-.input-panel #version-label {
-  text-align: center;
+.scenario-basics label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.input-panel .scenario-basics .field-help {
+  margin: 0;
+  font-weight: normal;
+  color: var(--muted);
+}
+.input-panel .annual-check {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .position-evaluation {
