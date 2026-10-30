@@ -243,15 +243,6 @@
                   <span class="step">03</span>
                   Adicionais pessoais · Quinquênio e ADE
                 </h3>
-                <label>
-                  Enquadramento do vínculo
-                  <select name="personal_additions_regime">
-                    <option value="none">Sem adicionais pessoais</option>
-                    <option value="quinquennium">Quinquênio · direito preservado</option>
-                    <option value="ade">ADE · vínculo abrangido</option>
-                    <option value="ade_option">Opção pelo ADE · quinquênios já adquiridos</option>
-                  </select>
-                </label>
                 <div class="field-row">
                   <label>
                     Quinquênios reconhecidos
@@ -263,12 +254,11 @@
                       step="1"
                       value="0"
                       required
-                      disabled
                     />
                   </label>
                   <label>
                     Calcular ADE por
-                    <select name="ade_calculation" disabled>
+                    <select name="ade_calculation">
                       <option value="entry_year">Ano de ingresso</option>
                       <option value="evaluations">ADI/AED satisfatórias</option>
                       <option value="granted_percentage" hidden disabled>
@@ -287,7 +277,6 @@
                       max="2026"
                       step="1"
                       placeholder="Ex.: 2010"
-                      disabled
                     />
                   </label>
                   <label id="ade-count-field" hidden>
@@ -299,22 +288,21 @@
                       max="150"
                       step="1"
                       placeholder="Quantidade"
-                      disabled
+                    />
+                  </label>
+                  <label>
+                    ADI considerada no ADE (%)
+                    <input
+                      name="ade_adi"
+                      type="text"
+                      inputmode="decimal"
+                      autocomplete="off"
+                      data-decimal="100"
+                      placeholder="Igual à ADI da GDPI"
                     />
                   </label>
                 </div>
-                <label>
-                  ADI considerada no ADE (%)
-                  <input
-                    name="ade_adi"
-                    type="text"
-                    inputmode="decimal"
-                    autocomplete="off"
-                    data-decimal="100"
-                    placeholder="Igual à ADI da GDPI"
-                    disabled
-                  />
-                </label>
+                <p class="field-help">O total de referência corresponde a um quinquênio a cada cinco anos ou avaliações informados. Informe somente quinquênios já reconhecidos; a simulação não comprova direito administrativo.</p>
                 <input name="ade_percent" type="hidden" value="0" />
 
               </section>

@@ -456,7 +456,7 @@ function scenario() {
   s.tax_dependents = Number(field('tax_dependents').value);
   s.commission = field('commission').value || null;
   s.function = field('function').value || null;
-  s.personal_additions_regime = field('personal_additions_regime').value;
+  s.personal_additions_regime = 'auto';
   s.quinquennia = field('quinquennia').disabled ? 0 : Number(field('quinquennia').value);
   s.ade_calculation = field('ade_calculation').disabled
     ? 'granted_percentage'
@@ -755,7 +755,6 @@ async function loadScenario(s) {
   clearTimeout(timer);
   // Arquivos anteriores aos adicionais pessoais não podem herdar o vínculo aberto.
   for (const [key, value] of Object.entries({
-    personal_additions_regime: 'none',
     quinquennia: 0,
     ade_percent: '0',
     ade_calculation: 'entry_year',
@@ -1263,22 +1262,19 @@ function updateControls() {
   updateActions();
 }
 function updatePersonalAdditions() {
-  const regime = field('personal_additions_regime').value;
-  const quinquennium = ['quinquennium', 'ade_option'].includes(regime),
-    ade = ['ade', 'ade_option'].includes(regime);
-  field('quinquennia').disabled = !quinquennium;
-  field('ade_calculation').disabled = !ade;
+  field('quinquennia').disabled = false;
+  field('ade_calculation').disabled = false;
   if (
     field('ade_calculation').value === 'granted_percentage' &&
     !Number(field('ade_percent').value)
   )
     field('ade_calculation').value = 'entry_year';
   const method = field('ade_calculation').value;
-  field('ade_adi').disabled = !ade || method === 'granted_percentage';
-  field('ade_entry_year').disabled = !ade || method !== 'entry_year';
-  field('ade_evaluations').disabled = !ade || method !== 'evaluations';
-  field('ade_entry_year').required = ade && method === 'entry_year';
-  field('ade_evaluations').required = ade && method === 'evaluations';
+  field('ade_adi').disabled = method === 'granted_percentage';
+  field('ade_entry_year').disabled = method !== 'entry_year';
+  field('ade_evaluations').disabled = method !== 'evaluations';
+  field('ade_entry_year').required = false;
+  field('ade_evaluations').required = false;
   field('ade_entry_year').max = field('competence').value.slice(0, 4);
   $('#ade-year-field').hidden = method !== 'entry_year';
   $('#ade-count-field').hidden = method !== 'evaluations';

@@ -162,6 +162,15 @@ def personal_additions(s, p, salary):
     O percentual informado é preservado somente para cenários anteriores.
     Bases informadas são integrais e só depois recebem a fração do mês.
     """
+    if s.personal_additions_regime == 'auto':
+        count = s.personal_additions_count()
+        include_ade = not s.quinquennia or (count is not None and s.quinquennia < count // 5)
+        if not include_ade or (count is None and s.ade_calculation != 'granted_percentage'):
+            s = s.model_copy(update={'personal_additions_regime': 'quinquennium' if s.quinquennia else 'ade',
+                                     'ade_calculation': 'granted_percentage', 'ade_percent': ZERO,
+                                     'ade_entry_year': None, 'ade_evaluations': None, 'ade_adi': None})
+        else:
+            s = s.model_copy(update={'personal_additions_regime': 'ade_option' if s.quinquennia else 'ade'})
     automatic_ade = s.ade_calculation != 'granted_percentage'
     if not (s.quinquennia or s.ade_percent or automatic_ade):
         return []

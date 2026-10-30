@@ -45,7 +45,15 @@ Valor do ADE = VB × índice ADE × fração do mês
 
 ## Entradas e cálculo
 
-O enquadramento pode ser: sem adicionais; quinquênio com direito preservado; ADE; opção formal pelo ADE com quinquênios já adquiridos. A coexistência exige o último enquadramento. A quantidade não aumenta automaticamente com o horizonte de carreira.
+A interface deriva o enquadramento automaticamente, sem seletor de vínculo. Quinquênios e método do ADE ficam editáveis. O total de referência é `floor(avaliações / 5)` ou `floor((ano da competência − ano de ingresso) / 5)`:
+
+- Zero quinquênios: ADE de vínculo abrangido, quando há dados para calculá-lo.
+- Quinquênios preenchidos e ano/avaliações em branco: somente quinquênios.
+- Quantidade reconhecida igual ao total de referência: somente quinquênios.
+- Quantidade menor: quinquênios + ADE, mantendo a faixa calculada pela quantidade total de avaliações.
+- Quantidade maior: erro informativo com a quantidade reconhecida, o total de referência e os dados usados.
+
+A comparação é uma regra de simulação; não homologa tempo nem comprova direito administrativo. Campos vazios diferem de zero: zero avaliações ou ingresso no próprio ano permitem validar que o total de referência é zero. A quantidade de quinquênios não aumenta automaticamente com o horizonte de carreira. Os contratos anteriores da API continuam aceitando enquadramentos explícitos; o novo fluxo usa `personal_additions_regime: auto`.
 
 - Quinquênio: `base integral × 10% × quantidade reconhecida × fração do mês`.
 - ADE por avaliações: seleciona a maior faixa (P) cujo mínimo de avaliações foi atingido. Abaixo de três avaliações, percentual zero; a partir de 35, teto de 70%. O percentual aplicado é P × ADI.
@@ -54,24 +62,22 @@ O enquadramento pode ser: sem adicionais; quinquênio com direito preservado; AD
 
 Ano posterior à competência, quantidade negativa ou fracionária e entradas conflitantes são rejeitados. A interface oferece as duas formas de estimativa, sem campo de percentual. Os percentuais informados em cenários anteriores permanecem reproduzíveis pela API e pela abertura de arquivos salvos.
 
-A base padrão é o VB do cargo efetivo na posição escolhida. Bases específicas podem ser informadas separadamente para cada adicional, em valor mensal integral. A calculadora não reconstrói composição histórica, adicionais em cascata, atos anteriores à EC federal 19/1998 ou escolhas de base no exercício de comissão/função. Nessas situações, a base deve corresponder ao ato aplicável. A estimativa não decide o enquadramento nem os limites individuais da opção pelo ADE; esses direitos dependem do ato do vínculo.
+A base da interface é o VB do cargo efetivo na posição escolhida. Pela API, bases específicas podem ser informadas separadamente para cada adicional, em valor mensal integral. A calculadora não reconstrói composição histórica, adicionais em cascata, atos anteriores à EC federal 19/1998 ou escolhas de base no exercício de comissão/função. Nessas situações, a base deve corresponder ao ato aplicável. A estimativa não decide o enquadramento nem os limites individuais da opção pelo ADE; esses direitos dependem do ato do vínculo.
 
 As parcelas são arredondadas separadamente, compõem IR/RPPS/IPSEMG conforme o vínculo ativo simulado e integram férias e 13º. O terço segue as incidências próprias já existentes. O teto previdenciário, quando selecionado, é aplicado depois da soma da base. Não se inclui o adicional na base da GDPI ou do outro adicional.
 
 Comparações, retroativos por competência, consolidação e exportações usam as mesmas parcelas do motor mensal. A memória JSON conserva quantidade, percentual, origem da base e fração; o CSV inclui a fórmula no fundamento. Na evolução de carreira, a base padrão acompanha o novo VB e bases específicas informadas permanecem fixas; a quantidade de avaliações e a faixa permanecem constantes para a mesma competência. As condições da projeção tornam essa hipótese explícita.
 
-Cenários antigos permanecem sem adicionais. A interface desabilita os campos incompatíveis com o enquadramento e carrega simulações antigas sem herdar adicionais do formulário aberto.
+Cenários sem dados de adicionais continuam sem adicionais; ao abrir um cenário, os campos são limpos antes de aplicar os valores salvos. O campo ativo de ano de ingresso ou ADI/AED satisfatórias fica ao lado da ADI própria do ADE.
 
 ## Exemplo de conferência
 
-I-A, VB R$3.773,24; ADI95/AI90 na GDPI; dois quinquênios e ADE estimado por cinco avaliações satisfatórias (ou ingresso em2021 para competência2026), sem ADI própria do ADE (usa 95); IPSEMG para titular de35 anos:
+I-A, VB R$3.773,24; ADI 95%; dois quinquênios e ingresso em 2011 na competência 2026 (15 avaliações, total de referência de três quinquênios):
 
 - Quinquênio: R$754,65 (10% × 2 × VB).
-- ADE: 3.773,24 × 10% × 0,95 = **R$358,46**.
-- Bruto: R$7.530,36; RPPS: 771,0023 + (7.530,36 − 6.251,37) × 15% = R$962,85; IPSEMG: R$240,97; IRRF: (7.530,36 − 962,85) × 27,5% − 908,73 = R$897,34.
-- Líquido: **R$5.429,20**.
-
-Com ADI do ADE igual a 80, o ADE seria 3.773,24 × 10% × 0,80 = R$301,86; com 69,99, zero.
+- ADE: R$1.075,37 (VB × 30% × 95%).
+- Se forem informados três quinquênios, calcula somente quinquênios; quatro geram erro.
+- Ao apagar o ano, dois quinquênios continuam calculados sem ADE.
 
 Caso conferido com contracheque: IV-J (VB R$11.165,80), ingresso em 2009 (17 avaliações, faixa 30%), ADI 94,28 → 11.165,80 × 30% × 0,9428 = **R$3.158,13**.
 
